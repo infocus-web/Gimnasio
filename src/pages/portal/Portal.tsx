@@ -161,8 +161,9 @@ export function Portal() {
                     <span className="font-semibold">{fmtMoney(m.plan.price)}</span>
                   </div>
                   <Button onClick={pay} loading={paying} size="lg" className="mt-4 w-full">
-                    <CreditCard className="size-5" /> {m.status === 'al_dia' ? 'Adelantar cuota' : 'Pagar cuota'} · Mercado Pago
+                    <CreditCard className="size-5" /> {m.status === 'al_dia' ? 'Adelantar cuota' : 'Pagar cuota'}
                   </Button>
+                  <p className="mt-2 text-center text-xs text-zinc-500">Pago seguro con Mercado Pago</p>
                   {payError && <p className="mt-2 text-center text-xs text-red-400">{payError}</p>}
                 </>
               )}
@@ -180,7 +181,7 @@ export function Portal() {
               {activities
                 .filter((a) => a.description)
                 .map((a) => (
-                  <div key={a.id} className="rounded-xl bg-zinc-900 p-4" style={{ borderLeft: `4px solid ${a.color ?? '#84cc16'}` }}>
+                  <div key={a.id} className="rounded-xl bg-zinc-900 p-4" style={{ borderLeft: `4px solid ${a.color ?? '#edcc36'}` }}>
                     <p className="font-semibold">{a.name}</p>
                     <p className="text-sm text-zinc-400">{a.description}</p>
                     {a.instructor && <p className="mt-1 text-xs text-zinc-500">Con {a.instructor}</p>}

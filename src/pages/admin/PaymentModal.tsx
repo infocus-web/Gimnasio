@@ -170,7 +170,7 @@ export function PaymentModal({
         )}
         {member?.email && (
           <label className="flex items-center gap-2 text-sm text-zinc-600">
-            <input type="checkbox" checked={sendReceipt} onChange={(e) => setSendReceipt(e.target.checked)} className="size-4 accent-lime-500" />
+            <input type="checkbox" checked={sendReceipt} onChange={(e) => setSendReceipt(e.target.checked)} className="size-4 accent-yellow-400" />
             Enviar comprobante a {member.email}
           </label>
         )}

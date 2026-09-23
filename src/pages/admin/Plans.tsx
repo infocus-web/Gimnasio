@@ -119,11 +119,11 @@ export function Plans() {
             </Field>
             <div className="flex flex-col justify-end gap-2 text-sm">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="size-4 accent-lime-500" checked={edit.active ?? true} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} />
+                <input type="checkbox" className="size-4 accent-yellow-400" checked={edit.active ?? true} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} />
                 Activo
               </label>
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="size-4 accent-lime-500" checked={edit.show_public ?? true} onChange={(e) => setEdit({ ...edit, show_public: e.target.checked })} />
+                <input type="checkbox" className="size-4 accent-yellow-400" checked={edit.show_public ?? true} onChange={(e) => setEdit({ ...edit, show_public: e.target.checked })} />
                 Mostrar en la web
               </label>
             </div>

@@ -6,7 +6,7 @@ import { WEEKDAYS, fmtTime } from '../../lib/format'
 import { Button, Card, Empty, Field, Loading, Modal, PageHeader, confirmDelete, errorText, useToast } from '../../components/ui'
 import { WeekSchedule } from '../../components/WeekSchedule'
 
-const COLORS = ['#84cc16', '#f97316', '#06b6d4', '#a855f7', '#ef4444', '#eab308', '#ec4899', '#3b82f6']
+const COLORS = ['#edcc36', '#f97316', '#06b6d4', '#a855f7', '#ef4444', '#eab308', '#ec4899', '#3b82f6']
 type SlotDraft = Omit<ScheduleSlot, 'id' | 'activity_id'> & { id?: string }
 
 export function Activities() {
@@ -104,7 +104,7 @@ export function Activities() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {activities.map((a) => (
               <Card key={a.id} className={`overflow-hidden ${a.active ? '' : 'opacity-60'}`}>
-                <div className="h-1.5" style={{ background: a.color ?? '#84cc16' }} />
+                <div className="h-1.5" style={{ background: a.color ?? '#edcc36' }} />
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <h3 className="font-display text-lg font-bold uppercase">{a.name}</h3>
@@ -192,7 +192,7 @@ export function Activities() {
                 </div>
               </Field>
               <label className="flex items-center gap-2 self-end pb-2 text-sm">
-                <input type="checkbox" className="size-4 accent-lime-500" checked={edit.active ?? true} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} />
+                <input type="checkbox" className="size-4 accent-yellow-400" checked={edit.active ?? true} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} />
                 Activa (visible)
               </label>
             </div>

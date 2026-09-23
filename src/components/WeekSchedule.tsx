@@ -29,11 +29,12 @@ export function WeekSchedule({
         onClick={() => onSlotClick?.(s)}
         disabled={!onSlotClick}
         className={cx(
-          'w-full rounded-lg border-l-4 px-2.5 py-1.5 text-left transition',
+          'w-full border-l-4 px-2.5 py-1.5 text-left transition',
+          dark ? 'rounded-none' : 'rounded-lg',
           dark ? 'bg-zinc-900' : 'bg-white shadow-sm ring-1 ring-zinc-200',
           onSlotClick && 'hover:ring-zinc-400',
         )}
-        style={{ borderLeftColor: a.color ?? '#84cc16' }}
+        style={{ borderLeftColor: a.color ?? '#edcc36' }}
       >
         <p className={cx('text-[11px] tabular-nums', dark ? 'text-zinc-400' : 'text-zinc-500')}>
           {fmtTime(s.start_time)}–{fmtTime(s.end_time)}

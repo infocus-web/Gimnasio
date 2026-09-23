@@ -109,10 +109,10 @@ export function emailLayout(gym: { gym_name: string; logo_url: string | null; ad
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden">
 <tr><td style="background:#09090b;padding:22px 28px">
 ${gym.logo_url ? `<img src="${esc(gym.logo_url)}" alt="" height="36" style="vertical-align:middle;border-radius:8px;margin-right:10px">` : ''}
-<span style="color:#a3e635;font-size:20px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;vertical-align:middle">${esc(gym.gym_name)}</span>
+<span style="color:#edcc36;font-size:20px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;vertical-align:middle">${esc(gym.gym_name)}</span>
 </td></tr>
 <tr><td style="padding:28px;font-size:15px;line-height:1.55">${body}
-${cta ? `<p style="margin:28px 0 8px"><a href="${esc(cta.url)}" style="display:inline-block;background:#a3e635;color:#09090b;text-decoration:none;font-weight:bold;padding:13px 22px;border-radius:10px">${esc(cta.label)}</a></p>` : ''}
+${cta ? `<p style="margin:28px 0 8px"><a href="${esc(cta.url)}" style="display:inline-block;background:#edcc36;color:#09090b;text-decoration:none;font-weight:bold;padding:13px 22px;border-radius:0;text-transform:uppercase;letter-spacing:1px;font-size:13px">${esc(cta.label)}</a></p>` : ''}
 </td></tr>
 <tr><td style="padding:16px 28px;border-top:1px solid #f4f4f5;color:#a1a1aa;font-size:12px">
 ${esc(gym.gym_name)}${gym.address ? ` · ${esc(gym.address)}` : ''}${gym.whatsapp ? ` · WhatsApp ${esc(gym.whatsapp)}` : ''}

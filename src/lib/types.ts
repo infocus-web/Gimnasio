@@ -16,6 +16,13 @@ export interface Settings {
   opening_hours: string | null
   grace_days: number
   reminder_days: number
+  hero_kicker: string | null
+  hero_text: string | null
+  about_title: string | null
+  about_text: string | null
+  about_image_url: string | null
+  about_image2_url: string | null
+  gallery: string[]
 }
 
 export interface Profile {

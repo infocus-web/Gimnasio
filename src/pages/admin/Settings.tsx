@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Mail, Upload } from 'lucide-react'
+import { Mail, Upload, X } from 'lucide-react'
 import { supabase, uploadMedia, callApi } from '../../lib/supabase'
 import type { Profile, Role, Settings as SettingsT } from '../../lib/types'
 import { useAuth, useSettings } from '../../lib/auth'
@@ -45,7 +45,17 @@ export function Settings() {
     reload()
   }
 
-  async function upload(file: File | undefined, field: 'logo_url' | 'hero_url') {
+  async function addGallery(files: FileList | null) {
+    if (!files?.length) return
+    try {
+      const urls = await Promise.all(Array.from(files).map((f) => uploadMedia(f, 'galeria')))
+      setForm((f) => (f ? { ...f, gallery: [...(f.gallery ?? []), ...urls] } : f))
+    } catch (err) {
+      toast(errorText(err), 'error')
+    }
+  }
+
+  async function upload(file: File | undefined, field: 'logo_url' | 'hero_url' | 'about_image_url' | 'about_image2_url') {
     if (!file) return
     try {
       const url = await uploadMedia(file, 'web')
@@ -84,9 +94,6 @@ export function Settings() {
             <Field label="Nombre">
               <input className="input" value={form.gym_name} onChange={set('gym_name')} required />
             </Field>
-            <Field label="Frase / slogan">
-              <input className="input" value={form.tagline ?? ''} onChange={set('tagline')} />
-            </Field>
             <Field label="Dirección">
               <input className="input" value={form.address ?? ''} onChange={set('address')} />
             </Field>
@@ -114,15 +121,54 @@ export function Settings() {
                 </label>
               </div>
             </Field>
-            <Field label="Foto de portada (web)">
-              <div className="flex items-center gap-3">
-                {form.hero_url && <img src={form.hero_url} alt="" className="h-12 w-20 rounded-lg object-cover" />}
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50">
-                  <Upload className="size-4" /> Subir foto
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0], 'hero_url')} />
+          </fieldset>
+        </Card>
+
+        <Card className="p-5">
+          <h2 className="font-semibold">Web pública</h2>
+          <p className="mb-4 text-sm text-zinc-500">Textos y fotos de la página principal. Usá fotos reales del gimnasio (verticales para la portada).</p>
+          <fieldset disabled={!isAdmin} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Texto chico sobre el título">
+              <input className="input" value={form.hero_kicker ?? ''} onChange={set('hero_kicker')} />
+            </Field>
+            <Field label="Título principal" hint="Frase grande de la portada">
+              <input className="input" value={form.tagline ?? ''} onChange={set('tagline')} />
+            </Field>
+            <Field label="Texto de la portada" className="sm:col-span-2">
+              <textarea className="input" rows={2} value={form.hero_text ?? ''} onChange={set('hero_text')} />
+            </Field>
+            <ImageField label="Foto de portada" url={form.hero_url} onFile={(f) => upload(f, 'hero_url')} onClear={() => setForm({ ...form, hero_url: null })} />
+            <div />
+            <Field label="Título sección “Nosotros”" className="sm:col-span-2">
+              <input className="input" value={form.about_title ?? ''} onChange={set('about_title')} />
+            </Field>
+            <Field label="Texto sección “Nosotros”" className="sm:col-span-2">
+              <textarea className="input" rows={3} value={form.about_text ?? ''} onChange={set('about_text')} />
+            </Field>
+            <ImageField label="Foto grande (Nosotros)" url={form.about_image_url} onFile={(f) => upload(f, 'about_image_url')} onClear={() => setForm({ ...form, about_image_url: null })} />
+            <ImageField label="Foto chica (Nosotros)" url={form.about_image2_url} onFile={(f) => upload(f, 'about_image2_url')} onClear={() => setForm({ ...form, about_image2_url: null })} />
+            <div className="sm:col-span-2">
+              <span className="label">Galería de fotos</span>
+              <div className="flex flex-wrap gap-2">
+                {(form.gallery ?? []).map((g, i) => (
+                  <div key={g + i} className="group relative">
+                    <img src={g} alt="" className="size-20 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, gallery: form.gallery.filter((_, j) => j !== i) })}
+                      className="absolute -right-1.5 -top-1.5 hidden rounded-full bg-red-600 p-0.5 text-white group-hover:block"
+                      aria-label="Quitar foto"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <label className="flex size-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-500 hover:bg-zinc-50">
+                  <Upload className="size-4" /> Agregar
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => addGallery(e.target.files)} />
                 </label>
               </div>
-            </Field>
+            </div>
           </fieldset>
         </Card>
 
@@ -184,5 +230,24 @@ export function Settings() {
         </ul>
       </Card>
     </div>
+  )
+}
+
+function ImageField({ label, url, onFile, onClear }: { label: string; url: string | null; onFile: (f: File | undefined) => void; onClear: () => void }) {
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-3">
+        {url && <img src={url} alt="" className="h-14 w-20 rounded-lg object-cover" />}
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50">
+          <Upload className="size-4" /> {url ? 'Cambiar' : 'Subir foto'}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+        </label>
+        {url && (
+          <button type="button" onClick={onClear} className="text-xs text-zinc-500 hover:text-red-600">
+            Quitar
+          </button>
+        )}
+      </div>
+    </Field>
   )
 }
