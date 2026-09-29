@@ -104,6 +104,8 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
   // Filtrar sesiones del día seleccionado
   const filteredSessions = sessions.filter((s) => {
     if (!s.startsAt) return false;
+    // Las clases que ya empezaron no se muestran para reservar (salvo que el socio esté anotado)
+    if (new Date(s.startsAt).getTime() < Date.now() && !s.myBooking) return false;
     const sessionDate = localDateKey(new Date(s.startsAt));
     return sessionDate === activeDay.fullDateStr;
   });
@@ -268,7 +270,8 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
       ) : (
         <div className="space-y-3">
           {filteredSessions.map((session) => {
-            const isBooked = session.myBooking?.status === 'booked';
+            const isAttended = session.myBooking?.status === 'checked_in';
+            const isBooked = session.myBooking?.status === 'booked' || isAttended;
             const isWaitlisted = session.myBooking?.status === 'waitlisted';
             const isFull = session.spotsLeft <= 0;
 
@@ -325,9 +328,9 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
                       <div className="p-3 rounded-2xl bg-[#edcc36]/10 border border-[#edcc36]/40 flex items-center justify-between text-xs font-mono">
                         <div className="flex items-center gap-2 text-[#edcc36]">
                           <ShieldCheck className="w-4 h-4" />
-                          <span>Reserva confirmada {session.myBooking?.equipmentLabel ? `(${session.myBooking.equipmentLabel})` : ''}</span>
+                          <span>{isAttended ? 'Asististe ✓' : 'Reserva confirmada'} {session.myBooking?.equipmentLabel ? `(${session.myBooking.equipmentLabel})` : ''}</span>
                         </div>
-                        <button
+                        {!isAttended && <button
                           type="button"
                           onClick={() => {
                             sound.playClick();
@@ -336,7 +339,7 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
                           className="text-red-400 hover:text-red-300 underline font-semibold min-h-[44px] flex items-center px-1 focus-visible:ring-2 focus-visible:ring-red-400"
                         >
                           Cancelar reserva
-                        </button>
+                        </button>}
                       </div>
                     )}
 
@@ -369,7 +372,7 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
                         </div>
                       ) : (
                         <div className="text-red-400 font-semibold">
-                          Clase llena ({session.waitlistLeft} en espera)
+                          Clase llena{session.waitlistLeft > 0 ? ` · ${session.waitlistLeft} ${session.waitlistLeft === 1 ? 'lugar' : 'lugares'} en lista de espera` : ''}
                         </div>
                       )}
                     </div>

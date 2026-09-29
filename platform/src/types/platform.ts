@@ -69,6 +69,7 @@ export interface LoggedSet {
   reps: number;
   weightKg: number;
   rpe?: number;
+  performedAt?: string;
 }
 
 export interface CheckinResult {

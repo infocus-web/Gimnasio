@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 export const metadata: Metadata = {
   title: { default: 'Evolution Fitness', template: '%s · Evolution Fitness' },
   description: 'Tu pase, tus clases y tu entrenamiento.',
+  applicationName: 'Evolution Fitness GYM',
+  appleWebApp: { capable: true, title: 'Evolution', statusBarStyle: 'black-translucent' },
+  icons: { icon: '/icon-192.png', apple: '/apple-touch-icon.png' },
 }
 export const viewport: Viewport = { themeColor: '#09090b', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 

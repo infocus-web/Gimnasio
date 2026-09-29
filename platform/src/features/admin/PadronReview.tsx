@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import { Check, X, Copy, Link2, Phone, IdCard, Mail } from 'lucide-react'
 import type { ActionState } from './errors'
-import { inputClass, Notice, SubmitButton } from './ui'
+import { inputClass, Notice, SubmitButton, useActionForm } from './ui'
 import { SecretBox } from './TeamForms'
 
 export function ShareLink({ url }: { url: string }) {
@@ -51,8 +51,8 @@ export function RequestCard({
   reject: (p: ActionState) => Promise<ActionState>
   when: string
 }) {
-  const [aState, aAction] = useActionState(approve, {})
-  const [rState, rAction] = useActionState(reject, {})
+  const [aState, aAction] = useActionForm(approve, {})
+  const [rState, rAction] = useActionForm(reject, {})
   if (aState.ok || rState.ok) {
     return (
       <li className="space-y-2 py-4">

@@ -1,7 +1,6 @@
-'use client'
-
 'use client';
 
+import { VideoEmbed } from './VideoEmbed';
 import React, { useState, useEffect } from 'react';
 import {
   Check,
@@ -52,21 +51,25 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
   const activeExercise = exercises[currentExerciseIdx] || exercises[0];
 
-  // Sync initial target weight & reps when switching exercise
+  // Al cambiar de ejercicio: carga y reps sugeridas (o las de la última serie de este ejercicio).
+  // No depende de loggedSets: si no, cada serie guardada pisaba el peso que el socio había ajustado.
+  const activeId = activeExercise?.id
   useEffect(() => {
-    if (activeExercise) {
-      const targetW = activeExercise.targetWeightKg ?? 60;
-      setSelectedWeight(targetW);
-      const parsedReps = parseInt(activeExercise.targetReps, 10) || 8;
-      setSelectedReps(parsedReps);
-      setRestDuration(activeExercise.restSeconds || 60);
-      setRestRemaining(activeExercise.restSeconds || 60);
+    if (!activeExercise) return
+    const last = [...loggedSets].reverse().find((s) => s.exerciseId === activeExercise.id)
+    setSelectedWeight(last?.weightKg ?? activeExercise.targetWeightKg ?? 0)   // 0 = peso corporal
+    const parsedReps = parseInt(activeExercise.targetReps, 10) || 8
+    setSelectedReps(last?.reps ?? parsedReps)
+    setRestDuration(activeExercise.restSeconds || 60)
+    setRestRemaining(activeExercise.restSeconds || 60)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId])
 
-      // Calcular número de serie siguiente para este ejercicio
-      const loggedForEx = loggedSets.filter((s) => s.exerciseId === activeExercise.id);
-      setCurrentSetNumber(loggedForEx.length + 1);
-    }
-  }, [activeExercise, currentExerciseIdx, loggedSets]);
+  // Número de la próxima serie de este ejercicio
+  useEffect(() => {
+    if (!activeId) return
+    setCurrentSetNumber(loggedSets.filter((s) => s.exerciseId === activeId).length + 1)
+  }, [activeId, loggedSets])
 
   // Screen Wake Lock API to keep phone screen awake during workout
   useEffect(() => {
@@ -503,14 +506,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             </div>
 
             <div className="relative rounded-2xl overflow-hidden bg-black aspect-video border border-zinc-900">
-              <video
-                src={activeExercise.videoUrl}
-                controls
-                autoPlay
-                loop
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <VideoEmbed url={activeExercise.videoUrl!} title={activeExercise.name} />
             </div>
 
             {activeExercise.notes && (

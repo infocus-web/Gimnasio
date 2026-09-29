@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { ClipboardCheck, Loader2, CheckCircle2 } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
+import { KeepValues, useActionForm } from '@/features/admin/ui'
 
 const input =
   'min-h-[48px] w-full rounded-xl border border-zinc-800 bg-black px-4 text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] aria-[invalid=true]:border-red-500/60'
@@ -30,7 +31,7 @@ function F({ label, name, error, children }: { label: string; name: string; erro
 }
 
 export function PadronForm({ gymName, action }: { gymName: string; action: (p: ActionState, f: FormData) => Promise<ActionState> }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const [startedAt] = useState(() => Date.now())
   const e = state.fieldErrors ?? {}
 
@@ -55,6 +56,7 @@ export function PadronForm({ gymName, action }: { gymName: string; action: (p: A
         ) : (
           <form action={formAction} className="space-y-4" noValidate>
             <input type="hidden" name="started_at" value={startedAt} />
+            <KeepValues values={state.values} />
             {/* Campo trampa para bots: invisible para personas */}
             <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
               <label>

@@ -1,8 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
 import type { ActionState } from './actions'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 export interface MemberValues {
   firstName: string
@@ -31,7 +30,7 @@ type Props =
     }
 
 export function MemberForm(props: Props) {
-  const [state, formAction] = useActionState(props.action, {})
+  const [state, formAction] = useActionForm(props.action, {})
   const v = props.mode === 'edit' ? props.values : null
   const err = state.fieldErrors ?? {}
   const disabled = props.mode === 'edit' && props.readOnly

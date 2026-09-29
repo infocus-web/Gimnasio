@@ -59,7 +59,7 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
   const Row = ({ r }: { r: NonNullable<typeof roster>[number] }) => (
     <li className="flex items-center gap-3 py-2.5 text-sm">
       <span className="min-w-0 flex-1">
-        <Link href={`/${slug}/admin/socios/${r.member_id}` as Route} className="font-semibold text-white hover:text-[#edcc36]">
+        <Link href={(ctx.can('members.read') ? `/${slug}/admin/socios/${r.member_id}` : `/${slug}/admin/alumnos/${r.member_id}`) as Route} className="font-semibold text-white hover:text-[#edcc36]">
           {r.member_name}
         </Link>
         <span className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">

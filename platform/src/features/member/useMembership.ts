@@ -40,7 +40,11 @@ export function useMembership() {
       best
         ? {
             planName: best.membership_plans?.name ?? 'Plan',
-            status: best.status,
+            // El estado guardado se actualiza de noche: si ya pasó la fecha, se muestra vencida igual
+            status:
+              (best.status === 'active' || best.status === 'trialing') && new Date(best.current_period_end).getTime() < Date.now()
+                ? 'expired'
+                : best.status,
             currentPeriodEnd: best.current_period_end,
             creditsRemaining: best.credits_remaining,
           }

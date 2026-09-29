@@ -2,9 +2,9 @@
 
 import { randomInt } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
-import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteUrl } from '@/lib/site-url'
 import { getAdminContext } from './context'
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
 
@@ -62,8 +62,7 @@ function generatePassword() {
 }
 
 async function origin() {
-  const h = await headers()
-  return `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}`
+  return siteUrl()
 }
 
 export async function approveStaffRequest(slug: string, requestId: string, _prev: ActionState, form: FormData): Promise<ActionState> {

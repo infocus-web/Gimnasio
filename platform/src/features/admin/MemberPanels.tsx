@@ -1,9 +1,8 @@
 'use client'
 
-import { useActionState } from 'react'
 import { Send } from 'lucide-react'
 import type { ActionState } from './actions'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 export function AssignPlanForm({
   action,
@@ -16,7 +15,7 @@ export function AssignPlanForm({
   today: string
   currentPlanId: string | null
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-[1fr_170px]">
@@ -55,7 +54,7 @@ export function InviteButton({
   action: (prev: ActionState) => Promise<ActionState>
   label?: string
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-3">
       <SubmitButton variant="ghost">

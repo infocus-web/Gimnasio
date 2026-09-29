@@ -59,7 +59,7 @@ export async function bookForMember(slug: string, sessionId: string, _prev: Acti
   const { data, error } = await supabase.rpc('book_class', {
     p_session_id: sessionId,
     p_member_id: memberId,
-    p_idempotency_key: `desk:${sessionId}:${memberId}`,
+    p_idempotency_key: `desk:${sessionId}:${memberId}:${String(form.get('nonce') ?? Date.now())}`,
   })
   if (error) return { message: dbMessage(error) }
   const status = (data as { status?: string } | null)?.status

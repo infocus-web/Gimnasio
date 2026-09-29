@@ -5,10 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
 import { Dumbbell, Mail, KeyRound } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { safeInternalPath } from '@/lib/safe-path'
 
 /** Solo rutas internas: evita redirecciones abiertas a otros sitios. */
 function safeNext(value: string | null) {
-  return value && value.startsWith('/') && !value.startsWith('//') ? value : '/evolution/app/pase'
+  return safeInternalPath(value, '/evolution/app/pase')
 }
 
 export function LoginForm() {

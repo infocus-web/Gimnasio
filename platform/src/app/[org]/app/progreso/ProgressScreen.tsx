@@ -31,6 +31,7 @@ export function ProgressScreen() {
           reps: s.reps ?? 0,
           weightKg: Number(s.weight_kg ?? 0),
           rpe: s.rpe ?? undefined,
+          performedAt: (s.workout_logs as unknown as { performed_at: string } | null)?.performed_at,
         })),
       )
       setLoading(false)

@@ -24,7 +24,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
         supabase.from('checkins').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('allowed', true).gte('created_at', today),
         supabase
           .from('member_directory')
-          .select('id, first_name, last_name, plan_name, current_period_end')
+          .select('id, first_name, last_name, plan_name, current_period_end', { count: 'exact' })
           .eq('org_id', orgId)
           .eq('is_payer', true)
           .gte('current_period_end', now.toISOString())
@@ -49,7 +49,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
   const stats = [
     { label: 'Socios activos', value: active?.count ?? 0, icon: Users, href: `/${slug}/admin/socios` },
     { label: 'Entradas hoy', value: checkinsToday?.count ?? 0, icon: ScanLine, href: `/${slug}/admin/recepcion` },
-    { label: 'Vencen en 7 días', value: expiring?.data?.length ?? 0, icon: AlarmClock, href: `/${slug}/admin/socios?estado=por_vencer` },
+    { label: 'Vencen en 7 días', value: expiring?.count ?? expiring?.data?.length ?? 0, icon: AlarmClock, href: `/${slug}/admin/socios?estado=por_vencer` },
     { label: 'Vencidos o sin plan', value: noPlan?.count ?? 0, icon: UserX, href: `/${slug}/admin/socios?estado=vencido` },
   ]
 

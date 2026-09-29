@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { safeInternalPath } from '@/lib/safe-path'
 
 /** Vuelta del link mágico de Supabase (flujo PKCE): canjea el código por una sesión. */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
   const nextParam = searchParams.get('next')
-  const next = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/evolution/app/pase'
+  const next = safeInternalPath(nextParam, '/evolution/app/pase')
 
   if (code) {
     const supabase = await createClient()

@@ -4,6 +4,7 @@ import type { Route } from 'next'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { safeInternalPath } from '@/lib/safe-path'
 
 export const metadata: Metadata = { title: 'Entrar' }
 
@@ -28,7 +29,7 @@ function safeNext(raw: string | undefined) {
       return '/evolution/app/pase'
     }
   }
-  return value.startsWith('/') && !value.startsWith('//') ? value : '/evolution/app/pase'
+  return safeInternalPath(value, '/evolution/app/pase')
 }
 
 export default async function ConfirmPage({ searchParams }: PageProps<'/auth/confirm'>) {

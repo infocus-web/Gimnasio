@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { siteUrl } from '@/lib/site-url'
 import { getAdminContext } from './context'
 
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
@@ -46,10 +46,7 @@ function fieldErrors(error: z.ZodError) {
 
 
 async function origin() {
-  const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host')
-  const proto = h.get('x-forwarded-proto') ?? 'https'
-  return `${proto}://${host}`
+  return siteUrl()
 }
 
 /** Vincula la cuenta si ya existe; si no, manda la invitación por email (requiere SUPABASE_SECRET_KEY). */

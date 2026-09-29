@@ -1,10 +1,10 @@
 'use client'
 
-import { useActionState, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ImagePlus, Loader2, Trash2, ExternalLink, GripVertical } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
-import { Card, Field, inputClass, Notice, SubmitButton } from './ui'
+import { Card, Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -218,7 +218,7 @@ export function WebEditor({
   orgId: string
   publicUrl: string
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   const v = values
 

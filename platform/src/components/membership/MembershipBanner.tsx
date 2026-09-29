@@ -75,13 +75,13 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({
           <div className="flex items-center gap-2">
             <h3 className="font-cyber font-bold text-white text-base">{membership.planName}</h3>
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#edcc36]/15 text-[#edcc36] border border-[#edcc36]/30">
-              {membership.status === 'active' ? 'ACTIVA' : membership.status.toUpperCase()}
+              {({ active: 'ACTIVA', trialing: 'PRUEBA', past_due: 'PAGO PENDIENTE', paused: 'CONGELADA', expired: 'VENCIDA', canceled: 'CANCELADA' } as Record<string, string>)[membership.status] ?? membership.status.toUpperCase()}
             </span>
           </div>
           <div className="flex items-center gap-3 text-xs font-mono text-zinc-400 mt-0.5">
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Vence: <span className="text-zinc-200">{membership.currentPeriodEnd}</span></span>
+              <span>Vence: <span className="text-zinc-200">{membership.currentPeriodEnd ? new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(membership.currentPeriodEnd)) : '—'}</span></span>
             </span>
 
             {membership.creditsRemaining !== null && (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Dumbbell, Play } from 'lucide-react'
 import { ActiveWorkout } from '@/components/workout/ActiveWorkout'
 import { useMember } from '@/features/member/MemberProvider'
@@ -10,8 +10,31 @@ import type { LoggedSet } from '@/types/platform'
 export function WorkoutScreen() {
   const { supabase, org, activeMemberId } = useMember()
   const { program, loading, error } = useProgram()
-  const todayIso = ((new Date().getDay() + 6) % 7) + 1
   const [dayIdx, setDayIdx] = useState<number | null>(null)
+  const [lastWorkoutId, setLastWorkoutId] = useState<string | null>(null)
+  const logPromise = useRef<Promise<string> | null>(null)
+  const startedAt = useRef<number | null>(null)
+
+  // Día sugerido: el siguiente al último que entrenó (rotación Día 1 → 2 → 3 → 1)
+  useEffect(() => {
+    if (!program?.assignmentId) return
+    let cancelled = false
+    void supabase
+      .from('workout_logs')
+      .select('workout_id')
+      .eq('member_id', activeMemberId)
+      .eq('assignment_id', program.assignmentId)
+      .not('workout_id', 'is', null)
+      .order('performed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setLastWorkoutId(data?.workout_id ?? null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, activeMemberId, program?.assignmentId])
   const [running, setRunning] = useState(false)
   const [loggedSets, setLoggedSets] = useState<LoggedSet[]>([])
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -33,21 +56,29 @@ export function WorkoutScreen() {
     )
   }
 
-  const selected =
-    program.days[dayIdx ?? Math.max(0, program.days.findIndex((d) => d.dayIndex === todayIso))] ?? program.days[0]!
+  const lastIdx = program.days.findIndex((d) => d.workoutId === lastWorkoutId)
+  const suggestedIdx = lastIdx >= 0 ? (lastIdx + 1) % program.days.length : 0
+  const selected = program.days[dayIdx ?? suggestedIdx] ?? program.days[0]!
 
   const logSet = async (set: LoggedSet) => {
     setLoggedSets((prev) => [...prev.filter((s) => !(s.exerciseId === set.exerciseId && s.setNumber === set.setNumber)), set])
     setSaveError(null)
     try {
       if (!workoutLogId.current) {
-        const { data, error } = await supabase
-          .from('workout_logs')
-          .insert({ org_id: org.id, member_id: activeMemberId, assignment_id: program.assignmentId, workout_id: selected.workoutId })
-          .select('id')
-          .single()
-        if (error) throw error
-        workoutLogId.current = data.id
+        // Un solo registro por entrenamiento aunque se guarden dos series muy rápido
+        logPromise.current ??= (async () => {
+          const { data, error } = await supabase
+            .from('workout_logs')
+            .insert({ org_id: org.id, member_id: activeMemberId, assignment_id: program.assignmentId, workout_id: selected.workoutId })
+            .select('id')
+            .single()
+          if (error) {
+            logPromise.current = null
+            throw error
+          }
+          return data.id
+        })()
+        workoutLogId.current = await logPromise.current
       }
       const { error } = await supabase.from('set_logs').upsert(
         {
@@ -74,7 +105,21 @@ export function WorkoutScreen() {
           exercises={selected.exercises}
           loggedSets={loggedSets}
           onLogSet={logSet}
-          onFinishWorkout={() => setRunning(false)}
+          onFinishWorkout={() => {
+            // Guarda la duración y deja listo para el próximo entrenamiento
+            if (workoutLogId.current && startedAt.current) {
+              void supabase
+                .from('workout_logs')
+                .update({ duration_min: Math.max(1, Math.round((Date.now() - startedAt.current) / 60000)) })
+                .eq('id', workoutLogId.current)
+            }
+            if (workoutLogId.current) setLastWorkoutId(selected.workoutId)
+            workoutLogId.current = null
+            logPromise.current = null
+            setLoggedSets([])
+            setDayIdx(null)
+            setRunning(false)
+          }}
           onExit={() => setRunning(false)}
         />
         {saveError && (
@@ -135,7 +180,9 @@ export function WorkoutScreen() {
         type="button"
         onClick={() => {
           workoutLogId.current = null
+          logPromise.current = null
           setLoggedSets([])
+          startedAt.current = Date.now()
           setRunning(true)
         }}
         className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"

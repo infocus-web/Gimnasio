@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useRef, useEffect, useState } from 'react'
 import { ClassSchedule } from '@/components/classes/ClassSchedule'
 import { useMember } from '@/features/member/MemberProvider'
 import type { BookingErrorCode, BookingStatus, ClassSession, EquipmentSpot } from '@/types/platform'
@@ -88,7 +88,11 @@ export function ClassesScreen() {
     else setOtherError(body?.error?.message ?? 'No se pudo completar la operación.')
   }
 
+  const busy = useRef(false)   // evita dobles toques mientras responde el servidor
+
   const book = async (sessionId: string, equipmentId?: string, allowWaitlist = false) => {
+    if (busy.current) return
+    busy.current = true
     setErrorCode(null)
     setOtherError(null)
     const res = await fetch('/api/bookings', {
@@ -98,16 +102,24 @@ export function ClassesScreen() {
     })
     if (!res.ok) await handleApiError(res)
     await load()
+    busy.current = false
   }
 
   const cancel = async (sessionId: string) => {
-    const bookingId = sessions.find((s) => s.id === sessionId)?.myBooking?.id
-    if (!bookingId) return
+    const s = sessions.find((x) => x.id === sessionId)
+    const bookingId = s?.myBooking?.id
+    if (!bookingId || busy.current) return
+    const soon = s && new Date(s.startsAt).getTime() - Date.now() < 3 * 3600_000
+    if (!window.confirm(soon
+      ? '¿Cancelar la reserva? Falta poco para la clase: si cancelás tarde, podés perder la clase de tu pack.'
+      : '¿Cancelar la reserva?')) return
+    busy.current = true
     setErrorCode(null)
     setOtherError(null)
     const res = await fetch(`/api/bookings/${bookingId}`, { method: 'DELETE' })
     if (!res.ok) await handleApiError(res)
     await load()
+    busy.current = false
   }
 
   const loadEquipmentSpots = async (sessionId: string): Promise<EquipmentSpot[]> => {

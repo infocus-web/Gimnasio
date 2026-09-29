@@ -6,6 +6,8 @@ export interface ActionState {
   fieldErrors?: Record<string, string>
   /** Contraseña generada: se muestra UNA vez al admin y no se guarda en ningún lado */
   secret?: string
+  /** Lo que se envió, para no vaciar el formulario cuando hay un error */
+  values?: Record<string, string | string[]>
 }
 
 export const ERRORS: Record<string, string> = {

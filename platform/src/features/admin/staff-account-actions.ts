@@ -18,6 +18,25 @@ function generatePassword() {
   return `${block()}-${block()}-${block()}`
 }
 
+/**
+ * ¿La cuenta de acceso es SOLO del equipo de este gimnasio?
+ * Se cuenta con el cliente admin (sin RLS): si además es socio (acá o en otro
+ * gimnasio) o staff de otro gimnasio, NO se le cambia la contraseña, ni se la
+ * bloquea ni se la borra: eso afectaría su acceso a otros lugares.
+ */
+async function isExclusiveStaffAccount(userId: string, orgId: string) {
+  const admin = createAdminClient()
+  const [m, s] = await Promise.all([
+    admin.from('members').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    admin.from('staff').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('org_id', orgId),
+  ])
+  if (m.error || s.error) return false
+  return (m.count ?? 0) === 0 && (s.count ?? 0) === 0
+}
+
+const SHARED_ACCOUNT =
+  'Esta persona usa la misma cuenta como socio o en otro gimnasio: por seguridad no se puede cambiar desde acá. Pedile que use "Olvidé mi contraseña" en /equipo.'
+
 /** Quién puede tocar a quién: nadie toca al dueño ni a sí mismo; a los admins solo el dueño */
 async function loadTarget(slug: string, staffId: string) {
   const ctx = await getAdminContext(slug)
@@ -108,6 +127,7 @@ export async function resetStaffPassword(slug: string, staffId: string, _prev: A
   const t = await loadTarget(slug, staffId)
   if ('error' in t) return { message: t.error }
   if (!process.env.SUPABASE_SECRET_KEY) return { message: NO_KEY }
+  if (!(await isExclusiveStaffAccount(t.target.user_id, t.ctx.org.id))) return { message: SHARED_ACCOUNT }
   const password = generatePassword()
   const admin = createAdminClient()
   const { error } = await admin.auth.admin.updateUserById(t.target.user_id, {
@@ -132,17 +152,16 @@ export async function setStaffBlocked(slug: string, staffId: string, blocked: bo
   const { error } = await supabase.from('staff').update({ active: !blocked }).eq('id', staffId).eq('org_id', ctx.org.id)
   if (error) return { message: dbMessage(error) }
 
-  // Si además NO es socio, se bloquea la cuenta entera (no puede ni loguearse).
-  // Si es socio, conserva su app de socio y pierde solo el panel.
+  // Si la cuenta es solo de este equipo, se bloquea entera (no puede ni loguearse).
+  // Si también es socio u otro gimnasio, pierde solo el panel de este gimnasio.
   let extra = ''
-  const { count } = await supabase.from('members').select('id', { count: 'exact', head: true }).eq('user_id', target.user_id)
-  if (process.env.SUPABASE_SECRET_KEY && !count) {
+  if (process.env.SUPABASE_SECRET_KEY && (await isExclusiveStaffAccount(target.user_id, ctx.org.id))) {
     const admin = createAdminClient()
     const r = await admin.auth.admin.updateUserById(target.user_id, { ban_duration: blocked ? '876000h' : 'none' })
     if (r.error) console.error('[staff] ban', r.error)
     else extra = blocked ? ' La cuenta quedó bloqueada: no puede iniciar sesión.' : ' La cuenta vuelve a poder iniciar sesión.'
-  } else if (count) {
-    extra = blocked ? ' Como también es socio, conserva su app de socio.' : ''
+  } else if (blocked) {
+    extra = ' Pierde el acceso al panel (su cuenta sigue sirviendo como socio u otro gimnasio).'
   }
 
   revalidatePath(`/${slug}/admin/equipo`)
@@ -170,18 +189,17 @@ export async function deleteStaff(slug: string, staffId: string, _prev: ActionSt
     return { message: dbMessage(error) }
   }
 
-  // Si no es socio ni staff de otro gimnasio, se borra también la cuenta de acceso
+  // Si la cuenta era solo de este equipo, se borra también el acceso
   let extra = ''
-  const [{ count: asMember }, { count: asStaff }] = await Promise.all([
-    supabase.from('members').select('id', { count: 'exact', head: true }).eq('user_id', target.user_id),
-    supabase.from('staff').select('id', { count: 'exact', head: true }).eq('user_id', target.user_id),
-  ])
-  if (process.env.SUPABASE_SECRET_KEY && !asMember && !asStaff) {
+  if (process.env.SUPABASE_SECRET_KEY && (await isExclusiveStaffAccount(target.user_id, ctx.org.id))) {
     const admin = createAdminClient()
-    const r = await admin.auth.admin.deleteUser(target.user_id)
-    if (!r.error) extra = ' También se borró su cuenta de acceso.'
-  } else if (asMember) {
-    extra = ' Conserva su cuenta porque también es socio.'
+    const { count } = await admin.from('staff').select('id', { count: 'exact', head: true }).eq('user_id', target.user_id)
+    if (!count) {
+      const r = await admin.auth.admin.deleteUser(target.user_id)
+      if (!r.error) extra = ' También se borró su cuenta de acceso.'
+    }
+  } else {
+    extra = ' Conserva su cuenta porque la usa como socio u en otro gimnasio.'
   }
 
   revalidatePath(`/${slug}/admin/equipo`)

@@ -31,10 +31,12 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
     exercises[0]?.id || 'ex_squat'
   );
 
+  // La rutina carga después del primer render: si la selección no existe, usar el primer ejercicio
   const selectedExercise = exercises.find((e) => e.id === selectedExerciseId) || exercises[0];
+  const effectiveId = selectedExercise?.id ?? selectedExerciseId;
 
   // Filtrar series registradas para el ejercicio seleccionado
-  const exerciseSets = loggedSets.filter((s) => s.exerciseId === selectedExerciseId);
+  const exerciseSets = loggedSets.filter((s) => s.exerciseId === effectiveId);
 
   // Calcular 1RM estimado con fórmula de Epley: peso * (1 + reps / 30)
   const calculate1RM = (weight: number, reps: number) => {
@@ -56,9 +58,8 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
   if (best1RM === 0 && selectedExercise?.targetWeightKg) {
     const baseReps = parseInt(selectedExercise.targetReps, 10) || 8;
     best1RM = calculate1RM(selectedExercise.targetWeightKg, baseReps);
-  } else if (best1RM === 0) {
-    best1RM = 80; // fallback base
   }
+  // Sin series ni peso sugerido: no se inventa un 1RM (se muestra "—")
 
   const repBreakdown = [
     { label: '1RM (Fuerza Absoluta)', pct: 100, reps: 1, weight: Math.round(best1RM * 1.0) },
@@ -70,12 +71,18 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
   ];
 
   // Puntos del gráfico de evolución
-  const chartData = exerciseSets.map((s, idx) => ({
-    setLabel: `Serie ${s.setNumber || idx + 1}`,
-    weightKg: s.weightKg,
-    reps: s.reps,
-    estimated1RM: calculate1RM(s.weightKg, s.reps),
-  }));
+  // Un punto por día de entrenamiento: la mejor serie de ese día, en orden de fecha
+  const byDay = new Map<string, { weightKg: number; reps: number; estimated1RM: number }>();
+  for (const s of exerciseSets) {
+    if (!s.weightKg) continue;
+    const day = (s.performedAt ?? '').slice(0, 10) || 'sin fecha';
+    const rm = calculate1RM(s.weightKg, s.reps);
+    const cur = byDay.get(day);
+    if (!cur || rm > cur.estimated1RM) byDay.set(day, { weightKg: s.weightKg, reps: s.reps, estimated1RM: rm });
+  }
+  const chartData = [...byDay.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([day, v]) => ({ setLabel: day.length === 10 ? `${day.slice(8, 10)}/${day.slice(5, 7)}` : day, ...v }));
 
   if (isLoading) {
     return (
@@ -107,7 +114,7 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
           <div>
             <span className="text-[10px] font-mono text-zinc-400 block uppercase">1RM Estimado (Epley)</span>
             <div className="text-xl sm:text-2xl font-bold font-tech text-[#edcc36] tabular-nums">
-              {best1RM} <span className="text-xs text-zinc-400">kg</span>
+              {best1RM ? <>{best1RM} <span className="text-xs text-zinc-400">kg</span></> : '—'}
             </div>
           </div>
         </div>
@@ -124,7 +131,7 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
               setSelectedExerciseId(ex.id);
             }}
             className={`px-3.5 py-2 rounded-xl transition-all border whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
-              selectedExerciseId === ex.id
+              effectiveId === ex.id
                 ? 'bg-[#edcc36] text-black font-bold border-[#edcc36] shadow-[0_0_12px_rgba(237,204,54,0.3)]'
                 : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:text-white'
             }`}
@@ -142,7 +149,7 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
               Curva de Cargas & 1RM Estimado
             </span>
             <span className="text-[11px] font-mono text-[#edcc36] font-bold">
-              {chartData.length} series registradas
+              {chartData.length} {chartData.length === 1 ? 'día' : 'días'} registrados
             </span>
           </div>
 
@@ -210,7 +217,7 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
             <Target className="w-3.5 h-3.5 text-[#edcc36]" />
             <span>Pesos Sugeridos por Zona de Esfuerzo</span>
           </span>
-          <span className="text-[10px] font-mono text-zinc-400">Base 1RM: {best1RM} kg</span>
+          <span className="text-[10px] font-mono text-zinc-400">{best1RM ? `Base 1RM: ${best1RM} kg` : 'Registrá series con peso para calcularlo'}</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono">
@@ -230,7 +237,7 @@ export const StrengthProgress: React.FC<StrengthProgressProps> = ({
                 </span>
               </div>
               <div className="text-xl font-bold font-tech text-white tabular-nums">
-                {row.weight} <span className="text-xs font-normal text-zinc-400">kg</span>
+                {row.weight ? <>{row.weight} <span className="text-xs font-normal text-zinc-400">kg</span></> : '—'}
               </div>
               <span className="text-[9px] text-zinc-400 block truncate mt-0.5">{row.label}</span>
             </div>

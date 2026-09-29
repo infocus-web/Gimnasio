@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import { UserPlus, KeyRound, Copy, Lock, Unlock, Trash2 } from 'lucide-react'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 const ROLE_OPTIONS = [
   { value: 'trainer', label: 'Profesor', hint: 'Ve sus clases y sus alumnos, asigna rutinas.' },
@@ -18,7 +18,7 @@ export function InviteStaffForm({
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   allowAdmin: boolean
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -61,7 +61,7 @@ export function StaffRowForm({
   role: string
   allowAdmin: boolean
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-2">
       <label className="sr-only" htmlFor={`role-${role}`}>
@@ -118,7 +118,7 @@ export function CreateStaffAccountForm({
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   allowAdmin: boolean
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -166,9 +166,9 @@ export function StaffAccountActions({
   blockAction: (prev: ActionState) => Promise<ActionState>
   deleteAction: (prev: ActionState, form: FormData) => Promise<ActionState>
 }) {
-  const [resetState, reset] = useActionState(resetAction, {})
-  const [blockState, block] = useActionState(blockAction, {})
-  const [delState, del] = useActionState(deleteAction, {})
+  const [resetState, reset] = useActionForm(resetAction, {})
+  const [blockState, block] = useActionForm(blockAction, {})
+  const [delState, del] = useActionForm(deleteAction, {})
   const shown = delState.message ? delState : blockState.message ? blockState : resetState
   return (
     <div className="w-full space-y-2">

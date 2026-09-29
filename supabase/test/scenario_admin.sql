@@ -55,8 +55,7 @@ select test.expect_error($q$select public.admin_create_member(
   (select org_id from public.staff limit 1), 'X')$q$, 'FORBIDDEN');
 do $$
 begin
-  if array(select public.my_permissions((select org_id from public.staff where display_name = 'Ana')) order by 1)
-     <> array['checkins.manage'] then
+  if exists (select 1 from public.my_permissions((select org_id from public.staff where display_name = 'Ana'))) then
     raise exception 'permisos del trainer incorrectos';
   end if;
 end $$;

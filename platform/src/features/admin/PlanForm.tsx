@@ -1,8 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 export interface PlanValues {
   name: string
@@ -38,7 +38,7 @@ export function PlanForm({
   values?: PlanValues
   classTypes: { id: string; name: string }[]
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const [kind, setKind] = useState<PlanValues['kind']>(values?.kind ?? 'recurring')
   const err = state.fieldErrors ?? {}
   const v = values

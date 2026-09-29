@@ -49,30 +49,11 @@ export function ReceptionScreen({ orgId, locationId }: { orgId: string; location
     setResult(error ? { found: false, allowed: false, reason: 'QR_EXPIRED_OR_INVALID' } : toResult(data as unknown as RawResult))
   }
 
-  // Búsqueda manual: DNI exacto primero; si no, nombre/apellido con un único resultado.
-  const search = async (term: string) => {
-    const q = term.trim()
-    if (!q) return
+  const [matches, setMatches] = useState<{ id: string; name: string; doc: string | null; plan: string | null }[]>([])
+
+  const checkinMember = async (memberId: string) => {
+    setMatches([])
     setLoading(true)
-    let memberId: string | null = null
-    const byDoc = await supabase.from('members').select('id').eq('org_id', orgId).eq('document_id', q).limit(1).maybeSingle()
-    if (byDoc.data) memberId = byDoc.data.id
-    else {
-      const pattern = `%${q.replace(/[%_]/g, '')}%`
-      const byName = await supabase
-        .from('members')
-        .select('id')
-        .eq('org_id', orgId)
-        .neq('status', 'archived')
-        .or(`first_name.ilike.${pattern},last_name.ilike.${pattern}`)
-        .limit(2)
-      if (byName.data?.length === 1) memberId = byName.data[0]!.id
-    }
-    if (!memberId) {
-      setLoading(false)
-      setResult({ found: false, allowed: false, reason: 'MEMBER_NOT_FOUND' })
-      return
-    }
     const { data, error } = await supabase.rpc('checkin_scan', {
       p_location_id: locationId,
       p_member_id: memberId,
@@ -82,13 +63,71 @@ export function ReceptionScreen({ orgId, locationId }: { orgId: string; location
     setResult(error ? { found: false, allowed: false, reason: 'MEMBER_NOT_FOUND' } : toResult(data as unknown as RawResult))
   }
 
+  // Búsqueda manual: DNI exacto, o nombre y apellido en cualquier orden ("juan perez", "perez").
+  // Con varios resultados se muestra una lista para elegir.
+  const search = async (term: string) => {
+    const q = term.replace(/[,()*%\\:._]/g, ' ').trim()
+    if (!q) return
+    setLoading(true)
+    setMatches([])
+    const doc = q.replace(/\D/g, '')
+    let query = supabase
+      .from('member_directory')
+      .select('id, first_name, last_name, document_id, plan_name')
+      .eq('org_id', orgId)
+      .neq('status', 'archived')
+      .limit(8)
+    if (doc.length >= 6 && doc.length === q.replace(/\s/g, '').length) {
+      query = query.eq('document_id', doc)
+    } else {
+      for (const t of q.split(/\s+/).slice(0, 3)) {
+        query = query.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%`)
+      }
+    }
+    const { data } = await query.order('last_name')
+    const rows = (data ?? []).map((m) => ({
+      id: m.id!,
+      name: `${m.first_name} ${m.last_name}`.trim(),
+      doc: m.document_id,
+      plan: m.plan_name,
+    }))
+    if (rows.length === 1) return checkinMember(rows[0]!.id)
+    setLoading(false)
+    if (rows.length === 0) {
+      setResult({ found: false, allowed: false, reason: 'MEMBER_NOT_FOUND' })
+      return
+    }
+    setMatches(rows)
+  }
+
   return (
-    <ReceptionScanner
-      lastResult={result}
-      onScan={scan}
-      onSearch={search}
-      onClearResult={() => setResult(null)}
-      isLoading={loading}
-    />
+    <div className="space-y-4">
+      <ReceptionScanner
+        lastResult={result}
+        onScan={scan}
+        onSearch={search}
+        onClearResult={() => setResult(null)}
+        isLoading={loading}
+      />
+      {matches.length > 0 && (
+        <section aria-label="Resultados de la búsqueda" className="mx-auto max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+          <h2 className="mb-2 text-sm font-bold text-zinc-300">Hay {matches.length} coincidencias: elegí a quién dar entrada</h2>
+          <ul className="divide-y divide-zinc-900">
+            {matches.map((m) => (
+              <li key={m.id}>
+                <button type="button" onClick={() => checkinMember(m.id)}
+                  className="flex min-h-[52px] w-full items-center justify-between gap-3 px-2 text-left hover:bg-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]">
+                  <span>
+                    <span className="block font-semibold text-white">{m.name}</span>
+                    <span className="text-xs text-zinc-500">{[m.doc && `DNI ${m.doc}`, m.plan].filter(Boolean).join(' · ') || 'Sin plan'}</span>
+                  </span>
+                  <span className="rounded-lg bg-[#edcc36] px-3 py-1.5 text-xs font-bold text-black">Dar entrada</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
   )
 }

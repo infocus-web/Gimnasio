@@ -1,16 +1,15 @@
 'use client'
 
-import { useActionState } from 'react'
 import { Plus } from 'lucide-react'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 type Action = (prev: ActionState, form: FormData) => Promise<ActionState>
 
 export const LEVELS: Record<string, string> = { beginner: 'Principiante', intermediate: 'Intermedio', advanced: 'Avanzado' }
 
 export function TrainerSelectForm({ action, trainers, current }: { action: Action; trainers: { id: string; name: string }[]; current: string | null }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-2">
       <div className="flex gap-2">
@@ -39,7 +38,7 @@ export function ProgramForm({
   values?: { name: string; goal: string | null; level: string | null; description: string | null }
   submitLabel: string
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-3" noValidate>
@@ -73,7 +72,7 @@ export function ProgramForm({
 }
 
 export function AddDayForm({ action }: { action: Action }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-2">
       <label className="sr-only" htmlFor="new-day">Nombre del día</label>
@@ -89,7 +88,7 @@ export function AddDayForm({ action }: { action: Action }) {
 }
 
 export function RenameDayForm({ action, name }: { action: Action; name: string }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="flex items-center gap-2">
       <label className="sr-only" htmlFor={`day-${name}`}>Nombre del día</label>
@@ -107,7 +106,7 @@ export interface ExerciseOpt {
 }
 
 export function AddExerciseForm({ action, exercises }: { action: Action; exercises: ExerciseOpt[] }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   const groups = new Map<string, ExerciseOpt[]>()
   for (const e of exercises) {
@@ -164,7 +163,7 @@ export function AddExerciseForm({ action, exercises }: { action: Action; exercis
 }
 
 export function NewExerciseForm({ action }: { action: Action }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-3" noValidate>
@@ -209,7 +208,7 @@ export function AssignProgramForm({
   current: string | null
   today: string
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-2">
       <div className="grid gap-2 sm:grid-cols-[1fr_160px_auto] sm:items-end">

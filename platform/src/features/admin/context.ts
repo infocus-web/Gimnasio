@@ -13,6 +13,11 @@ export const getAdminContext = cache(async (slug: string) => {
   const ctx = await getStaffContext(slug)
   if (!ctx) return null
   const supabase = await createClient()
+  // Con contraseña temporal no se opera nada hasta cambiarla (no solo una redirección de pantalla)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user?.user_metadata?.must_change_password === true) return null
   const { data } = await supabase.rpc('my_permissions', { p_org: ctx.org.id })
   const permissions = new Set((data ?? []) as Permission[])
   return { ...ctx, permissions, can: (p: Permission) => permissions.has(p) }

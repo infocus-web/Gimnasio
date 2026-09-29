@@ -1,10 +1,10 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CalendarPlus, Search, Trash2, UserPlus, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 type Action = (prev: ActionState, form: FormData) => Promise<ActionState>
 type BareAction = (prev: ActionState) => Promise<ActionState>
@@ -12,7 +12,7 @@ type BareAction = (prev: ActionState) => Promise<ActionState>
 export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 export function GenerateButton({ action }: { action: BareAction }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-2">
       <SubmitButton variant="ghost">
@@ -24,7 +24,7 @@ export function GenerateButton({ action }: { action: BareAction }) {
 }
 
 export function CancelSessionForm({ action }: { action: Action }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   if (state.ok) return <Notice state={state} />
   return (
     <details className="rounded-xl border border-red-500/20 p-3">
@@ -46,10 +46,11 @@ export function CancelSessionForm({ action }: { action: Action }) {
 /** Buscador de socios + reservar en su nombre (recepción) */
 export function BookForMemberForm({ action, orgId }: { action: Action; orgId: string }) {
   const supabase = useMemo(() => createClient(), [])
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const [q, setQ] = useState('')
   const [results, setResults] = useState<{ id: string; name: string; plan: string | null }[]>([])
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null)
+  const [nonce] = useState(() => crypto.randomUUID())
 
   const search = async () => {
     const term = q.replace(/[,()*%\\:]/g, ' ').trim()
@@ -102,6 +103,7 @@ export function BookForMemberForm({ action, orgId }: { action: Action; orgId: st
       {picked && (
         <form action={formAction} className="flex flex-wrap items-center gap-2 rounded-xl border border-[#edcc36]/30 p-3">
           <input type="hidden" name="memberId" value={picked.id} />
+          <input type="hidden" name="nonce" value={nonce} />
           <span className="flex-1 text-sm text-white">{picked.name}</span>
           <button type="button" onClick={() => setPicked(null)} className="text-xs text-zinc-400 hover:text-white">
             Cambiar
@@ -132,7 +134,7 @@ export function SeriesForm({
   rooms: (Opt & { capacity: number })[]
   instructors: Opt[]
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const [typeId, setTypeId] = useState(classTypes[0]?.id ?? '')
   const t = classTypes.find((x) => x.id === typeId)
   const err = state.fieldErrors ?? {}
@@ -213,8 +215,8 @@ export function SeriesRowForm({
   rooms: Opt[]
   instructors: Opt[]
 }) {
-  const [state, formAction] = useActionState(action, {})
-  const [endState, endFormAction] = useActionState(endAction, {})
+  const [state, formAction] = useActionForm(action, {})
+  const [endState, endFormAction] = useActionForm(endAction, {})
   if (endState.ok) return <Notice state={endState} />
   return (
     <div className="space-y-2">
@@ -248,7 +250,7 @@ export function SeriesRowForm({
 }
 
 export function RoomForm({ action, values }: { action: Action; values?: { name: string; capacity: number; active: boolean } }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2" noValidate>
@@ -276,7 +278,7 @@ export function RoomForm({ action, values }: { action: Action; values?: { name: 
 }
 
 export function EquipmentForm({ action }: { action: Action }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2" noValidate>
@@ -316,7 +318,7 @@ export function ClassTypeForm({
   action: Action
   values?: { name: string; description: string | null; color: string; duration: number; capacity: number; equipmentKind: string | null; active: boolean }
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-3" noValidate>

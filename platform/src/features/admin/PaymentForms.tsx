@@ -1,9 +1,9 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
 import { Banknote, Ban } from 'lucide-react'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton } from './ui'
+import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
 export const METHOD_LABELS: Record<string, string> = {
   cash: 'Efectivo',
@@ -20,21 +20,36 @@ export interface PlanOption {
   priceCents: number
 }
 
-export function PaymentForm({
+function PaymentFormInner({
   action,
   plans,
   currentPlanId,
+  onDone,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   plans: PlanOption[]
   currentPlanId: string | null
+  onDone: () => void
 }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   const initial = plans.find((p) => p.id === currentPlanId) ?? plans[0]
   const [planId, setPlanId] = useState(initial?.id ?? '')
   const [renew, setRenew] = useState(true)
   const [amount, setAmount] = useState(initial ? String(initial.priceCents / 100) : '')
   const err = state.fieldErrors ?? {}
+
+  // Cobro registrado: el formulario se cierra para que un segundo toque no cobre dos veces
+  if (state.ok) {
+    return (
+      <div className="space-y-3">
+        <Notice state={state} />
+        <button type="button" onClick={onDone}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60">
+          <Banknote className="h-4 w-4" aria-hidden="true" /> Registrar otro cobro
+        </button>
+      </div>
+    )
+  }
 
   return (
     <form action={formAction} className="space-y-3" noValidate>
@@ -96,7 +111,7 @@ export function PaymentForm({
 }
 
 export function VoidPaymentForm({ action }: { action: (prev: ActionState, form: FormData) => Promise<ActionState> }) {
-  const [state, formAction] = useActionState(action, {})
+  const [state, formAction] = useActionForm(action, {})
   if (state.ok) return <span className="text-xs text-emerald-300">Anulado</span>
   return (
     <details className="group">
@@ -117,4 +132,13 @@ export function VoidPaymentForm({ action }: { action: (prev: ActionState, form: 
       </form>
     </details>
   )
+}
+
+export function PaymentForm(props: {
+  action: (prev: ActionState, form: FormData) => Promise<ActionState>
+  plans: PlanOption[]
+  currentPlanId: string | null
+}) {
+  const [round, setRound] = useState(0)
+  return <PaymentFormInner key={round} {...props} onDone={() => setRound((r) => r + 1)} />
 }
