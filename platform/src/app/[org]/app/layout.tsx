@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 import { Dumbbell } from 'lucide-react'
-import { getMemberContext } from '@/lib/member-context'
+import { getMemberContext, getStaffContext } from '@/lib/member-context'
 import { MemberProvider } from '@/features/member/MemberProvider'
 import { MemberNav } from '@/features/member/MemberNav'
 import { SignOutButton } from '@/features/member/SignOutButton'
@@ -10,6 +12,10 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
   const ctx = await getMemberContext(slug)
 
   if ('error' in ctx) {
+    // El dueño / staff sin ficha de socio va directo a su pantalla.
+    if (ctx.error === 'NOT_A_MEMBER' && (await getStaffContext(slug))) {
+      redirect(`/${slug}/admin/recepcion` as Route)
+    }
     return (
       <main className="grid min-h-dvh place-items-center p-6 text-center">
         <div className="max-w-sm space-y-3">
