@@ -81,3 +81,9 @@ La base se puede probar en un Postgres local con `supabase/test/stub_supabase.sq
   Con un equipo ZKTeco (ej. SpeedFace) se puede sumar un endpoint que reciba sus eventos y llame a
   la función `check_in` de la base, igual que el QR.
 - Reserva de cupos en clases, app instalable (PWA), débito automático mensual con Mercado Pago.
+
+## Plataforma v2 (en desarrollo)
+
+La nueva plataforma multi-gimnasio (Next.js + Supabase) está en `platform/`.
+Arquitectura, modelo de datos y plan de migración: [`platform/ARCHITECTURE.md`](platform/ARCHITECTURE.md).
+Migraciones nuevas: `supabase/migrations/0005` a `0009` (todavía no aplicadas en producción).
