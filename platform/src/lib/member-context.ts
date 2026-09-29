@@ -105,7 +105,7 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
 
 /** Staff activo del gimnasio (para la recepción). */
 export const getStaffContext = cache(async (slug: string) => {
-  const user = await requireUser(`/${slug}/admin/recepcion`)
+  const user = await requireUser(`/${slug}/admin`)
   const org = await getOrg(slug)
   if (!org) return null
   const supabase = await createClient()

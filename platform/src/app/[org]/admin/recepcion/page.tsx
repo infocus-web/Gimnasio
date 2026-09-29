@@ -1,27 +1,20 @@
 import type { Metadata } from 'next'
-import { getStaffContext } from '@/lib/member-context'
+import { getAdminContext } from '@/features/admin/context'
 import { ReceptionScreen } from './ReceptionScreen'
 
 export const metadata: Metadata = { title: 'Recepción' }
 
 export default async function RecepcionPage({ params }: PageProps<'/[org]/admin/recepcion'>) {
   const { org: slug } = await params
-  const ctx = await getStaffContext(slug)
+  const ctx = (await getAdminContext(slug))!
 
-  if (!ctx || !ctx.org.locationId) {
-    return (
-      <main className="grid min-h-dvh place-items-center p-6 text-center">
-        <div className="max-w-sm space-y-2">
-          <h1 className="text-xl font-bold text-white">Acceso solo para el staff</h1>
-          <p className="text-sm text-zinc-400">Ingresá con una cuenta de recepción o administración de este gimnasio.</p>
-        </div>
-      </main>
-    )
+  if (!ctx.can('checkins.manage') || !ctx.org.locationId) {
+    return <p className="text-sm text-zinc-400">Tu rol no tiene acceso a la recepción.</p>
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6">
+    <div className="mx-auto w-full max-w-5xl">
       <ReceptionScreen orgId={ctx.org.id} locationId={ctx.org.locationId} />
-    </main>
+    </div>
   )
 }

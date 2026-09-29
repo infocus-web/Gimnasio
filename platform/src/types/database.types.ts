@@ -187,6 +187,13 @@ export type Database = {
             foreignKeyName: "billing_accounts_payer_member_id_org_id_fkey"
             columns: ["payer_member_id", "org_id"]
             isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_payer_member_id_org_id_fkey"
+            columns: ["payer_member_id", "org_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "org_id"]
           },
@@ -221,6 +228,13 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "body_metrics_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "body_metrics_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -291,6 +305,13 @@ export type Database = {
             columns: ["equipment_id", "org_id"]
             isOneToOne: false
             referencedRelation: "equipment"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
           {
@@ -373,6 +394,13 @@ export type Database = {
             columns: ["location_id", "org_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "checkins_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
           {
@@ -855,6 +883,13 @@ export type Database = {
             foreignKeyName: "member_secrets_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: true
+            referencedRelation: "member_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_secrets_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
@@ -968,6 +1003,13 @@ export type Database = {
           org_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "membership_members_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "membership_members_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -1384,6 +1426,13 @@ export type Database = {
             foreignKeyName: "program_assignments_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
             isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "program_assignments_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
             referencedRelation: "members"
             referencedColumns: ["id", "org_id"]
           },
@@ -1642,6 +1691,47 @@ export type Database = {
           },
         ]
       }
+      staff_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          invited_by: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          org_id: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          org_id?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_permission_overrides: {
         Row: {
           granted: boolean
@@ -1695,6 +1785,13 @@ export type Database = {
           trainer_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "trainer_clients_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "trainer_clients_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -1778,6 +1875,13 @@ export type Database = {
             columns: ["assignment_id", "org_id"]
             isOneToOne: false
             referencedRelation: "program_assignments"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "workout_logs_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
           {
@@ -1888,8 +1992,72 @@ export type Database = {
           },
         ]
       }
+      member_directory: {
+        Row: {
+          billing_account_id: string | null
+          birth_date: string | null
+          created_at: string | null
+          credits_remaining: number | null
+          current_period_end: string | null
+          document_id: string | null
+          email: string | null
+          first_name: string | null
+          has_app: boolean | null
+          id: string | null
+          is_payer: boolean | null
+          last_checkin_at: string | null
+          last_name: string | null
+          medical_notes: string | null
+          membership_id: string | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          org_id: string | null
+          payer_member_id: string | null
+          phone: string | null
+          photo_url: string | null
+          plan_id: string | null
+          plan_name: string | null
+          status: Database["public"]["Enums"]["member_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_billing_account_fk"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      admin_assign_plan: {
+        Args: { p_member: string; p_plan: string; p_start?: string }
+        Returns: string
+      }
+      admin_create_member: {
+        Args: {
+          p_birth_date?: string
+          p_document_id?: string
+          p_email?: string
+          p_first_name: string
+          p_last_name?: string
+          p_org: string
+          p_payer_id?: string
+          p_phone?: string
+          p_plan_id?: string
+          p_start?: string
+        }
+        Returns: string
+      }
       book_class: {
         Args: {
           p_allow_waitlist?: boolean
@@ -1943,6 +2111,11 @@ export type Database = {
         Args: { p_member_id?: string; p_org_id?: string }
         Returns: Json
       }
+      link_existing_user: {
+        Args: { p_email: string; p_org: string }
+        Returns: string
+      }
+      my_permissions: { Args: { p_org: string }; Returns: string[] }
       new_token: { Args: never; Returns: string }
       peak_hours: {
         Args: { p_org_id: string; p_weeks?: number }

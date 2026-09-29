@@ -14,7 +14,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
   if ('error' in ctx) {
     // El dueño / staff sin ficha de socio va directo a su pantalla.
     if (ctx.error === 'NOT_A_MEMBER' && (await getStaffContext(slug))) {
-      redirect(`/${slug}/admin/recepcion` as Route)
+      redirect(`/${slug}/admin` as Route)
     }
     return (
       <main className="grid min-h-dvh place-items-center p-6 text-center">
