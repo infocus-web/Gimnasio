@@ -4,6 +4,8 @@ export interface ActionState {
   ok?: boolean
   message?: string
   fieldErrors?: Record<string, string>
+  /** Contraseña generada: se muestra UNA vez al admin y no se guarda en ningún lado */
+  secret?: string
 }
 
 export const ERRORS: Record<string, string> = {

@@ -223,18 +223,17 @@ export async function updateStaff(slug: string, staffId: string, _prev: ActionSt
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
   const role = String(form.get('role') ?? '')
-  const active = form.get('active') === 'on'
   if (!['admin', 'staff', 'trainer'].includes(role)) return { message: 'Rol inválido.' }
 
   const supabase = await createClient()
   const { error } = await supabase
     .from('staff')
-    .update({ role: role as 'admin' | 'staff' | 'trainer', active })
+    .update({ role: role as 'admin' | 'staff' | 'trainer' })
     .eq('id', staffId)
     .eq('org_id', ctx.org.id)
   if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin/equipo`)
-  return { ok: true, message: 'Cambios guardados.' }
+  return { ok: true, message: 'Rol actualizado.' }
 }
 
 export async function cancelInvitation(slug: string, invitationId: string): Promise<void> {

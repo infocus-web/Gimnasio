@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
-import { Dumbbell, ExternalLink } from 'lucide-react'
+import { Dumbbell, ExternalLink, KeyRound } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
 import { SignOutButton } from '@/features/member/SignOutButton'
@@ -12,14 +12,28 @@ import { createClient } from '@/lib/supabase/server'
 export default async function AdminLayout({ children, params }: LayoutProps<'/[org]/admin'>) {
   const { org: slug } = await params
 
-  // Dueño y administradores: 2FA obligatorio (la base también lo exige: sin AAL2 no tienen permisos)
   const staffCtx = await getStaffContext(slug)
+
+  // Dueño y administradores: 2FA obligatorio (la base también lo exige: sin AAL2 no tienen permisos)
   if (staffCtx && (staffCtx.staff.role === 'owner' || staffCtx.staff.role === 'admin')) {
     const supabase = await createClient()
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
     if (aal?.currentLevel !== 'aal2') {
       const path = (await headers()).get('x-pathname') ?? `/${slug}/admin`
       redirect(`/mfa?next=${encodeURIComponent(path)}` as Route)
+    }
+  }
+
+  // Contraseña temporal (va después del 2FA: con 2FA activo, Supabase pide AAL2 para cambiarla)
+  // (cuenta creada o reseteada por el admin): la tiene que cambiar antes de seguir
+  if (staffCtx) {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (user?.user_metadata?.must_change_password === true) {
+      const path = (await headers()).get('x-pathname') ?? `/${slug}/admin`
+      redirect(`/equipo/clave?next=${encodeURIComponent(path)}` as Route)
     }
   }
 
@@ -76,6 +90,12 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
             className="flex items-center gap-2 px-2 text-xs text-zinc-400 hover:text-white"
           >
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Ver la web pública
+          </Link>
+          <Link
+            href={`/equipo/clave?next=${encodeURIComponent(base)}` as Route}
+            className="flex items-center gap-2 px-2 text-xs text-zinc-400 hover:text-white"
+          >
+            <KeyRound className="h-3.5 w-3.5" aria-hidden="true" /> Cambiar mi contraseña
           </Link>
           <div className="px-2">
             <p className="truncate text-sm font-semibold text-white">{ctx.staff.display_name}</p>

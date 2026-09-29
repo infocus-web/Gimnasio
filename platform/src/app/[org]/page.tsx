@@ -395,8 +395,17 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
         </section>
       </main>
 
-      <footer className="border-t border-white/5 px-4 py-8 text-center text-xs text-zinc-500">
-        © {new Date().getFullYear()} {gym.name}
+      <footer className="border-t border-white/5 px-4 py-8 text-xs text-zinc-500">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 sm:flex-row">
+          <span>© {new Date().getFullYear()} {gym.name}</span>
+          <Link
+            href={`/equipo?next=${encodeURIComponent(`/${gym.slug}/admin`)}` as Route}
+            rel="nofollow"
+            className="rounded-md px-2 py-1 text-zinc-600 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          >
+            Acceso equipo
+          </Link>
+        </div>
       </footer>
     </div>
   )

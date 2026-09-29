@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
-import { Clock, X } from 'lucide-react'
+import { Clock, X, Lock } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { cancelInvitation, inviteStaff, resendInvitation, updateStaff } from '@/features/admin/actions'
+import { createStaffAccount, deleteStaff, resetStaffPassword, setStaffBlocked } from '@/features/admin/staff-account-actions'
 import { fmtDate } from '@/features/admin/format'
-import { InviteStaffForm, StaffRowForm } from '@/features/admin/TeamForms'
+import { CreateStaffAccountForm, InviteStaffForm, StaffAccountActions, StaffRowForm } from '@/features/admin/TeamForms'
 import { InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
 
@@ -32,13 +33,23 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
   ])
 
   const isOwner = ctx.staff.role === 'owner'
+  const keyMissing = !process.env.SUPABASE_SECRET_KEY
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-extrabold text-white">Equipo</h1>
-        <p className="text-sm text-zinc-400">Profesores, recepción y administradores del gimnasio.</p>
+        <p className="text-sm text-zinc-400">
+          Profesores, recepción y administradores. Entran por <strong className="text-zinc-200">/equipo</strong> (link “Acceso equipo” al pie de la web).
+        </p>
       </div>
+
+      {keyMissing && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+          Falta cargar <code>SUPABASE_SECRET_KEY</code> en Vercel: hasta entonces no se pueden crear cuentas, cambiar contraseñas,
+          bloquear accesos ni enviar invitaciones.
+        </p>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-5">
@@ -47,22 +58,33 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
               {(staff ?? []).map((s) => {
                 const locked = s.role === 'owner' || s.id === ctx.staff.id || (s.role === 'admin' && !isOwner)
                 return (
-                  <li key={s.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className={`truncate font-semibold ${s.active ? 'text-white' : 'text-zinc-500 line-through'}`}>
-                        {s.display_name}
-                        {s.id === ctx.staff.id && <span className="ml-2 text-xs font-normal text-zinc-500">(vos)</span>}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {ROLE_LABELS[s.role] ?? s.role} · desde {fmtDate(s.created_at)}
-                      </p>
+                  <li key={s.id} className="space-y-3 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={`flex items-center gap-2 truncate font-semibold ${s.active ? 'text-white' : 'text-zinc-500'}`}>
+                          {s.display_name}
+                          {s.id === ctx.staff.id && <span className="text-xs font-normal text-zinc-500">(vos)</span>}
+                          {!s.active && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-red-300">
+                              <Lock className="h-3 w-3" aria-hidden="true" /> Bloqueado
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {ROLE_LABELS[s.role] ?? s.role} · desde {fmtDate(s.created_at)}
+                        </p>
+                      </div>
+                      {!locked && s.active && (
+                        <StaffRowForm action={updateStaff.bind(null, slug, s.id)} role={s.role} allowAdmin={isOwner} />
+                      )}
                     </div>
                     {!locked && (
-                      <StaffRowForm
-                        action={updateStaff.bind(null, slug, s.id)}
-                        role={s.role}
+                      <StaffAccountActions
+                        name={s.display_name}
                         active={s.active}
-                        allowAdmin={isOwner}
+                        resetAction={resetStaffPassword.bind(null, slug, s.id)}
+                        blockAction={setStaffBlocked.bind(null, slug, s.id, s.active)}
+                        deleteAction={deleteStaff.bind(null, slug, s.id)}
                       />
                     )}
                   </li>
@@ -101,13 +123,18 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
           )}
         </div>
 
-        <Card title="Invitar al equipo">
-          <InviteStaffForm action={inviteStaff.bind(null, slug)} allowAdmin={isOwner} />
-          <p className="mt-4 text-xs text-zinc-500">
-            Le llega un email para entrar. Si esa persona ya tiene cuenta (por ejemplo, es socia), queda habilitada al
-            instante.
-          </p>
-        </Card>
+        <div className="space-y-5">
+          <Card title="Crear cuenta con contraseña">
+            <CreateStaffAccountForm action={createStaffAccount.bind(null, slug)} allowAdmin={isOwner} />
+          </Card>
+          <details className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">
+            <summary className="cursor-pointer text-sm font-bold uppercase tracking-wide text-zinc-300">O invitar por email</summary>
+            <div className="mt-4">
+              <InviteStaffForm action={inviteStaff.bind(null, slug)} allowAdmin={isOwner} />
+              <p className="mt-3 text-xs text-zinc-500">Le llega un mail para entrar sin contraseña.</p>
+            </div>
+          </details>
+        </div>
       </div>
     </div>
   )
