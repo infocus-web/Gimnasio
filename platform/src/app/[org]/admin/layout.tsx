@@ -52,11 +52,21 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
   }
 
   const base = `/${slug}/admin`
+  let pendingRequests = 0
+  if (ctx.can('staff.manage')) {
+    const supabase = await createClient()
+    const { count } = await supabase
+      .from('staff_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', ctx.org.id)
+      .eq('status', 'pending')
+    pendingRequests = count ?? 0
+  }
   const items: NavItem[] = [
     { href: base, label: 'Inicio', icon: 'home' },
     ...(ctx.can('members.read') ? [{ href: `${base}/socios`, label: 'Socios', icon: 'users' } as const] : []),
     ...(ctx.can('checkins.manage') ? [{ href: `${base}/recepcion`, label: 'Recepción', icon: 'scan' } as const] : []),
-    ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: 'Equipo', icon: 'team' } as const] : []),
+    ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: pendingRequests ? `Equipo (${pendingRequests})` : 'Equipo', icon: 'team' } as const] : []),
     ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Pagos', icon: 'billing' } as const] : []),
     ...(ctx.can('schedule.manage') || ctx.can('bookings.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar' } as const] : []),
     ...(ctx.staff.role === 'trainer' ? [{ href: `${base}/mis-clases`, label: 'Mis clases', icon: 'mine' } as const] : []),

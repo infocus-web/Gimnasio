@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 import { Clock, X, Lock } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
@@ -8,6 +9,9 @@ import { fmtDate } from '@/features/admin/format'
 import { CreateStaffAccountForm, InviteStaffForm, StaffAccountActions, StaffRowForm } from '@/features/admin/TeamForms'
 import { InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
+import { approveStaffRequest, rejectStaffRequest } from '@/features/admin/padron-actions'
+import { RequestCard, ShareLink, type RequestRow } from '@/features/admin/PadronReview'
+import { fmtDateTime } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Equipo' }
 
@@ -17,7 +21,7 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
   if (!ctx.can('staff.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador gestiona el equipo.</p>
 
   const supabase = await createClient()
-  const [{ data: staff }, { data: invites }] = await Promise.all([
+  const [{ data: staff }, { data: invites }, { data: requests }] = await Promise.all([
     supabase
       .from('staff')
       .select('id, display_name, role, active, user_id, created_at')
@@ -30,7 +34,15 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
       .eq('org_id', ctx.org.id)
       .is('accepted_at', null)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('staff_requests')
+      .select('id, first_name, last_name, document_id, phone, email, requested_role, message, created_at')
+      .eq('org_id', ctx.org.id)
+      .eq('status', 'pending')
+      .order('created_at'),
   ])
+  const h = await headers()
+  const padronUrl = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}/${slug}/padron`
 
   const isOwner = ctx.staff.role === 'owner'
   const keyMissing = !process.env.SUPABASE_SECRET_KEY
@@ -50,6 +62,29 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
           bloquear accesos ni enviar invitaciones.
         </p>
       )}
+
+      <Card title={`Padrón del equipo${requests?.length ? ` · ${requests.length} para aprobar` : ''}`}>
+        <p className="mb-3 text-sm text-zinc-400">
+          Compartí este link en el grupo de profes: cada uno completa sus datos y vos lo aprobás acá. No se crea ninguna cuenta hasta que aprobás.
+        </p>
+        <ShareLink url={padronUrl} />
+        {requests && requests.length > 0 ? (
+          <ul className="mt-4 divide-y divide-zinc-900 border-t border-zinc-900">
+            {requests.map((r) => (
+              <RequestCard
+                key={r.id}
+                r={r as RequestRow}
+                allowAdmin={isOwner}
+                approve={approveStaffRequest.bind(null, slug, r.id)}
+                reject={rejectStaffRequest.bind(null, slug, r.id)}
+                when={fmtDateTime(r.created_at)}
+              />
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-3 text-xs text-zinc-500">No hay solicitudes pendientes.</p>
+        )}
+      </Card>
 
       <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-5">

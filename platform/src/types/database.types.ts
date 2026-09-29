@@ -1719,8 +1719,10 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string
+          document_id: string | null
           id: string
           org_id: string
+          phone: string | null
           photo_url: string | null
           role: Database["public"]["Enums"]["staff_role"]
           user_id: string
@@ -1730,8 +1732,10 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name: string
+          document_id?: string | null
           id?: string
           org_id: string
+          phone?: string | null
           photo_url?: string | null
           role: Database["public"]["Enums"]["staff_role"]
           user_id: string
@@ -1741,8 +1745,10 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string
+          document_id?: string | null
           id?: string
           org_id?: string
+          phone?: string | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
           user_id?: string
@@ -1762,30 +1768,36 @@ export type Database = {
           accepted_at: string | null
           created_at: string
           display_name: string
+          document_id: string | null
           email: string
           id: string
           invited_by: string | null
           org_id: string
+          phone: string | null
           role: Database["public"]["Enums"]["staff_role"]
         }
         Insert: {
           accepted_at?: string | null
           created_at?: string
           display_name: string
+          document_id?: string | null
           email: string
           id?: string
           invited_by?: string | null
           org_id: string
+          phone?: string | null
           role: Database["public"]["Enums"]["staff_role"]
         }
         Update: {
           accepted_at?: string | null
           created_at?: string
           display_name?: string
+          document_id?: string | null
           email?: string
           id?: string
           invited_by?: string | null
           org_id?: string
+          phone?: string | null
           role?: Database["public"]["Enums"]["staff_role"]
         }
         Relationships: [
@@ -1827,6 +1839,62 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_requests: {
+        Row: {
+          created_at: string
+          document_id: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          message: string | null
+          org_id: string
+          phone: string
+          requested_role: Database["public"]["Enums"]["staff_role"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          message?: string | null
+          org_id: string
+          phone: string
+          requested_role: Database["public"]["Enums"]["staff_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          message?: string | null
+          org_id?: string
+          phone?: string
+          requested_role?: Database["public"]["Enums"]["staff_role"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2360,6 +2428,19 @@ export type Database = {
           mine: boolean
           taken: boolean
         }[]
+      }
+      submit_staff_request: {
+        Args: {
+          p_document_id: string
+          p_email: string
+          p_first_name: string
+          p_last_name: string
+          p_message?: string
+          p_phone: string
+          p_role: string
+          p_slug: string
+        }
+        Returns: string
       }
       today_ar: { Args: never; Returns: string }
       void_payment: {
