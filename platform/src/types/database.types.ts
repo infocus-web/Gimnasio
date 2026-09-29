@@ -1153,6 +1153,7 @@ export type Database = {
           late_cancel_minutes: number
           name: string
           opening_hours: Json
+          public_profile: Json
           qr_step_seconds: number
           slug: string
           timezone: string
@@ -1170,6 +1171,7 @@ export type Database = {
           late_cancel_minutes?: number
           name: string
           opening_hours?: Json
+          public_profile?: Json
           qr_step_seconds?: number
           slug: string
           timezone?: string
@@ -1187,6 +1189,7 @@ export type Database = {
           late_cancel_minutes?: number
           name?: string
           opening_hours?: Json
+          public_profile?: Json
           qr_step_seconds?: number
           slug?: string
           timezone?: string
@@ -1921,6 +1924,7 @@ export type Database = {
           late_cancel_minutes: number
           name: string
           opening_hours: Json
+          public_profile: Json
           qr_step_seconds: number
           slug: string
           timezone: string
@@ -1948,6 +1952,7 @@ export type Database = {
           weekday: number
         }[]
       }
+      public_gym_profile: { Args: { p_slug: string }; Returns: Json }
       session_equipment_map: {
         Args: { p_session_id: string }
         Returns: {
