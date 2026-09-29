@@ -11,6 +11,8 @@ import { NextResponse, type NextRequest } from 'next/server'
  * La autorización real NO vive acá: la hacen RLS y los layouts de cada panel.
  */
 export async function proxy(request: NextRequest) {
+  // Ruta actual para los layouts (ej. volver a la misma pantalla después del 2FA)
+  request.headers.set('x-pathname', request.nextUrl.pathname + request.nextUrl.search)
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(

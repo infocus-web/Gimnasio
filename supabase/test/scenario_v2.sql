@@ -10,7 +10,7 @@ create schema if not exists test;
 grant usage on schema test to authenticated;
 
 create or replace function test.login(p_uid uuid) returns void language sql as $$
-  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, false)
+  select set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated', 'aal', 'aal2')::text, false)
 $$;
 create or replace function test.expect_error(p_sql text, p_code text) returns void
 language plpgsql as $$

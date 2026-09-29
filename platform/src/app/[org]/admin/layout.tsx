@@ -1,12 +1,28 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import type { Route } from 'next'
 import { Dumbbell, ExternalLink } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
 import { SignOutButton } from '@/features/member/SignOutButton'
+import { getStaffContext } from '@/lib/member-context'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function AdminLayout({ children, params }: LayoutProps<'/[org]/admin'>) {
   const { org: slug } = await params
+
+  // Dueño y administradores: 2FA obligatorio (la base también lo exige: sin AAL2 no tienen permisos)
+  const staffCtx = await getStaffContext(slug)
+  if (staffCtx && (staffCtx.staff.role === 'owner' || staffCtx.staff.role === 'admin')) {
+    const supabase = await createClient()
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (aal?.currentLevel !== 'aal2') {
+      const path = (await headers()).get('x-pathname') ?? `/${slug}/admin`
+      redirect(`/mfa?next=${encodeURIComponent(path)}` as Route)
+    }
+  }
+
   const ctx = await getAdminContext(slug)
 
   if (!ctx) {
@@ -27,8 +43,8 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
     ...(ctx.can('members.read') ? [{ href: `${base}/socios`, label: 'Socios', icon: 'users' } as const] : []),
     ...(ctx.can('checkins.manage') ? [{ href: `${base}/recepcion`, label: 'Recepción', icon: 'scan' } as const] : []),
     ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: 'Equipo', icon: 'team' } as const] : []),
-    ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Planes y pagos', icon: 'billing', soon: true } as const] : []),
-    ...(ctx.can('schedule.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar', soon: true } as const] : []),
+    ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Pagos', icon: 'billing' } as const] : []),
+    ...(ctx.can('schedule.manage') || ctx.can('bookings.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar' } as const] : []),
     ...(ctx.can('org.manage') ? [{ href: `${base}/web`, label: 'Web', icon: 'web', soon: true } as const] : []),
   ]
 

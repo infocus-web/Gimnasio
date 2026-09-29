@@ -5,6 +5,8 @@ import { ArrowLeft, Smartphone, UserPlus, Crown, Info } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { assignPlan, inviteMemberToApp, updateMember } from '@/features/admin/actions'
+import { recordPayment } from '@/features/admin/billing-actions'
+import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
 import { fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 import { MemberForm } from '@/features/admin/MemberForm'
 import { AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
@@ -29,7 +31,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
     .maybeSingle()
   if (!m) notFound()
 
-  const [family, checkins, plans] = await Promise.all([
+  const [family, checkins, plans, payments] = await Promise.all([
     m.billing_account_id
       ? supabase
           .from('member_directory')
@@ -52,6 +54,14 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
       .eq('active', true)
       .order('sort')
       .order('price_cents'),
+    m.billing_account_id && ctx.can('billing.read')
+      ? supabase
+          .from('payment_ledger')
+          .select('id, paid_at, amount_cents, currency, provider, status, plan_name, note')
+          .eq('billing_account_id', m.billing_account_id)
+          .order('paid_at', { ascending: false })
+          .limit(12)
+      : Promise.resolve({ data: [] as { id: string | null; paid_at: string | null; amount_cents: number | null; currency: string | null; provider: string | null; status: string | null; plan_name: string | null; note: string | null }[] }),
   ])
 
   const st = PLAN_STATE_UI[planState(m as { membership_status: string | null; current_period_end: string | null; status: string })]
@@ -140,6 +150,44 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
               </p>
             ) : null}
           </Card>
+          {canBill && (
+            <div id="cobrar" className="scroll-mt-24">
+              <Card title="Registrar cobro">
+                {m.is_payer || !m.billing_account_id ? null : (
+                  <p className="mb-3 text-xs text-zinc-500">El cobro se imputa a la cuenta del titular del grupo familiar.</p>
+                )}
+                <PaymentForm
+                  action={recordPayment.bind(null, slug, memberId)}
+                  plans={(plans.data ?? []).map((p) => ({ id: p.id, label: `${p.name} · ${formatMoney(p.price_cents, p.currency)}`, priceCents: p.price_cents }))}
+                  currentPlanId={m.plan_id}
+                />
+              </Card>
+            </div>
+          )}
+
+          {ctx.can('billing.read') && (
+            <Card title="Pagos">
+              {payments.data?.length ? (
+                <ul className="divide-y divide-zinc-900 text-sm">
+                  {payments.data.map((p) => (
+                    <li key={p.id} className={`flex items-center justify-between gap-3 py-2 ${p.status === 'succeeded' ? '' : 'opacity-50'}`}>
+                      <span className="min-w-0">
+                        <span className="tabular-nums text-zinc-200">{fmtDate(p.paid_at)}</span>
+                        <span className="block truncate text-xs text-zinc-500">
+                          {[p.plan_name, METHOD_LABELS[p.provider ?? ''] ?? p.provider, p.status !== 'succeeded' && 'anulado', p.note].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                      <span className={`tabular-nums font-semibold ${p.status === 'succeeded' ? 'text-white' : 'line-through text-zinc-500'}`}>
+                        {formatMoney(Number(p.amount_cents), p.currency ?? 'ARS')}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-zinc-500">Todavía no hay pagos registrados.</p>
+              )}
+            </Card>
+          )}
         </div>
 
         <div className="space-y-5">

@@ -390,6 +390,13 @@ export type Database = {
             referencedColumns: ["id", "org_id"]
           },
           {
+            foreignKeyName: "checkins_booking_id_org_id_fkey"
+            columns: ["booking_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "session_roster"
+            referencedColumns: ["booking_id", "org_id"]
+          },
+          {
             foreignKeyName: "checkins_location_id_org_id_fkey"
             columns: ["location_id", "org_id"]
             isOneToOne: false
@@ -893,6 +900,13 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "member_secrets_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "payment_ledger"
+            referencedColumns: ["payer_member_id"]
+          },
         ]
       }
       members: {
@@ -1248,6 +1262,7 @@ export type Database = {
           failure_reason: string | null
           id: string
           invoice_id: string | null
+          note: string | null
           org_id: string
           paid_at: string | null
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -1264,6 +1279,7 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           invoice_id?: string | null
+          note?: string | null
           org_id: string
           paid_at?: string | null
           provider: Database["public"]["Enums"]["payment_provider"]
@@ -1280,6 +1296,7 @@ export type Database = {
           failure_reason?: string | null
           id?: string
           invoice_id?: string | null
+          note?: string | null
           org_id?: string
           paid_at?: string | null
           provider?: Database["public"]["Enums"]["payment_provider"]
@@ -2037,6 +2054,87 @@ export type Database = {
           },
         ]
       }
+      payment_ledger: {
+        Row: {
+          amount_cents: number | null
+          billing_account_id: string | null
+          created_at: string | null
+          currency: string | null
+          id: string | null
+          note: string | null
+          org_id: string | null
+          paid_at: string | null
+          payer_member_id: string | null
+          payer_name: string | null
+          period_end: string | null
+          plan_name: string | null
+          provider: Database["public"]["Enums"]["payment_provider"] | null
+          recorded_by_name: string | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_billing_account_id_org_id_fkey"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_roster: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          equipment_label: string | null
+          medical_notes: string | null
+          member_id: string | null
+          member_name: string | null
+          org_id: string | null
+          phone: string | null
+          session_id: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+          waitlist_position: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_session_id_org_id_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_session_id_org_id_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions_availability"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_assign_plan: {
@@ -2058,6 +2156,7 @@ export type Database = {
         }
         Returns: string
       }
+      apply_series_to_future: { Args: { p_series: string }; Returns: number }
       book_class: {
         Args: {
           p_allow_waitlist?: boolean
@@ -2069,6 +2168,10 @@ export type Database = {
         Returns: Json
       }
       cancel_booking: { Args: { p_booking_id: string }; Returns: Json }
+      cancel_session: {
+        Args: { p_reason?: string; p_session: string }
+        Returns: number
+      }
       checkin_scan: {
         Args: {
           p_location_id: string
@@ -2106,7 +2209,12 @@ export type Database = {
         }
       }
       current_occupancy: { Args: { p_org_id: string }; Returns: Json }
+      end_series: { Args: { p_series: string }; Returns: Json }
       enqueue_inactivity_events: { Args: never; Returns: number }
+      generate_sessions: {
+        Args: { p_org?: string; p_weeks?: number }
+        Returns: Json
+      }
       get_checkin_token: {
         Args: { p_member_id?: string; p_org_id?: string }
         Returns: Json
@@ -2116,6 +2224,7 @@ export type Database = {
         Returns: string
       }
       my_permissions: { Args: { p_org: string }; Returns: string[] }
+      my_staff_role: { Args: { p_org: string }; Returns: string }
       new_token: { Args: never; Returns: string }
       peak_hours: {
         Args: { p_org_id: string; p_weeks?: number }
@@ -2126,6 +2235,17 @@ export type Database = {
         }[]
       }
       public_gym_profile: { Args: { p_slug: string }; Returns: Json }
+      record_payment: {
+        Args: {
+          p_amount_cents: number
+          p_member: string
+          p_method: Database["public"]["Enums"]["payment_provider"]
+          p_note?: string
+          p_plan?: string
+          p_renew?: boolean
+        }
+        Returns: Json
+      }
       session_equipment_map: {
         Args: { p_session_id: string }
         Returns: {
@@ -2138,6 +2258,10 @@ export type Database = {
         }[]
       }
       today_ar: { Args: never; Returns: string }
+      void_payment: {
+        Args: { p_payment: string; p_reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       booking_status:

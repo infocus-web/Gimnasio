@@ -9,33 +9,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminContext } from './context'
 
-export interface ActionState {
-  ok?: boolean
-  message?: string
-  fieldErrors?: Record<string, string>
-}
+import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
 
-const ERRORS: Record<string, string> = {
-  FORBIDDEN: 'No tenés permiso para esta acción.',
-  NAME_REQUIRED: 'El nombre es obligatorio.',
-  DOCUMENT_TAKEN: 'Ya hay un socio con ese DNI.',
-  FAMILY_LIMIT_REACHED: 'El plan del grupo familiar ya está completo.',
-  PAYER_HAS_NO_ACCOUNT: 'El titular elegido no tiene cuenta familiar.',
-  NOT_PAYER: 'El plan se asigna al titular del grupo familiar.',
-  PLAN_NOT_FOUND: 'Ese plan no existe o está desactivado.',
-  MEMBER_NOT_FOUND: 'No encontramos al socio.',
-  ONLY_OWNER_CAN_MANAGE_ADMINS: 'Solo el dueño puede invitar o modificar administradores.',
-  CANNOT_MODIFY_OWN_ROLE: 'No podés cambiar tu propio rol ni darte de baja.',
-}
-
-function dbMessage(error: { message: string; code?: string; hint?: string | null }) {
-  const code = error.message.trim()
-  if (ERRORS[code]) return error.hint || ERRORS[code]
-  if (error.code === '23505') return 'Ese dato ya está cargado en otra ficha.'
-  if (error.code === '42501' || /row-level security/i.test(error.message)) return ERRORS.FORBIDDEN
-  console.error('[admin] db error', error)
-  return 'Ocurrió un error inesperado. Probá de nuevo.'
-}
+export type { ActionState }
 
 const optionalText = z
   .string()
@@ -68,9 +44,6 @@ function fieldErrors(error: z.ZodError) {
   return out
 }
 
-function formObject(form: FormData) {
-  return Object.fromEntries([...form.entries()].map(([k, v]) => [k, typeof v === 'string' ? v : '']))
-}
 
 async function origin() {
   const h = await headers()

@@ -14,3 +14,4 @@ $Q -c "insert into auth.users (id,email,raw_user_meta_data) values ('aaaaaaaa-00
 for f in migrations/000[5-9]*.sql migrations/00[1-9][0-9]*.sql; do $Q -f "$f" 2>&1 | grep -v 'NOTICE\|DETAIL\|drop cascades' || true; done
 $Q -f test/scenario_v2.sql | grep -E '^ OK|PASARON|=|FALLO'
 $Q -f test/scenario_admin.sql | grep -E '^ OK|PASARON|=|FALLO'
+$Q -f test/scenario_stage1.sql | grep -E '^ OK|PASARON|=|FALLO'
