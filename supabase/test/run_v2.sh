@@ -11,5 +11,5 @@ $Q -f test/stub_supabase.sql -f test/stub_supabase_v2.sql
 for f in migrations/000[1-4]*.sql; do $Q -f "$f" >/dev/null 2>&1; done
 # simula el admin que ya existe en producción
 $Q -c "insert into auth.users (id,email,raw_user_meta_data) values ('aaaaaaaa-0000-0000-0000-000000000001','admin@test.com','{\"full_name\":\"Admin\"}')" >/dev/null
-for f in migrations/000[5-9]*.sql; do $Q -f "$f" 2>&1 | grep -v 'NOTICE\|DETAIL\|drop cascades' || true; done
+for f in migrations/000[5-9]*.sql migrations/00[1-9][0-9]*.sql; do $Q -f "$f" 2>&1 | grep -v 'NOTICE\|DETAIL\|drop cascades' || true; done
 $Q -f test/scenario_v2.sql | grep -E '^ OK|PASARON|=|FALLO'

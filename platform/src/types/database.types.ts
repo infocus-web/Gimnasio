@@ -1,50 +1,2166 @@
-/**
- * Tipos de la base de datos.
- *
- * ⚠️ Este archivo se GENERA con `npm run db:types` (supabase gen types) una vez
- * aplicadas las migraciones 0005–0009 en el proyecto de Supabase. Esta versión
- * mínima, escrita a mano, cubre solo lo que usa el módulo de reservas para que
- * el proyecto compile antes de aplicar las migraciones.
- */
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
-
-export type BookingStatus = 'booked' | 'waitlisted' | 'canceled' | 'late_canceled' | 'checked_in' | 'no_show'
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
-  __InternalSupabase: { PostgrestVersion: '13' }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
-      [_ in never]: never
+      automation_runs: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          event_id: number | null
+          id: number
+          last_error: string | null
+          member_id: string | null
+          next_step: number
+          org_id: string
+          run_after: string
+          status: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          event_id?: number | null
+          id?: never
+          last_error?: string | null
+          member_id?: string | null
+          next_step?: number
+          org_id: string
+          run_after?: string
+          status?: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          event_id?: number | null
+          id?: never
+          last_error?: string | null
+          member_id?: string | null
+          next_step?: number
+          org_id?: string
+          run_after?: string
+          status?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "domain_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_workflow_id_org_id_fkey"
+            columns: ["workflow_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "automation_workflows"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      automation_steps: {
+        Row: {
+          action: string
+          config: Json
+          id: string
+          org_id: string
+          position: number
+          workflow_id: string
+        }
+        Insert: {
+          action: string
+          config?: Json
+          id?: string
+          org_id: string
+          position: number
+          workflow_id: string
+        }
+        Update: {
+          action?: string
+          config?: Json
+          id?: string
+          org_id?: string
+          position?: number
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_steps_workflow_id_org_id_fkey"
+            columns: ["workflow_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "automation_workflows"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      automation_workflows: {
+        Row: {
+          active: boolean
+          conditions: Json
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          trigger: string
+        }
+        Insert: {
+          active?: boolean
+          conditions?: Json
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          trigger: string
+        }
+        Update: {
+          active?: boolean
+          conditions?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          trigger?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_workflows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_accounts: {
+        Row: {
+          created_at: string
+          delinquent: boolean
+          id: string
+          org_id: string
+          payer_member_id: string
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_customer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delinquent?: boolean
+          id?: string
+          org_id: string
+          payer_member_id: string
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_customer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delinquent?: boolean
+          id?: string
+          org_id?: string
+          payer_member_id?: string
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_customer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_payer_member_id_org_id_fkey"
+            columns: ["payer_member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      body_metrics: {
+        Row: {
+          body_fat_pct: number | null
+          id: string
+          measured_at: string
+          measurements: Json
+          member_id: string
+          org_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          body_fat_pct?: number | null
+          id?: string
+          measured_at?: string
+          measurements?: Json
+          member_id: string
+          org_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          body_fat_pct?: number | null
+          id?: string
+          measured_at?: string
+          measurements?: Json
+          member_id?: string
+          org_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_metrics_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      bookings: {
+        Row: {
+          booked_by: string | null
+          canceled_at: string | null
+          checked_in_at: string | null
+          created_at: string
+          credit_consumed: boolean
+          during: unknown
+          equipment_id: string | null
+          id: string
+          idempotency_key: string | null
+          member_id: string
+          membership_id: string | null
+          org_id: string
+          session_id: string
+          source: string
+          status: Database["public"]["Enums"]["booking_status"]
+          waitlist_position: number | null
+        }
+        Insert: {
+          booked_by?: string | null
+          canceled_at?: string | null
+          checked_in_at?: string | null
+          created_at?: string
+          credit_consumed?: boolean
+          during: unknown
+          equipment_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          member_id: string
+          membership_id?: string | null
+          org_id: string
+          session_id: string
+          source?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          waitlist_position?: number | null
+        }
+        Update: {
+          booked_by?: string | null
+          canceled_at?: string | null
+          checked_in_at?: string | null
+          created_at?: string
+          credit_consumed?: boolean
+          during?: unknown
+          equipment_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          member_id?: string
+          membership_id?: string | null
+          org_id?: string
+          session_id?: string
+          source?: string
+          status?: Database["public"]["Enums"]["booking_status"]
+          waitlist_position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_equipment_id_org_id_fkey"
+            columns: ["equipment_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_session_id_org_id_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_session_id_org_id_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions_availability"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      checkins: {
+        Row: {
+          allowed: boolean
+          booking_id: string | null
+          created_at: string
+          id: number
+          location_id: string
+          member_id: string
+          method: Database["public"]["Enums"]["checkin_method"]
+          org_id: string
+          reason: string | null
+          scanned_by: string | null
+        }
+        Insert: {
+          allowed: boolean
+          booking_id?: string | null
+          created_at?: string
+          id?: never
+          location_id: string
+          member_id: string
+          method: Database["public"]["Enums"]["checkin_method"]
+          org_id: string
+          reason?: string | null
+          scanned_by?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          booking_id?: string | null
+          created_at?: string
+          id?: never
+          location_id?: string
+          member_id?: string
+          method?: Database["public"]["Enums"]["checkin_method"]
+          org_id?: string
+          reason?: string | null
+          scanned_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_booking_id_org_id_fkey"
+            columns: ["booking_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "checkins_location_id_org_id_fkey"
+            columns: ["location_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "checkins_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      class_series: {
+        Row: {
+          capacity: number
+          class_type_id: string
+          duration_min: number
+          id: string
+          instructor_id: string
+          org_id: string
+          room_id: string
+          start_time: string
+          valid_from: string
+          valid_until: string | null
+          weekday: number
+        }
+        Insert: {
+          capacity: number
+          class_type_id: string
+          duration_min: number
+          id?: string
+          instructor_id: string
+          org_id: string
+          room_id: string
+          start_time: string
+          valid_from?: string
+          valid_until?: string | null
+          weekday: number
+        }
+        Update: {
+          capacity?: number
+          class_type_id?: string
+          duration_min?: number
+          id?: string
+          instructor_id?: string
+          org_id?: string
+          room_id?: string
+          start_time?: string
+          valid_from?: string
+          valid_until?: string | null
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_series_class_type_id_org_id_fkey"
+            columns: ["class_type_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_types"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_series_instructor_id_org_id_fkey"
+            columns: ["instructor_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_series_room_id_org_id_fkey"
+            columns: ["room_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      class_sessions: {
+        Row: {
+          booking_closes_min: number
+          booking_opens_at: string | null
+          cancel_reason: string | null
+          capacity: number
+          class_type_id: string
+          created_at: string
+          during: unknown
+          ends_at: string
+          id: string
+          instructor_id: string
+          org_id: string
+          room_id: string
+          series_id: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["session_status"]
+          waitlist_capacity: number
+        }
+        Insert: {
+          booking_closes_min?: number
+          booking_opens_at?: string | null
+          cancel_reason?: string | null
+          capacity: number
+          class_type_id: string
+          created_at?: string
+          during?: unknown
+          ends_at: string
+          id?: string
+          instructor_id: string
+          org_id: string
+          room_id: string
+          series_id?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["session_status"]
+          waitlist_capacity?: number
+        }
+        Update: {
+          booking_closes_min?: number
+          booking_opens_at?: string | null
+          cancel_reason?: string | null
+          capacity?: number
+          class_type_id?: string
+          created_at?: string
+          during?: unknown
+          ends_at?: string
+          id?: string
+          instructor_id?: string
+          org_id?: string
+          room_id?: string
+          series_id?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          waitlist_capacity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_class_type_id_org_id_fkey"
+            columns: ["class_type_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_types"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_sessions_instructor_id_org_id_fkey"
+            columns: ["instructor_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_sessions_room_id_org_id_fkey"
+            columns: ["room_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_sessions_series_id_org_id_fkey"
+            columns: ["series_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_series"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      class_types: {
+        Row: {
+          active: boolean
+          color: string
+          default_capacity: number
+          default_duration_min: number
+          description: string | null
+          equipment_kind: string | null
+          id: string
+          image_url: string | null
+          name: string
+          org_id: string
+        }
+        Insert: {
+          active?: boolean
+          color?: string
+          default_capacity?: number
+          default_duration_min?: number
+          description?: string | null
+          equipment_kind?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          org_id: string
+        }
+        Update: {
+          active?: boolean
+          color?: string
+          default_capacity?: number
+          default_duration_min?: number
+          description?: string | null
+          equipment_kind?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_types_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_events: {
+        Row: {
+          attempts: number
+          id: number
+          member_id: string | null
+          occurred_at: string
+          org_id: string
+          payload: Json
+          processed_at: string | null
+          type: string
+        }
+        Insert: {
+          attempts?: number
+          id?: never
+          member_id?: string | null
+          occurred_at?: string
+          org_id: string
+          payload?: Json
+          processed_at?: string | null
+          type: string
+        }
+        Update: {
+          attempts?: number
+          id?: never
+          member_id?: string | null
+          occurred_at?: string
+          org_id?: string
+          payload?: Json
+          processed_at?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment: {
+        Row: {
+          grid_col: number | null
+          grid_row: number | null
+          id: string
+          kind: string
+          label: string
+          location_id: string
+          org_id: string
+          room_id: string | null
+          status: Database["public"]["Enums"]["equipment_status"]
+        }
+        Insert: {
+          grid_col?: number | null
+          grid_row?: number | null
+          id?: string
+          kind: string
+          label: string
+          location_id: string
+          org_id: string
+          room_id?: string | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+        }
+        Update: {
+          grid_col?: number | null
+          grid_row?: number | null
+          id?: string
+          kind?: string
+          label?: string
+          location_id?: string
+          org_id?: string
+          room_id?: string | null
+          status?: Database["public"]["Enums"]["equipment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_location_id_org_id_fkey"
+            columns: ["location_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "equipment_room_id_org_id_fkey"
+            columns: ["room_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          equipment: string | null
+          id: string
+          instructions: string | null
+          muscle_group: string | null
+          name: string
+          org_id: string | null
+          thumbnail_url: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          equipment?: string | null
+          id?: string
+          instructions?: string | null
+          muscle_group?: string | null
+          name: string
+          org_id?: string | null
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          equipment?: string | null
+          id?: string
+          instructions?: string | null
+          muscle_group?: string | null
+          name?: string
+          org_id?: string | null
+          thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_due_cents: number
+          amount_paid_cents: number
+          billing_account_id: string
+          created_at: string
+          currency: string
+          due_at: string | null
+          id: string
+          membership_id: string | null
+          number: string | null
+          org_id: string
+          period_end: string | null
+          period_start: string | null
+          provider: Database["public"]["Enums"]["payment_provider"] | null
+          provider_invoice_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+        }
+        Insert: {
+          amount_due_cents: number
+          amount_paid_cents?: number
+          billing_account_id: string
+          created_at?: string
+          currency: string
+          due_at?: string | null
+          id?: string
+          membership_id?: string | null
+          number?: string | null
+          org_id: string
+          period_end?: string | null
+          period_start?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"] | null
+          provider_invoice_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+        }
+        Update: {
+          amount_due_cents?: number
+          amount_paid_cents?: number
+          billing_account_id?: string
+          created_at?: string
+          currency?: string
+          due_at?: string | null
+          id?: string
+          membership_id?: string | null
+          number?: string | null
+          org_id?: string
+          period_end?: string | null
+          period_start?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"] | null
+          provider_invoice_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_billing_account_id_org_id_fkey"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "invoices_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "invoices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          active: boolean
+          address: string | null
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          timezone: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          timezone?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_secrets: {
+        Row: {
+          member_id: string
+          qr_secret: string
+          rotated_at: string
+        }
+        Insert: {
+          member_id: string
+          qr_secret?: string
+          rotated_at?: string
+        }
+        Update: {
+          member_id?: string
+          qr_secret?: string
+          rotated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_secrets_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          billing_account_id: string | null
+          birth_date: string | null
+          created_at: string
+          document_id: string | null
+          email: string | null
+          emergency_contact: Json | null
+          first_name: string
+          home_location_id: string | null
+          id: string
+          last_checkin_at: string | null
+          last_name: string
+          medical_notes: string | null
+          org_id: string
+          phone: string | null
+          photo_url: string | null
+          status: Database["public"]["Enums"]["member_status"]
+          tags: string[]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          billing_account_id?: string | null
+          birth_date?: string | null
+          created_at?: string
+          document_id?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          first_name: string
+          home_location_id?: string | null
+          id?: string
+          last_checkin_at?: string | null
+          last_name?: string
+          medical_notes?: string | null
+          org_id: string
+          phone?: string | null
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["member_status"]
+          tags?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          billing_account_id?: string | null
+          birth_date?: string | null
+          created_at?: string
+          document_id?: string | null
+          email?: string | null
+          emergency_contact?: Json | null
+          first_name?: string
+          home_location_id?: string | null
+          id?: string
+          last_checkin_at?: string | null
+          last_name?: string
+          medical_notes?: string | null
+          org_id?: string
+          phone?: string | null
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["member_status"]
+          tags?: string[]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_billing_account_fk"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "members_home_location_id_org_id_fkey"
+            columns: ["home_location_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_members: {
+        Row: {
+          added_at: string
+          member_id: string
+          membership_id: string
+          org_id: string
+        }
+        Insert: {
+          added_at?: string
+          member_id: string
+          membership_id: string
+          org_id: string
+        }
+        Update: {
+          added_at?: string
+          member_id?: string
+          membership_id?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_members_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "membership_members_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      membership_plans: {
+        Row: {
+          active: boolean
+          billing_interval: string | null
+          booking_window_days: number
+          class_credits: number | null
+          created_at: string
+          credits_valid_days: number | null
+          currency: string
+          description: string | null
+          id: string
+          includes_open_gym: boolean
+          interval_count: number
+          is_public: boolean
+          kind: Database["public"]["Enums"]["plan_kind"]
+          max_bookings_per_week: number | null
+          max_members: number
+          name: string
+          org_id: string
+          price_cents: number
+          provider_price_ids: Json
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          billing_interval?: string | null
+          booking_window_days?: number
+          class_credits?: number | null
+          created_at?: string
+          credits_valid_days?: number | null
+          currency: string
+          description?: string | null
+          id?: string
+          includes_open_gym?: boolean
+          interval_count?: number
+          is_public?: boolean
+          kind?: Database["public"]["Enums"]["plan_kind"]
+          max_bookings_per_week?: number | null
+          max_members?: number
+          name: string
+          org_id: string
+          price_cents: number
+          provider_price_ids?: Json
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          billing_interval?: string | null
+          booking_window_days?: number
+          class_credits?: number | null
+          created_at?: string
+          credits_valid_days?: number | null
+          currency?: string
+          description?: string | null
+          id?: string
+          includes_open_gym?: boolean
+          interval_count?: number
+          is_public?: boolean
+          kind?: Database["public"]["Enums"]["plan_kind"]
+          max_bookings_per_week?: number | null
+          max_members?: number
+          name?: string
+          org_id?: string
+          price_cents?: number
+          provider_price_ids?: Json
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      memberships: {
+        Row: {
+          billing_account_id: string
+          cancel_at_period_end: boolean
+          canceled_at: string | null
+          created_at: string
+          credits_remaining: number | null
+          current_period_end: string
+          current_period_start: string
+          id: string
+          org_id: string
+          paused_until: string | null
+          plan_id: string
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_subscription_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["membership_status"]
+          updated_at: string
+        }
+        Insert: {
+          billing_account_id: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          credits_remaining?: number | null
+          current_period_end: string
+          current_period_start: string
+          id?: string
+          org_id: string
+          paused_until?: string | null
+          plan_id: string
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_subscription_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string
+        }
+        Update: {
+          billing_account_id?: string
+          cancel_at_period_end?: boolean
+          canceled_at?: string | null
+          created_at?: string
+          credits_remaining?: number | null
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          org_id?: string
+          paused_until?: string | null
+          plan_id?: string
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_subscription_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memberships_billing_account_id_org_id_fkey"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "memberships_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "memberships_plan_id_org_id_fkey"
+            columns: ["plan_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          branding: Json
+          busy_threshold: number
+          country: string
+          created_at: string
+          currency: string
+          default_payment_provider: Database["public"]["Enums"]["payment_provider"]
+          grace_days: number
+          id: string
+          late_cancel_minutes: number
+          name: string
+          opening_hours: Json
+          qr_step_seconds: number
+          slug: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          branding?: Json
+          busy_threshold?: number
+          country?: string
+          created_at?: string
+          currency?: string
+          default_payment_provider?: Database["public"]["Enums"]["payment_provider"]
+          grace_days?: number
+          id?: string
+          late_cancel_minutes?: number
+          name: string
+          opening_hours?: Json
+          qr_step_seconds?: number
+          slug: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          branding?: Json
+          busy_threshold?: number
+          country?: string
+          created_at?: string
+          currency?: string
+          default_payment_provider?: Database["public"]["Enums"]["payment_provider"]
+          grace_days?: number
+          id?: string
+          late_cancel_minutes?: number
+          name?: string
+          opening_hours?: Json
+          qr_step_seconds?: number
+          slug?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          billing_account_id: string
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          invoice_id: string | null
+          org_id: string
+          paid_at: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_payment_id: string | null
+          recorded_by: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          billing_account_id: string
+          created_at?: string
+          currency: string
+          failure_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          org_id: string
+          paid_at?: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          provider_payment_id?: string | null
+          recorded_by?: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          billing_account_id?: string
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          invoice_id?: string | null
+          org_id?: string
+          paid_at?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          provider_payment_id?: string | null
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_billing_account_id_org_id_fkey"
+            columns: ["billing_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "billing_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "payments_invoice_id_org_id_fkey"
+            columns: ["invoice_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "payments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permissions: {
+        Row: {
+          code: string
+          description: string
+        }
+        Insert: {
+          code: string
+          description: string
+        }
+        Update: {
+          code?: string
+          description?: string
+        }
+        Relationships: []
+      }
+      plan_class_types: {
+        Row: {
+          class_type_id: string
+          org_id: string
+          plan_id: string
+        }
+        Insert: {
+          class_type_id: string
+          org_id: string
+          plan_id: string
+        }
+        Update: {
+          class_type_id?: string
+          org_id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_class_types_class_type_id_org_id_fkey"
+            columns: ["class_type_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_types"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "plan_class_types_plan_id_org_id_fkey"
+            columns: ["plan_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "membership_plans"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      program_assignments: {
+        Row: {
+          created_at: string
+          ends_on: string | null
+          id: string
+          member_id: string
+          org_id: string
+          program_id: string
+          starts_on: string
+          status: string
+          trainer_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          member_id: string
+          org_id: string
+          program_id: string
+          starts_on?: string
+          status?: string
+          trainer_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string | null
+          id?: string
+          member_id?: string
+          org_id?: string
+          program_id?: string
+          starts_on?: string
+          status?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_assignments_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "program_assignments_program_id_org_id_fkey"
+            columns: ["program_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "program_assignments_trainer_id_org_id_fkey"
+            columns: ["trainer_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      program_exercises: {
+        Row: {
+          exercise_id: string
+          id: string
+          notes: string | null
+          org_id: string
+          position: number
+          rest_seconds: number | null
+          target_reps: string | null
+          target_sets: number | null
+          target_weight_kg: number | null
+          workout_id: string
+        }
+        Insert: {
+          exercise_id: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          position?: number
+          rest_seconds?: number | null
+          target_reps?: string | null
+          target_sets?: number | null
+          target_weight_kg?: number | null
+          workout_id: string
+        }
+        Update: {
+          exercise_id?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          position?: number
+          rest_seconds?: number | null
+          target_reps?: string | null
+          target_sets?: number | null
+          target_weight_kg?: number | null
+          workout_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_exercises_workout_id_org_id_fkey"
+            columns: ["workout_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "program_workouts"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      program_workouts: {
+        Row: {
+          day_index: number
+          id: string
+          name: string
+          org_id: string
+          program_id: string
+        }
+        Insert: {
+          day_index: number
+          id?: string
+          name: string
+          org_id: string
+          program_id: string
+        }
+        Update: {
+          day_index?: number
+          id?: string
+          name?: string
+          org_id?: string
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_workouts_program_id_org_id_fkey"
+            columns: ["program_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "workout_programs"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      role_permissions: {
+        Row: {
+          permission: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Insert: {
+          permission: string
+          role: Database["public"]["Enums"]["staff_role"]
+        }
+        Update: {
+          permission?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_fkey"
+            columns: ["permission"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          active: boolean
+          capacity: number
+          id: string
+          location_id: string
+          name: string
+          org_id: string
+        }
+        Insert: {
+          active?: boolean
+          capacity: number
+          id?: string
+          location_id: string
+          name: string
+          org_id: string
+        }
+        Update: {
+          active?: boolean
+          capacity?: number
+          id?: string
+          location_id?: string
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_location_id_org_id_fkey"
+            columns: ["location_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      set_logs: {
+        Row: {
+          duration_s: number | null
+          exercise_id: string
+          id: number
+          org_id: string
+          reps: number | null
+          rpe: number | null
+          set_number: number
+          weight_kg: number | null
+          workout_log_id: string
+        }
+        Insert: {
+          duration_s?: number | null
+          exercise_id: string
+          id?: never
+          org_id: string
+          reps?: number | null
+          rpe?: number | null
+          set_number: number
+          weight_kg?: number | null
+          workout_log_id: string
+        }
+        Update: {
+          duration_s?: number | null
+          exercise_id?: string
+          id?: never
+          org_id?: string
+          reps?: number | null
+          rpe?: number | null
+          set_number?: number
+          weight_kg?: number | null
+          workout_log_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_logs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_logs_workout_log_id_org_id_fkey"
+            columns: ["workout_log_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      staff: {
+        Row: {
+          active: boolean
+          bio: string | null
+          created_at: string
+          display_name: string
+          id: string
+          org_id: string
+          photo_url: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          org_id: string
+          photo_url?: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          org_id?: string
+          photo_url?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_permission_overrides: {
+        Row: {
+          granted: boolean
+          permission: string
+          staff_id: string
+        }
+        Insert: {
+          granted: boolean
+          permission: string
+          staff_id: string
+        }
+        Update: {
+          granted?: boolean
+          permission?: string
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_permission_overrides_permission_fkey"
+            columns: ["permission"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "staff_permission_overrides_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trainer_clients: {
+        Row: {
+          member_id: string
+          org_id: string
+          since: string
+          trainer_id: string
+        }
+        Insert: {
+          member_id: string
+          org_id: string
+          since?: string
+          trainer_id: string
+        }
+        Update: {
+          member_id?: string
+          org_id?: string
+          since?: string
+          trainer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trainer_clients_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "trainer_clients_trainer_id_org_id_fkey"
+            columns: ["trainer_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      webhook_events: {
+        Row: {
+          error: string | null
+          event_id: string
+          payload: Json
+          processed_at: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          received_at: string
+        }
+        Insert: {
+          error?: string | null
+          event_id: string
+          payload: Json
+          processed_at?: string | null
+          provider: Database["public"]["Enums"]["payment_provider"]
+          received_at?: string
+        }
+        Update: {
+          error?: string | null
+          event_id?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: Database["public"]["Enums"]["payment_provider"]
+          received_at?: string
+        }
+        Relationships: []
+      }
+      workout_logs: {
+        Row: {
+          assignment_id: string | null
+          duration_min: number | null
+          effort_rpe: number | null
+          id: string
+          member_id: string
+          notes: string | null
+          org_id: string
+          performed_at: string
+          workout_id: string | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          duration_min?: number | null
+          effort_rpe?: number | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          org_id: string
+          performed_at?: string
+          workout_id?: string | null
+        }
+        Update: {
+          assignment_id?: string | null
+          duration_min?: number | null
+          effort_rpe?: number | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          org_id?: string
+          performed_at?: string
+          workout_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_assignment_id_org_id_fkey"
+            columns: ["assignment_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "program_assignments"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "workout_logs_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "workout_logs_workout_id_org_id_fkey"
+            columns: ["workout_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "program_workouts"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      workout_programs: {
+        Row: {
+          author_id: string
+          created_at: string
+          description: string | null
+          goal: string | null
+          id: string
+          is_template: boolean
+          level: string | null
+          name: string
+          org_id: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_template?: boolean
+          level?: string | null
+          name: string
+          org_id: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          description?: string | null
+          goal?: string | null
+          id?: string
+          is_template?: boolean
+          level?: string | null
+          name?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_programs_author_id_org_id_fkey"
+            columns: ["author_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      class_sessions_availability: {
+        Row: {
+          booking_closes_min: number | null
+          capacity: number | null
+          class_name: string | null
+          class_type_id: string | null
+          color: string | null
+          ends_at: string | null
+          equipment_kind: string | null
+          id: string | null
+          instructor_id: string | null
+          instructor_name: string | null
+          instructor_photo_url: string | null
+          org_id: string | null
+          room_id: string | null
+          room_name: string | null
+          spots_left: number | null
+          starts_at: string | null
+          status: Database["public"]["Enums"]["session_status"] | null
+          uses_equipment: boolean | null
+          waitlist_left: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_class_type_id_org_id_fkey"
+            columns: ["class_type_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "class_types"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_sessions_instructor_id_org_id_fkey"
+            columns: ["instructor_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "class_sessions_room_id_org_id_fkey"
+            columns: ["room_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
     }
     Functions: {
       book_class: {
         Args: {
-          p_session_id: string
-          p_member_id?: string | null
-          p_equipment_id?: string | null
-          p_idempotency_key?: string | null
           p_allow_waitlist?: boolean
+          p_equipment_id?: string
+          p_idempotency_key?: string
+          p_member_id?: string
+          p_session_id: string
         }
         Returns: Json
       }
-      cancel_booking: {
-        Args: { p_booking_id: string }
+      cancel_booking: { Args: { p_booking_id: string }; Returns: Json }
+      checkin_scan: {
+        Args: {
+          p_location_id: string
+          p_member_id?: string
+          p_method?: Database["public"]["Enums"]["checkin_method"]
+          p_token?: string
+        }
         Returns: Json
       }
+      create_organization: {
+        Args: { p_display_name?: string; p_name: string; p_slug: string }
+        Returns: {
+          branding: Json
+          busy_threshold: number
+          country: string
+          created_at: string
+          currency: string
+          default_payment_provider: Database["public"]["Enums"]["payment_provider"]
+          grace_days: number
+          id: string
+          late_cancel_minutes: number
+          name: string
+          opening_hours: Json
+          qr_step_seconds: number
+          slug: string
+          timezone: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organizations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      current_occupancy: { Args: { p_org_id: string }; Returns: Json }
+      enqueue_inactivity_events: { Args: never; Returns: number }
       get_checkin_token: {
-        Args: { p_member_id?: string | null; p_org_id?: string | null }
+        Args: { p_member_id?: string; p_org_id?: string }
         Returns: Json
       }
+      new_token: { Args: never; Returns: string }
+      peak_hours: {
+        Args: { p_org_id: string; p_weeks?: number }
+        Returns: {
+          avg_checkins: number
+          hour: number
+          weekday: number
+        }[]
+      }
+      session_equipment_map: {
+        Args: { p_session_id: string }
+        Returns: {
+          grid_col: number
+          grid_row: number
+          id: string
+          label: string
+          mine: boolean
+          taken: boolean
+        }[]
+      }
+      today_ar: { Args: never; Returns: string }
     }
     Enums: {
-      booking_status: BookingStatus
-      staff_role: 'owner' | 'admin' | 'staff' | 'trainer'
+      booking_status:
+        | "booked"
+        | "waitlisted"
+        | "canceled"
+        | "late_canceled"
+        | "checked_in"
+        | "no_show"
+      checkin_method: "qr" | "manual" | "facial" | "fingerprint" | "nfc"
+      equipment_status: "active" | "maintenance" | "retired"
+      invoice_status: "draft" | "open" | "paid" | "void" | "uncollectible"
+      member_status: "lead" | "active" | "frozen" | "archived"
+      membership_status:
+        | "trialing"
+        | "active"
+        | "past_due"
+        | "paused"
+        | "canceled"
+        | "expired"
+      payment_provider:
+        | "stripe"
+        | "mercadopago"
+        | "cash"
+        | "transfer"
+        | "card_terminal"
+        | "other"
+      payment_status:
+        | "pending"
+        | "succeeded"
+        | "failed"
+        | "refunded"
+        | "canceled"
+      plan_kind: "recurring" | "class_pack" | "drop_in" | "trial"
+      session_status: "scheduled" | "canceled" | "completed"
+      staff_role: "owner" | "admin" | "staff" | "trainer"
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      booking_status: [
+        "booked",
+        "waitlisted",
+        "canceled",
+        "late_canceled",
+        "checked_in",
+        "no_show",
+      ],
+      checkin_method: ["qr", "manual", "facial", "fingerprint", "nfc"],
+      equipment_status: ["active", "maintenance", "retired"],
+      invoice_status: ["draft", "open", "paid", "void", "uncollectible"],
+      member_status: ["lead", "active", "frozen", "archived"],
+      membership_status: [
+        "trialing",
+        "active",
+        "past_due",
+        "paused",
+        "canceled",
+        "expired",
+      ],
+      payment_provider: [
+        "stripe",
+        "mercadopago",
+        "cash",
+        "transfer",
+        "card_terminal",
+        "other",
+      ],
+      payment_status: [
+        "pending",
+        "succeeded",
+        "failed",
+        "refunded",
+        "canceled",
+      ],
+      plan_kind: ["recurring", "class_pack", "drop_in", "trial"],
+      session_status: ["scheduled", "canceled", "completed"],
+      staff_role: ["owner", "admin", "staff", "trainer"],
+    },
+  },
+} as const

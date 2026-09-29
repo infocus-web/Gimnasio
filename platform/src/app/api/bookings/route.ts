@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
   // 4. Reserva atómica (con el JWT del usuario → auth.uid() + RLS dentro de la función)
   const { data, error } = await supabase.rpc('book_class', {
     p_session_id: sessionId,
-    p_member_id: memberId ?? null,
-    p_equipment_id: equipmentId ?? null,
-    p_idempotency_key: idempotencyKey,
+    p_member_id: memberId,
+    p_equipment_id: equipmentId,
+    p_idempotency_key: idempotencyKey ?? undefined,
     p_allow_waitlist: allowWaitlist,
   })
   if (error) return fromDbError(error)

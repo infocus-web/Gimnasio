@@ -2,5 +2,72 @@
 
 @theme {
   --color-brand: #edcc36;
-  --color-ink: #0a0a0a;
+  --color-ink: #09090b;
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: #09090b;
+    color: #f4f4f5;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: -0.011em;
+  }
+  h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
+}
+
+/* Clases del diseño "cyber" (Fase A, AI Studio) */
+.font-cyber { font-family: var(--font-sans); letter-spacing: -0.02em; }
+.font-tech  { font-family: var(--font-sans); }
+
+.cyber-grid {
+  background-image:
+    linear-gradient(to right, rgba(237, 204, 54, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(237, 204, 54, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.cyber-grid-dense {
+  background-image:
+    linear-gradient(to right, rgba(237, 204, 54, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(237, 204, 54, 0.06) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+.glass-panel {
+  background: rgba(18, 18, 22, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.glass-panel-yellow {
+  background: rgba(24, 23, 15, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(237, 204, 54, 0.2);
+  box-shadow: 0 0 25px -5px rgba(237, 204, 54, 0.15);
+}
+.glow-yellow { box-shadow: 0 0 25px -3px rgba(237, 204, 54, 0.3); }
+.glow-yellow-sm { box-shadow: 0 0 12px -2px rgba(237, 204, 54, 0.25); }
+.glow-yellow-border {
+  border-color: rgba(237, 204, 54, 0.45);
+  box-shadow: inset 0 0 15px rgba(237, 204, 54, 0.06), 0 0 18px rgba(237, 204, 54, 0.2);
+}
+
+@keyframes cyber-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(400%); } }
+.animate-scan { animation: cyber-scan 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.animate-pulse-subtle { animation: pulse-subtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #09090b; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #edcc36; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-scan, .animate-pulse-subtle, .animate-pulse, .animate-spin { animation: none !important; }
 }

@@ -1,7 +1,6 @@
+import { redirect } from 'next/navigation'
+
+// Por ahora hay un solo gimnasio. Cuando haya más, acá va la landing del SaaS.
 export default function Home() {
-  return (
-    <main className="grid min-h-dvh place-items-center p-6">
-      <h1 className="text-3xl font-bold text-brand">Evolution Platform</h1>
-    </main>
-  )
+  redirect('/evolution/app/pase')
 }

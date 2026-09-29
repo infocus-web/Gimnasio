@@ -125,12 +125,27 @@ Gimnasio/                          (repo infocus-web/Gimnasio)
         └── types/database.types.ts ● (reemplazar con `npm run db:types`)
 ```
 
+## Fase A integrada (app del socio + recepción)
+
+Diseño: prototipo de AI Studio, portado a Next.js y conectado a Supabase.
+
+| Ruta | Pantalla | Datos |
+|---|---|---|
+| `/login` | Link mágico por email (socios) o contraseña (staff) | Supabase Auth |
+| `/[org]/app/pase` | QR dinámico (cambia cada 30 s) + estado de membresía + selector familiar | `get_checkin_token`, `membership_members` |
+| `/[org]/app/clases` | Agenda 7 días, reserva en 1 toque, mapa de bicis, lista de espera | vista `class_sessions_availability`, `session_equipment_map`, `POST/DELETE /api/bookings` |
+| `/[org]/app/entrenar` | Modo entrenamiento activo + calculadora de discos | `program_assignments` → `program_exercises`; guarda en `workout_logs` / `set_logs` |
+| `/[org]/app/progreso` | 1RM estimado y evolución | `set_logs` del socio |
+| `/[org]/app/horarios` | Horarios pico + "ahora" (cerrado/tranquilo/…) | `peak_hours`, `current_occupancy` |
+| `/[org]/admin/recepcion` | Escáner con cámara / lector USB / búsqueda manual | `checkin_scan` |
+
+Migraciones de soporte: `0010_member_app_rpcs.sql` (horario del gimnasio, mapa de equipos, horarios pico)
+y `0011_availability_invoker.sql` (la agenda respeta RLS; corrige el ERROR del advisor de seguridad).
+
 ## Cómo aplicarlo
 
 1. **Probar local** (Postgres 15+): `PGHOST=localhost PGUSER=postgres supabase/test/run_v2.sh`
-2. **Supabase**: aplicar `0005` a `0009` primero en un **branch** del proyecto, y después en producción.
-   ⚠️ En el momento en que se aplica `0005`, la v1 deja de funcionar (sus tablas pasan al schema `legacy`).
-   Hoy la v1 tiene 0 socios y 0 pagos, así que el corte no pierde datos.
+2. **Supabase**: ✅ `0005` a `0011` ya aplicadas en producción (29/09/2026). La v1 quedó archivada en el schema `legacy`.
 3. `cd platform && npm install && npm run db:types && npm run dev`
 4. **Vercel** (proyecto `evolution-fitness-gym`): Settings → Build → Root Directory = `platform`, Framework = Next.js,
    variables de `.env.example`.
