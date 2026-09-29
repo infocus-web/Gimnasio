@@ -77,6 +77,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
         ] as const)
       : []),
     ...(ctx.can('reports.read') ? [{ href: `${base}/reportes`, label: 'Reportes', icon: 'chart' } as const] : []),
+    ...(ctx.can('org.manage') ? [{ href: `${base}/accesos`, label: 'Accesos', icon: 'door' } as const] : []),
     ...(ctx.can('org.manage') ? [{ href: `${base}/web`, label: 'Web', icon: 'web' } as const] : []),
   ]
 

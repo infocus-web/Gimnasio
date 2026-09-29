@@ -14,6 +14,311 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_commands: {
+        Row: {
+          attempts: number
+          command: string
+          created_at: string
+          device_id: string
+          done_at: string | null
+          id: number
+          kind: string
+          member_id: string | null
+          org_id: string
+          pin: number | null
+          return_code: number | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          command: string
+          created_at?: string
+          device_id: string
+          done_at?: string | null
+          id?: never
+          kind: string
+          member_id?: string | null
+          org_id: string
+          pin?: number | null
+          return_code?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          command?: string
+          created_at?: string
+          device_id?: string
+          done_at?: string | null
+          id?: never
+          kind?: string
+          member_id?: string | null
+          org_id?: string
+          pin?: number | null
+          return_code?: number | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_commands_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "access_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_device_log: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: number
+          ip: string | null
+          method: string | null
+          path: string | null
+          query: string | null
+          result: string | null
+          serial: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: never
+          ip?: string | null
+          method?: string | null
+          path?: string | null
+          query?: string | null
+          result?: string | null
+          serial?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: never
+          ip?: string | null
+          method?: string | null
+          path?: string | null
+          query?: string | null
+          result?: string | null
+          serial?: string | null
+        }
+        Relationships: []
+      }
+      access_device_users: {
+        Row: {
+          device_id: string
+          has_bio: boolean
+          managed: boolean
+          member_id: string | null
+          name: string | null
+          org_id: string
+          pin: number
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          device_id: string
+          has_bio?: boolean
+          managed?: boolean
+          member_id?: string | null
+          name?: string | null
+          org_id: string
+          pin: number
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          device_id?: string
+          has_bio?: boolean
+          managed?: boolean
+          member_id?: string | null
+          name?: string | null
+          org_id?: string
+          pin?: number
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_device_users_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "access_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_device_users_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "access_device_users_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_directory"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_device_users_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_device_users_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "payment_ledger"
+            referencedColumns: ["payer_member_id"]
+          },
+        ]
+      }
+      access_devices: {
+        Row: {
+          active: boolean
+          attlog_stamp: string | null
+          created_at: string
+          id: string
+          info: Json
+          last_ip: string | null
+          last_seen_at: string | null
+          location_id: string
+          name: string
+          operlog_stamp: string | null
+          org_id: string
+          pending_ip: string | null
+          pending_ip_at: string | null
+          serial_number: string
+          trusted_ip: string | null
+        }
+        Insert: {
+          active?: boolean
+          attlog_stamp?: string | null
+          created_at?: string
+          id?: string
+          info?: Json
+          last_ip?: string | null
+          last_seen_at?: string | null
+          location_id: string
+          name?: string
+          operlog_stamp?: string | null
+          org_id: string
+          pending_ip?: string | null
+          pending_ip_at?: string | null
+          serial_number: string
+          trusted_ip?: string | null
+        }
+        Update: {
+          active?: boolean
+          attlog_stamp?: string | null
+          created_at?: string
+          id?: string
+          info?: Json
+          last_ip?: string | null
+          last_seen_at?: string | null
+          location_id?: string
+          name?: string
+          operlog_stamp?: string | null
+          org_id?: string
+          pending_ip?: string | null
+          pending_ip_at?: string | null
+          serial_number?: string
+          trusted_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_devices_location_id_org_id_fkey"
+            columns: ["location_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "access_devices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_templates: {
+        Row: {
+          fields: string
+          org_id: string
+          pin: number
+          pin_key: string
+          source_device_id: string | null
+          tbl: string
+          tkey: string
+          updated_at: string
+        }
+        Insert: {
+          fields: string
+          org_id: string
+          pin: number
+          pin_key?: string
+          source_device_id?: string | null
+          tbl: string
+          tkey: string
+          updated_at?: string
+        }
+        Update: {
+          fields?: string
+          org_id?: string
+          pin?: number
+          pin_key?: string
+          source_device_id?: string | null
+          tbl?: string
+          tkey?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_templates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_templates_source_device_id_fkey"
+            columns: ["source_device_id"]
+            isOneToOne: false
+            referencedRelation: "access_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      access_unknown_devices: {
+        Row: {
+          hits: number
+          info: Json
+          ip: string | null
+          last_seen_at: string
+          serial_number: string
+        }
+        Insert: {
+          hits?: number
+          info?: Json
+          ip?: string | null
+          last_seen_at?: string
+          serial_number: string
+        }
+        Update: {
+          hits?: number
+          info?: Json
+          ip?: string | null
+          last_seen_at?: string
+          serial_number?: string
+        }
+        Relationships: []
+      }
       automation_runs: {
         Row: {
           created_at: string
@@ -946,7 +1251,9 @@ export type Database = {
       }
       members: {
         Row: {
+          access_pin: number | null
           billing_account_id: string | null
+          biometric_consent_at: string | null
           birth_date: string | null
           created_at: string
           document_id: string | null
@@ -967,7 +1274,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          access_pin?: number | null
           billing_account_id?: string | null
+          biometric_consent_at?: string | null
           birth_date?: string | null
           created_at?: string
           document_id?: string | null
@@ -988,7 +1297,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          access_pin?: number | null
           billing_account_id?: string | null
+          biometric_consent_at?: string | null
           birth_date?: string | null
           created_at?: string
           document_id?: string | null
@@ -2301,6 +2612,50 @@ export type Database = {
       }
     }
     Functions: {
+      access_device_confirm_ip: {
+        Args: { p_device: string }
+        Returns: undefined
+      }
+      access_device_delete: { Args: { p_device: string }; Returns: undefined }
+      access_device_query_users: {
+        Args: { p_device: string }
+        Returns: undefined
+      }
+      access_device_register: {
+        Args: {
+          p_location?: string
+          p_name: string
+          p_org: string
+          p_serial: string
+        }
+        Returns: string
+      }
+      access_device_resync: { Args: { p_device: string }; Returns: number }
+      access_device_update: {
+        Args: { p_active: boolean; p_device: string; p_name: string }
+        Returns: undefined
+      }
+      access_enroll: {
+        Args: { p_bio_type?: number; p_device: string; p_member: string }
+        Returns: number
+      }
+      access_forget_pin: {
+        Args: { p_device: string; p_pin: number }
+        Returns: undefined
+      }
+      access_link_pin: {
+        Args: { p_device: string; p_member: string; p_pin: number }
+        Returns: undefined
+      }
+      access_reconcile_all: { Args: never; Returns: number }
+      access_unknown_nearby: {
+        Args: { p_ip: string; p_org: string }
+        Returns: {
+          info: Json
+          last_seen_at: string
+          serial_number: string
+        }[]
+      }
       admin_assign_plan: {
         Args: { p_member: string; p_plan: string; p_start?: string }
         Returns: string
@@ -2319,6 +2674,40 @@ export type Database = {
           p_start?: string
         }
         Returns: string
+      }
+      adms_hello: {
+        Args: { p_info?: Json; p_ip: string; p_sn: string }
+        Returns: Json
+      }
+      adms_log: {
+        Args: {
+          p_body: string
+          p_ip: string
+          p_method: string
+          p_path: string
+          p_query: string
+          p_result: string
+          p_sn: string
+        }
+        Returns: undefined
+      }
+      adms_poll: {
+        Args: { p_ip: string; p_max_bytes?: number; p_sn: string }
+        Returns: Json
+      }
+      adms_push: {
+        Args: {
+          p_ip: string
+          p_records: Json
+          p_sn: string
+          p_stamp: string
+          p_table: string
+        }
+        Returns: Json
+      }
+      adms_results: {
+        Args: { p_ip: string; p_results: Json; p_sn: string }
+        Returns: number
       }
       apply_series_to_future: { Args: { p_series: string }; Returns: number }
       book_class: {
@@ -2375,6 +2764,7 @@ export type Database = {
       current_occupancy: { Args: { p_org_id: string }; Returns: Json }
       end_series: { Args: { p_series: string }; Returns: Json }
       enqueue_inactivity_events: { Args: never; Returns: number }
+      expire_memberships: { Args: never; Returns: number }
       generate_sessions: {
         Args: { p_org?: string; p_weeks?: number }
         Returns: Json
@@ -2429,6 +2819,14 @@ export type Database = {
           taken: boolean
         }[]
       }
+      staff_contacts: {
+        Args: { p_org: string }
+        Returns: {
+          document_id: string
+          phone: string
+          staff_id: string
+        }[]
+      }
       submit_staff_request: {
         Args: {
           p_document_id: string
@@ -2456,7 +2854,13 @@ export type Database = {
         | "late_canceled"
         | "checked_in"
         | "no_show"
-      checkin_method: "qr" | "manual" | "facial" | "fingerprint" | "nfc"
+      checkin_method:
+        | "qr"
+        | "manual"
+        | "facial"
+        | "fingerprint"
+        | "nfc"
+        | "palm"
       equipment_status: "active" | "maintenance" | "retired"
       invoice_status: "draft" | "open" | "paid" | "void" | "uncollectible"
       member_status: "lead" | "active" | "frozen" | "archived"
@@ -2618,7 +3022,7 @@ export const Constants = {
         "checked_in",
         "no_show",
       ],
-      checkin_method: ["qr", "manual", "facial", "fingerprint", "nfc"],
+      checkin_method: ["qr", "manual", "facial", "fingerprint", "nfc", "palm"],
       equipment_status: ["active", "maintenance", "retired"],
       invoice_status: ["draft", "open", "paid", "void", "uncollectible"],
       member_status: ["lead", "active", "frozen", "archived"],

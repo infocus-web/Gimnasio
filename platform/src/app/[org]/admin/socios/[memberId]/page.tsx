@@ -13,6 +13,8 @@ import { fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD }
 import { MemberForm } from '@/features/admin/MemberForm'
 import { AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
+import { EnrollForm } from '@/features/admin/AccessForms'
+import { enrollMember } from '@/features/admin/access-actions'
 
 export const metadata: Metadata = { title: 'Ficha de socio' }
 
@@ -69,6 +71,27 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
           .limit(12)
       : Promise.resolve({ data: [] as { id: string | null; paid_at: string | null; amount_cents: number | null; currency: string | null; provider: string | null; status: string | null; plan_name: string | null; note: string | null }[] }),
   ])
+
+  // Lectores de acceso (cara/palma/huella)
+  const [{ data: pinRow }, { data: accessDevices }] = await Promise.all([
+    supabase.from('members').select('access_pin, biometric_consent_at').eq('id', memberId).maybeSingle(),
+    supabase.from('access_devices').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('created_at'),
+  ])
+  const accessPin = pinRow?.access_pin ?? null
+  const [{ data: onDevices }, { data: lastEnroll }] =
+    accessPin && accessDevices?.length
+      ? await Promise.all([
+          supabase.from('access_device_users').select('device_id, state, has_bio').eq('org_id', ctx.org.id).eq('pin', accessPin),
+          supabase
+            .from('access_commands')
+            .select('status, return_code, created_at')
+            .eq('member_id', memberId)
+            .eq('kind', 'enroll')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ])
+      : [{ data: [] as { device_id: string; state: string; has_bio: boolean }[] }, { data: null }]
 
   const st = PLAN_STATE_UI[planState(m as { membership_status: string | null; current_period_end: string | null; status: string })]
   const payer = (family.data ?? []).find((f) => f.is_payer)
@@ -232,6 +255,43 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
               </div>
             )}
           </Card>
+
+          {accessPin && accessDevices && accessDevices.length > 0 && (
+            <Card title="Acceso con lector">
+              <p className="text-sm text-zinc-400">
+                Número en el lector: <strong className="font-mono text-white">{accessPin}</strong>
+              </p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {accessDevices.map((d) => {
+                  const u = (onDevices ?? []).find((x) => x.device_id === d.id)
+                  const label =
+                    !u || u.state === 'absent'
+                      ? ['No cargado (no está al día)', 'text-zinc-500']
+                      : u.state === 'error'
+                        ? ['El lector rechazó el alta', 'text-red-300']
+                        : u.has_bio
+                          ? ['Cargado · puede entrar', 'text-emerald-300']
+                          : ['Cargado · falta registrar cara', 'text-amber-300']
+                  return (
+                    <li key={d.id} className="flex justify-between gap-2">
+                      <span className="text-zinc-300">{d.name}</span>
+                      <span className={label[1]}>{label[0]}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+              {lastEnroll?.status === 'error' && (
+                <p className="mt-2 text-xs text-amber-300">
+                  El lector no aceptó el registro a distancia: registralo desde el lector (Menú → Usuarios → buscar {accessPin} → Cara).
+                </p>
+              )}
+              {ctx.can('checkins.manage') && (
+                <div className="mt-3 border-t border-zinc-900 pt-3">
+                  <EnrollForm action={enrollMember.bind(null, slug, memberId)} devices={accessDevices} />
+                </div>
+              )}
+            </Card>
+          )}
 
           <Card
             title="Grupo familiar"
