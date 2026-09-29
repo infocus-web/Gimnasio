@@ -114,7 +114,7 @@ export function LoginForm() {
               onClick={() => setMode(mode === 'link' ? 'password' : 'link')}
               className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline"
             >
-              {mode === 'link' ? 'Prefiero usar contraseña (staff)' : 'Prefiero recibir un link por email'}
+              {mode === 'link' ? 'Prefiero usar contraseña' : 'Prefiero recibir un link por email'}
             </button>
           </form>
         )}

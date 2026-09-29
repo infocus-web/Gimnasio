@@ -4,11 +4,11 @@ import { useRouter } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export function SignOutButton({ compact = false }: { compact?: boolean }) {
+export function SignOutButton({ compact = false, to = '/login' }: { compact?: boolean; to?: '/login' | '/equipo' }) {
   const router = useRouter()
   const signOut = async () => {
     await createClient().auth.signOut()
-    router.replace('/login')
+    router.replace(to)
     router.refresh()
   }
   return (

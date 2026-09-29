@@ -31,7 +31,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
         <div className="max-w-sm space-y-3">
           <h1 className="text-xl font-bold text-white">Acceso solo para el equipo del gimnasio</h1>
           <p className="text-sm text-zinc-400">Ingresá con una cuenta de recepción, profesor o administración.</p>
-          <SignOutButton />
+          <SignOutButton to="/equipo" />
         </div>
       </main>
     )
@@ -81,14 +81,14 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
             <p className="truncate text-sm font-semibold text-white">{ctx.staff.display_name}</p>
             <p className="text-xs text-zinc-500">{ROLE_LABELS[ctx.staff.role] ?? ctx.staff.role}</p>
           </div>
-          <SignOutButton compact />
+          <SignOutButton compact to="/equipo" />
         </div>
       </aside>
 
       <header className="sticky top-0 z-30 border-b border-zinc-900 bg-black/85 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <span className="truncate text-sm font-extrabold text-white">{ctx.org.name}</span>
-          <SignOutButton compact />
+          <SignOutButton compact to="/equipo" />
         </div>
         <AdminNav items={items} variant="bar" />
       </header>

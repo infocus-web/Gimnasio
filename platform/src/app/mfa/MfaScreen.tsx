@@ -148,7 +148,7 @@ export function MfaScreen({ next, mode, factorId: initialFactor, email }: Props)
         </form>
         <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>¿Perdiste el celular? Pedile al soporte que reinicie tu 2FA.</span>
-          <SignOutButton compact />
+          <SignOutButton compact to="/equipo" />
         </div>
       </div>
     </main>

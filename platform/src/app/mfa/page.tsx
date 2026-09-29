@@ -17,7 +17,7 @@ export default async function MfaPage({ searchParams }: PageProps<'/mfa'>) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent(next)}` as Route)
+  if (!user) redirect(`/equipo?next=${encodeURIComponent(next)}` as Route)
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
   if (aal?.currentLevel === 'aal2') redirect(next as Route)

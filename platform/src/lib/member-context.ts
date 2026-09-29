@@ -48,12 +48,13 @@ export const getOrg = cache(async (slug: string): Promise<OrgInfo | null> => {
   }
 })
 
-export const requireUser = cache(async (next: string) => {
+/** Usuario logueado; si no hay sesión, a la puerta que corresponde (socios: /login · equipo: /equipo). */
+export const requireUser = cache(async (next: string, door: 'login' | 'equipo' = 'login') => {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect(`/login?next=${encodeURIComponent(next)}` as Route)
+  if (!user) redirect(`/${door}?next=${encodeURIComponent(next)}` as Route)
   return user
 })
 
@@ -105,7 +106,7 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
 
 /** Staff activo del gimnasio (para la recepción). */
 export const getStaffContext = cache(async (slug: string) => {
-  const user = await requireUser(`/${slug}/admin`)
+  const user = await requireUser(`/${slug}/admin`, 'equipo')
   const org = await getOrg(slug)
   if (!org) return null
   const supabase = await createClient()
