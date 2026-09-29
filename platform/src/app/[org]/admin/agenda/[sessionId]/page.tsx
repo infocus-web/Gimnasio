@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata, Route } from 'next'
-import { ArrowLeft, X, HeartPulse } from 'lucide-react'
+import { ArrowLeft, X, HeartPulse, Check, UserX } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { bookForMember, cancelBookingDesk, cancelSession } from '@/features/admin/schedule-actions'
+import { markAttendance } from '@/features/admin/coach-actions'
 import { fmtTime } from '@/features/admin/format'
 import { BookForMemberForm, CancelSessionForm } from '@/features/admin/ScheduleForms'
 import { Card } from '@/features/admin/ui'
@@ -49,6 +50,10 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
   const others = (roster ?? []).filter((r) => !['booked', 'checked_in', 'waitlisted'].includes(r.status!))
   const future = new Date(s.starts_at!).getTime() > Date.now()
   const scheduled = s.status === 'scheduled'
+  const canAttend =
+    (ctx.can('bookings.manage') || s.instructor_id === ctx.staff.id) &&
+    scheduled &&
+    new Date(s.starts_at!).getTime() - 30 * 60_000 <= Date.now()
   const dateLabel = new Intl.DateTimeFormat('es-AR', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(s.starts_at!))
 
   const Row = ({ r }: { r: NonNullable<typeof roster>[number] }) => (
@@ -68,8 +73,25 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
           )}
         </span>
       </span>
-      <span className={`text-xs ${STATUS[r.status!]?.cls ?? ''}`}>{STATUS[r.status!]?.label ?? r.status}</span>
-      {ctx.can('bookings.manage') && future && (r.status === 'booked' || r.status === 'waitlisted') && (
+      {canAttend && ['booked', 'checked_in', 'no_show'].includes(r.status!) ? (
+        <span className="flex gap-1">
+          <form action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'checked_in' ? 'booked' : 'checked_in')}>
+            <button type="submit" aria-pressed={r.status === 'checked_in'} aria-label={`${r.member_name} vino`}
+              className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'checked_in' ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200' : 'border-zinc-700 text-zinc-300 hover:border-emerald-500/50'}`}>
+              <Check className="h-3.5 w-3.5" aria-hidden="true" /> Vino
+            </button>
+          </form>
+          <form action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'no_show' ? 'booked' : 'no_show')}>
+            <button type="submit" aria-pressed={r.status === 'no_show'} aria-label={`${r.member_name} no vino`}
+              className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'no_show' ? 'border-red-500/50 bg-red-500/15 text-red-200' : 'border-zinc-700 text-zinc-300 hover:border-red-500/50'}`}>
+              <UserX className="h-3.5 w-3.5" aria-hidden="true" /> No vino
+            </button>
+          </form>
+        </span>
+      ) : (
+        <span className={`text-xs ${STATUS[r.status!]?.cls ?? ''}`}>{STATUS[r.status!]?.label ?? r.status}</span>
+      )}
+      {ctx.can('bookings.manage') && future && !canAttend && (r.status === 'booked' || r.status === 'waitlisted') && (
         <form action={cancelBookingDesk.bind(null, slug, r.booking_id!)}>
           <button type="submit" aria-label={`Cancelar reserva de ${r.member_name}`}
             className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-800 text-zinc-500 hover:border-red-500/50 hover:text-red-300">

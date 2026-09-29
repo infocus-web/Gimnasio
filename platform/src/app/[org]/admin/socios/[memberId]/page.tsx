@@ -6,6 +6,8 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { assignPlan, inviteMemberToApp, updateMember } from '@/features/admin/actions'
 import { recordPayment } from '@/features/admin/billing-actions'
+import { assignTrainer } from '@/features/admin/coach-actions'
+import { TrainerSelectForm } from '@/features/admin/CoachForms'
 import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
 import { fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 import { MemberForm } from '@/features/admin/MemberForm'
@@ -31,6 +33,10 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
     .maybeSingle()
   if (!m) notFound()
 
+  const [{ data: staffList }, { data: tc }] = await Promise.all([
+    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).order('display_name'),
+    supabase.from('trainer_clients').select('trainer_id').eq('member_id', memberId).maybeSingle(),
+  ])
   const [family, checkins, plans, payments] = await Promise.all([
     m.billing_account_id
       ? supabase
@@ -191,6 +197,21 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
         </div>
 
         <div className="space-y-5">
+          <Card title="Profesor a cargo">
+            {canWrite ? (
+              <TrainerSelectForm
+                action={assignTrainer.bind(null, slug, memberId)}
+                trainers={(staffList ?? []).map((t) => ({ id: t.id, name: t.display_name }))}
+                current={tc?.trainer_id ?? null}
+              />
+            ) : (
+              <p className="text-sm text-zinc-400">
+                {(staffList ?? []).find((t) => t.id === tc?.trainer_id)?.display_name ?? 'Sin profesor asignado'}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-zinc-500">El profe ve su progreso y le asigna rutinas.</p>
+          </Card>
+
           <Card title="Acceso a la app">
             {m.has_app ? (
               <p className="flex items-center gap-2 text-sm text-emerald-200">

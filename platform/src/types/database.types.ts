@@ -187,6 +187,13 @@ export type Database = {
             foreignKeyName: "billing_accounts_payer_member_id_org_id_fkey"
             columns: ["payer_member_id", "org_id"]
             isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
+          {
+            foreignKeyName: "billing_accounts_payer_member_id_org_id_fkey"
+            columns: ["payer_member_id", "org_id"]
+            isOneToOne: false
             referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
@@ -228,6 +235,13 @@ export type Database = {
           weight_kg?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "body_metrics_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
           {
             foreignKeyName: "body_metrics_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -306,6 +320,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "equipment"
             referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
           },
           {
             foreignKeyName: "bookings_member_id_org_id_fkey"
@@ -402,6 +423,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "checkins_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
           },
           {
             foreignKeyName: "checkins_member_id_org_id_fkey"
@@ -890,6 +918,13 @@ export type Database = {
             foreignKeyName: "member_secrets_member_id_fkey"
             columns: ["member_id"]
             isOneToOne: true
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_secrets_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
             referencedRelation: "member_directory"
             referencedColumns: ["id"]
           },
@@ -1017,6 +1052,13 @@ export type Database = {
           org_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "membership_members_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
           {
             foreignKeyName: "membership_members_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -1443,6 +1485,13 @@ export type Database = {
             foreignKeyName: "program_assignments_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
             isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
+          {
+            foreignKeyName: "program_assignments_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
             referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
@@ -1806,6 +1855,13 @@ export type Database = {
             foreignKeyName: "trainer_clients_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
             isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
+          {
+            foreignKeyName: "trainer_clients_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
             referencedRelation: "member_directory"
             referencedColumns: ["id", "org_id"]
           },
@@ -1893,6 +1949,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "program_assignments"
             referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "workout_logs_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
           },
           {
             foreignKeyName: "workout_logs_member_id_org_id_fkey"
@@ -2009,6 +2072,32 @@ export type Database = {
           },
         ]
       }
+      coach_client_overview: {
+        Row: {
+          last_checkin_at: string | null
+          last_workout_at: string | null
+          medical_notes: string | null
+          member_id: string | null
+          member_name: string | null
+          org_id: string | null
+          phone: string | null
+          photo_url: string | null
+          program_name: string | null
+          since: string | null
+          trainer_id: string | null
+          trainer_name: string | null
+          workouts_30d: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_directory: {
         Row: {
           billing_account_id: string | null
@@ -2105,6 +2194,13 @@ export type Database = {
           waitlist_position: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_member_id_org_id_fkey"
+            columns: ["member_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "coach_client_overview"
+            referencedColumns: ["member_id", "org_id"]
+          },
           {
             foreignKeyName: "bookings_member_id_org_id_fkey"
             columns: ["member_id", "org_id"]
@@ -2223,9 +2319,17 @@ export type Database = {
         Args: { p_email: string; p_org: string }
         Returns: string
       }
+      mark_attendance: {
+        Args: {
+          p_booking: string
+          p_status: Database["public"]["Enums"]["booking_status"]
+        }
+        Returns: undefined
+      }
       my_permissions: { Args: { p_org: string }; Returns: string[] }
       my_staff_role: { Args: { p_org: string }; Returns: string }
       new_token: { Args: never; Returns: string }
+      org_report: { Args: { p_months?: number; p_org: string }; Returns: Json }
       peak_hours: {
         Args: { p_org_id: string; p_weeks?: number }
         Returns: {

@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
-import { Home, Users, UserCog, ScanLine, CreditCard, CalendarDays, Globe } from 'lucide-react'
+import { Home, Users, UserCog, ScanLine, CreditCard, CalendarDays, Globe, BarChart3, Dumbbell, ClipboardList, CalendarCheck } from 'lucide-react'
 
-const ICONS = { home: Home, users: Users, team: UserCog, scan: ScanLine, billing: CreditCard, calendar: CalendarDays, web: Globe }
+const ICONS = { home: Home, users: Users, team: UserCog, scan: ScanLine, billing: CreditCard, calendar: CalendarDays, web: Globe, chart: BarChart3, dumbbell: Dumbbell, list: ClipboardList, mine: CalendarCheck }
 
 export interface NavItem {
   href: string

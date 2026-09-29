@@ -15,3 +15,4 @@ for f in migrations/000[5-9]*.sql migrations/00[1-9][0-9]*.sql; do $Q -f "$f" 2>
 $Q -f test/scenario_v2.sql | grep -E '^ OK|PASARON|=|FALLO'
 $Q -f test/scenario_admin.sql | grep -E '^ OK|PASARON|=|FALLO'
 $Q -f test/scenario_stage1.sql | grep -E '^ OK|PASARON|=|FALLO'
+$Q -f test/scenario_stage2.sql | grep -E '^ OK|PASARON|=|FALLO'

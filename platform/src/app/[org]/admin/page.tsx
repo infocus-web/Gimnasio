@@ -141,8 +141,9 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
         </>
       ) : (
         <p className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 text-sm text-zinc-400">
-          Desde acá vas a ver tus clases y alumnos. Mientras tanto, usá <strong className="text-white">Recepción</strong> para
-          registrar entradas.
+          Desde el menú tenés <strong className="text-white">Mis clases</strong> (asistencia),{' '}
+          <strong className="text-white">Mis alumnos</strong> (progreso) y <strong className="text-white">Rutinas</strong> (armado y
+          asignación).
         </p>
       )}
     </div>
