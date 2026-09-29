@@ -33,6 +33,9 @@ export interface PublicGym {
     whatsapp?: string
     email?: string
     instagram?: string
+    facebook?: string
+    maps_url?: string
+    geo?: { lat: number; lng: number }
   }
   plans: PublicPlan[]
   activities: { name: string; description: string | null; color: string; image_url: string | null }[]

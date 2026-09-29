@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowRight, CalendarCheck, Clock, Dumbbell, AtSign, Mail, MapPin, Menu, MessageCircle, Phone, QrCode, Smartphone, Users,
+  ArrowRight, CalendarCheck, Clock, Dumbbell, AtSign, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
 
@@ -48,6 +48,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const loginHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/pase`)}` as Route
   const [first, ...rest] = gym.name.split(' ')
   const whatsapp = p.whatsapp ? `https://wa.me/${p.whatsapp.replace(/\D/g, '')}` : null
+  const mapQuery = gym.address ? `${gym.name}, ${gym.address}` : p.geo ? `${p.geo.lat},${p.geo.lng}` : null
+  // Google Maps embebido sin API key (no requiere cuenta ni costo)
+  const mapEmbed = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&hl=es&output=embed` : null
+  const mapsHref = p.maps_url ?? (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : null)
   const scheduleDays = [1, 2, 3, 4, 5, 6, 7].filter((d) => gym.schedule.some((s) => s.weekday === d))
 
   return (
@@ -296,58 +300,97 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           </section>
         )}
 
-        {/* ---------- Contacto ---------- */}
+        {/* ---------- Contacto + mapa ---------- */}
         <section id="contacto" className="scroll-mt-20 border-t border-white/5 bg-black py-20">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <Kicker>Contacto</Kicker>
-              <SectionTitle>Vení a conocernos</SectionTitle>
-              <p className="text-zinc-300">Acercate a recepción y te armamos tu plan y tu rutina.</p>
-              {whatsapp && (
-                <a
-                  href={whatsapp}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`inline-flex min-h-[52px] items-center gap-2 rounded-xl bg-[#edcc36] px-6 font-bold text-black hover:bg-white ${focus}`}
-                >
-                  <MessageCircle className="h-5 w-5" aria-hidden="true" /> Escribinos por WhatsApp
-                </a>
-              )}
+          <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-5">
+            <div className="space-y-6 lg:col-span-2">
+              <div className="space-y-3">
+                <Kicker>Contacto</Kicker>
+                <SectionTitle>Vení a conocernos</SectionTitle>
+                <p className="text-zinc-300">Acercate a recepción y te armamos tu plan y tu rutina.</p>
+              </div>
+              <ul className="glass-panel space-y-4 rounded-3xl p-6 text-sm">
+                {gym.address && (
+                  <li className="flex gap-3">
+                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                    <span>{gym.address}</span>
+                  </li>
+                )}
+                <li className="flex gap-3">
+                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                  <span>{p.hours_text ?? 'Consultá horarios en recepción'}</span>
+                </li>
+                {p.phone && (
+                  <li className="flex gap-3">
+                    <Phone className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                    <a href={`tel:${p.phone.replace(/[^\d+]/g, '')}`} className="underline-offset-4 hover:underline">{p.phone}</a>
+                  </li>
+                )}
+                {p.email && (
+                  <li className="flex gap-3">
+                    <Mail className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                    <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">{p.email}</a>
+                  </li>
+                )}
+                {p.instagram && (
+                  <li className="flex gap-3">
+                    <AtSign className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                    <a href={`https://instagram.com/${p.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                      Instagram {p.instagram}
+                    </a>
+                  </li>
+                )}
+                {p.facebook && (
+                  <li className="flex gap-3">
+                    <Users className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                    <a href={`https://www.facebook.com/${p.facebook}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                      Facebook
+                    </a>
+                  </li>
+                )}
+              </ul>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+                {mapsHref && (
+                  <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-6 font-bold text-black hover:bg-white ${focus}`}
+                  >
+                    <Navigation className="h-5 w-5" aria-hidden="true" /> Cómo llegar
+                  </a>
+                )}
+                {whatsapp ? (
+                  <a
+                    href={whatsapp}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#edcc36]/50 px-6 font-bold text-[#edcc36] hover:bg-[#edcc36]/10 ${focus}`}
+                  >
+                    <MessageCircle className="h-5 w-5" aria-hidden="true" /> WhatsApp
+                  </a>
+                ) : p.phone ? (
+                  <a
+                    href={`tel:${p.phone.replace(/[^\d+]/g, '')}`}
+                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#edcc36]/50 px-6 font-bold text-[#edcc36] hover:bg-[#edcc36]/10 ${focus}`}
+                  >
+                    <Phone className="h-5 w-5" aria-hidden="true" /> Llamar
+                  </a>
+                ) : null}
+              </div>
             </div>
-            <ul className="glass-panel space-y-4 rounded-3xl p-6 text-sm">
-              <li className="flex gap-3">
-                <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                <span>{p.hours_text ?? 'Consultá horarios en recepción'}</span>
-              </li>
-              {gym.address && (
-                <li className="flex gap-3">
-                  <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gym.address)}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                    {gym.address}
-                  </a>
-                </li>
-              )}
-              {p.phone && (
-                <li className="flex gap-3">
-                  <Phone className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                  <a href={`tel:${p.phone}`} className="underline-offset-4 hover:underline">{p.phone}</a>
-                </li>
-              )}
-              {p.email && (
-                <li className="flex gap-3">
-                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                  <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">{p.email}</a>
-                </li>
-              )}
-              {p.instagram && (
-                <li className="flex gap-3">
-                  <AtSign className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                  <a href={`https://instagram.com/${p.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
-                    {p.instagram}
-                  </a>
-                </li>
-              )}
-            </ul>
+
+            {mapEmbed && (
+              <div className="relative min-h-[320px] overflow-hidden rounded-3xl border border-[#edcc36]/25 shadow-[0_0_25px_-5px_rgba(237,204,54,0.2)] lg:col-span-3">
+                <iframe
+                  title={`Mapa: ${gym.name}${gym.address ? `, ${gym.address}` : ''}`}
+                  src={mapEmbed}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 h-full w-full [filter:grayscale(1)_invert(0.92)_contrast(0.9)]"
+                />
+              </div>
+            )}
           </div>
         </section>
       </main>
