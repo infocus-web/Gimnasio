@@ -11,7 +11,7 @@ export interface ActionState {
 }
 
 export const ERRORS: Record<string, string> = {
-  FORBIDDEN: 'No tenés permiso para esta acción.',
+  FORBIDDEN: 'No tenés permiso para esta acción. Si entraste con otra cuenta en otra pestaña, recargá la página: la sesión es una sola por navegador.',
   MFA_REQUIRED: 'Tenés que verificar tu identidad con el código de 2 pasos.',
   NAME_REQUIRED: 'El nombre es obligatorio.',
   DOCUMENT_TAKEN: 'Ya hay un socio con ese DNI.',
