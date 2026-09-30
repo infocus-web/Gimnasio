@@ -21,10 +21,15 @@ const PUBLIC_ERRORS: Record<string, [field: string | null, msg: string]> = {
 /** Formulario público del padrón. No crea cuentas: solo deja la solicitud para que la apruebe el dueño. */
 export async function submitStaffRequest(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const raw = formObject(form)
-  // Anti-bots: campo trampa invisible y tiempo mínimo de llenado
-  const started = Number(raw.started_at ?? 0)
-  if (raw.website || !started || Date.now() - started < 3000) {
+  // Anti-bots: campo trampa invisible (solo lo completa un robot) y tiempo mínimo de llenado,
+  // medido en el celular de la persona (antes se comparaban relojes y descartaba envíos reales).
+  if (raw.hp_field || raw.website) {
+    console.warn('[padron] descartado por campo trampa', slug)
     return { ok: true, message: '¡Listo! Tu solicitud quedó registrada.' }
+  }
+  const elapsed = Number(raw.elapsed_ms ?? 0)
+  if (Number.isFinite(elapsed) && elapsed > 0 && elapsed < 2000) {
+    return { message: 'Revisá tus datos y tocá "Enviar" de nuevo.' }
   }
   const supabase = await createClient()
   const { error } = await supabase.rpc('submit_staff_request', {
@@ -45,7 +50,7 @@ export async function submitStaffRequest(slug: string, _prev: ActionState, form:
   }
   return {
     ok: true,
-    message: '¡Listo! Tu solicitud quedó registrada. Cuando la aprueben te llega un email para crear tu contraseña y entrar.',
+    message: '¡Listo! Tu solicitud quedó registrada. Cuando la aprueben te llega tu acceso (por email o te lo pasan por WhatsApp).',
   }
 }
 

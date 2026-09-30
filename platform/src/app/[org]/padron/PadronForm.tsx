@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { ClipboardCheck, Loader2, CheckCircle2 } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
@@ -32,7 +32,9 @@ function F({ label, name, error, children }: { label: string; name: string; erro
 
 export function PadronForm({ gymName, action }: { gymName: string; action: (p: ActionState, f: FormData) => Promise<ActionState> }) {
   const [state, formAction] = useActionForm(action, {})
-  const [startedAt] = useState(() => Date.now())
+  // Tiempo de llenado medido en el propio celular (no depende de que su reloj esté en hora)
+  const [openedAt] = useState(() => (typeof performance !== 'undefined' ? performance.now() : 0))
+  const elapsedRef = useRef<HTMLInputElement>(null)
   const e = state.fieldErrors ?? {}
 
   return (
@@ -54,13 +56,20 @@ export function PadronForm({ gymName, action }: { gymName: string; action: (p: A
             {state.message}
           </p>
         ) : (
-          <form action={formAction} className="space-y-4" noValidate>
-            <input type="hidden" name="started_at" value={startedAt} />
+          <form
+            action={formAction}
+            onSubmit={() => {
+              if (elapsedRef.current) elapsedRef.current.value = String(Math.round(performance.now() - openedAt))
+            }}
+            className="space-y-4"
+            noValidate
+          >
+            <input ref={elapsedRef} type="hidden" name="elapsed_ms" defaultValue="0" />
             <KeepValues values={state.values} />
             {/* Campo trampa para bots: invisible para personas */}
             <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
               <label>
-                Sitio web <input name="website" tabIndex={-1} autoComplete="off" />
+                No completar <input name="hp_field" tabIndex={-1} autoComplete="off" />
               </label>
             </div>
 
