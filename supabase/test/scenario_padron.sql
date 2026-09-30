@@ -6,9 +6,9 @@ grant usage on schema test to anon; grant execute on all functions in schema tes
 set role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', false);
 select public.submit_staff_request('evolution', 'Marta', 'Gómez', '30.123.456', '11 5555-1234', ' Marta@Test.com ', 'trainer', 'Doy funcional') as r1 \gset
-select public.submit_staff_request('evolution', 'Marta', 'Gómez', '30123456', '1155551234', 'marta@test.com', 'trainer') as r2 \gset
-select public.submit_staff_request('evolution', 'Ana', 'Staff', '20111222', '1155550000', 'profe.ana@test.com', 'trainer') as r3 \gset
-\echo respuestas = :r1 :r2 :r3
+select test.expect_error($q$select public.submit_staff_request('evolution', 'Marta', 'Gómez', '30123456', '1155551234', 'marta@test.com', 'trainer')$q$, 'ALREADY_PENDING');
+select test.expect_error($q$select public.submit_staff_request('evolution', 'Ana', 'Staff', '20111222', '1155550000', 'profe.ana@test.com', 'trainer')$q$, 'ALREADY_STAFF');
+\echo respuestas = :r1 · repetida y ya del equipo avisan
 select test.expect_error($q$select public.submit_staff_request('evolution','X','Y','12','1155551234','x@test.com','trainer')$q$, 'INVALID_DOCUMENT');
 select test.expect_error($q$select public.submit_staff_request('evolution','X','Y','30111222','1155551234','x@test.com','admin')$q$, 'INVALID_ROLE');
 select test.expect_error($q$insert into public.staff_requests (org_id, first_name, last_name, document_id, phone, email, requested_role)

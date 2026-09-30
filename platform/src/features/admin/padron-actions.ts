@@ -16,6 +16,8 @@ const PUBLIC_ERRORS: Record<string, [field: string | null, msg: string]> = {
   INVALID_ROLE: ['role', 'Elegí tu puesto.'],
   RATE_LIMITED: [null, 'Hay muchas solicitudes en este momento. Probá de nuevo en un rato.'],
   ORG_NOT_FOUND: [null, 'El gimnasio no existe.'],
+  ALREADY_STAFF: ['email', 'Ese email ya es del equipo: entrá por "Acceso equipo" (al pie de la web) con tu contraseña.'],
+  ALREADY_PENDING: [null, 'Ya hay una solicitud tuya esperando aprobación. No hace falta mandarla de nuevo.'],
 }
 
 /** Formulario público del padrón. No crea cuentas: solo deja la solicitud para que la apruebe el dueño. */
