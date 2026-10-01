@@ -41,7 +41,11 @@ export function StaffLoginForm() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error || !data.user) {
       setStatus('idle')
-      setMessage('Email o contraseña incorrectos.')
+      setMessage(
+        error?.code === 'email_not_confirmed'
+          ? 'Tu cuenta todavía no está activada: abrí el mail que te mandamos o pedí una contraseña nueva en el gimnasio.'
+          : 'Email o contraseña incorrectos.',
+      )
       return
     }
     // Esta puerta es solo para el equipo

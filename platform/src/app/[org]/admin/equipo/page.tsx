@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { Clock, X, Lock } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { cancelInvitation, inviteStaff, resendInvitation, updateStaff } from '@/features/admin/actions'
 import { createStaffAccount, deleteStaff, resetStaffPassword, setStaffBlocked } from '@/features/admin/staff-account-actions'
 import { fmtDate } from '@/features/admin/format'
@@ -46,6 +47,20 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
 
   const isOwner = ctx.staff.role === 'owner'
   const keyMissing = !process.env.SUPABASE_SECRET_KEY
+
+  // El email vive en auth.users (no en staff): se lee con la clave secreta, solo del lado del servidor
+  const emails = new Map<string, string>()
+  if (!keyMissing) {
+    const admin = createAdminClient()
+    await Promise.all(
+      (staff ?? [])
+        .filter((s) => s.user_id)
+        .map(async (s) => {
+          const { data } = await admin.auth.admin.getUserById(s.user_id!)
+          if (data?.user?.email) emails.set(s.user_id!, data.user.email)
+        }),
+    )
+  }
 
   return (
     <div className="space-y-5">
@@ -108,6 +123,9 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
                         <p className="text-xs text-zinc-500">
                           {ROLE_LABELS[s.role] ?? s.role} · desde {fmtDate(s.created_at)}
                         </p>
+                        {s.user_id && emails.get(s.user_id) && (
+                          <p className="truncate text-xs text-zinc-400">{emails.get(s.user_id)}</p>
+                        )}
                       </div>
                       {!locked && s.active && (
                         <StaffRowForm action={updateStaff.bind(null, slug, s.id)} role={s.role} allowAdmin={isOwner} />

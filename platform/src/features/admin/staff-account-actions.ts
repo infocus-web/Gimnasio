@@ -132,6 +132,9 @@ export async function resetStaffPassword(slug: string, staffId: string, _prev: A
   const admin = createAdminClient()
   const { error } = await admin.auth.admin.updateUserById(t.target.user_id, {
     password,
+    // Si lo aprobaron "por email" y nunca abrió el link, la cuenta queda sin confirmar
+    // y Supabase rechaza la contraseña: al darle una clave a mano, la confirmamos.
+    email_confirm: true,
     user_metadata: { must_change_password: true },
   })
   if (error) {

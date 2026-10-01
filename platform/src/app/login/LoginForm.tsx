@@ -46,7 +46,11 @@ export function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setStatus('error')
-      setMessage('Email o contraseña incorrectos.')
+      setMessage(
+        error?.code === 'email_not_confirmed'
+          ? 'Tu cuenta todavía no está activada: abrí el mail que te mandamos o pedí una contraseña nueva en el gimnasio.'
+          : 'Email o contraseña incorrectos.',
+      )
       return
     }
     router.replace(next as Route)
