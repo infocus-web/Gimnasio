@@ -6,6 +6,13 @@ import { MembershipBanner } from '@/components/membership/MembershipBanner'
 import { useMember } from '@/features/member/MemberProvider'
 import { useMembership, NO_MEMBERSHIP } from '@/features/member/useMembership'
 import type { CheckinToken } from '@/types/platform'
+import { AccessStatusCard } from './AccessStatusCard'
+
+/**
+ * QR de acceso: apagado mientras se entra solo con los lectores ZKTeco (cara/palma/huella).
+ * Para volver a mostrarlo (por ejemplo, si un día hay recepción escaneando), cambiar a true.
+ */
+const SHOW_QR = false
 
 export function PassScreen() {
   const { supabase, family, activeMemberId, setActiveMemberId } = useMember()
@@ -29,6 +36,7 @@ export function PassScreen() {
   }, [supabase, activeMemberId])
 
   useEffect(() => {
+    if (!SHOW_QR) return
     setLoading(true)
     setToken(null)
     void refresh()
@@ -36,12 +44,37 @@ export function PassScreen() {
 
   const onPay = () => setPayNotice(true)
 
+  const payInfo = payNotice && (
+    <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-200">
+      El pago online con Mercado Pago se habilita en la próxima etapa. Por ahora podés abonar en el gimnasio
+      (efectivo, transferencia o tarjeta).
+    </p>
+  )
+
+  if (!SHOW_QR) {
+    return (
+      <div className="space-y-4">
+        <AccessStatusCard
+          membership={membership}
+          member={family.find((m) => m.id === activeMemberId) ?? family[0]}
+          family={family}
+          activeMemberId={activeMemberId}
+          onSelectMember={setActiveMemberId}
+          onPay={onPay}
+          loading={!membership}
+        />
+        {payInfo}
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <MemberQrPass
         token={token}
         membership={membership ?? NO_MEMBERSHIP}
         familyMembers={family.length > 1 ? family : undefined}
+        member={family.find((m) => m.id === activeMemberId) ?? family[0]}
         selectedFamilyMemberId={activeMemberId}
         onSelectFamilyMember={setActiveMemberId}
         onRefresh={refresh}
@@ -50,12 +83,7 @@ export function PassScreen() {
         error={error}
       />
       {membership && <MembershipBanner membership={membership} onPay={onPay} />}
-      {payNotice && (
-        <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-200">
-          El pago online con Mercado Pago se habilita en la próxima etapa. Por ahora podés abonar en recepción
-          (efectivo, transferencia o tarjeta).
-        </p>
-      )}
+      {payInfo}
     </div>
   )
 }

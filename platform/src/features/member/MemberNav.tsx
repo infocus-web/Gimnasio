@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
-import { QrCode, CalendarDays, Dumbbell, TrendingUp, Clock } from 'lucide-react'
+import { ShieldCheck, CalendarDays, Dumbbell, TrendingUp, Clock } from 'lucide-react'
 
 const TABS = [
-  { href: 'pase', label: 'Pase', Icon: QrCode },
+  { href: 'pase', label: 'Acceso', Icon: ShieldCheck },
   { href: 'clases', label: 'Clases', Icon: CalendarDays },
   { href: 'entrenar', label: 'Entrenar', Icon: Dumbbell },
   { href: 'progreso', label: 'Progreso', Icon: TrendingUp },

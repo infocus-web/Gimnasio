@@ -12,6 +12,8 @@ export interface MemberQrPassProps {
   token: CheckinToken | null;
   membership: MembershipSummary;
   familyMembers?: FamilyMember[];
+  /** El socio que muestra el pase (siempre, aunque no tenga grupo familiar) */
+  member?: FamilyMember;
   selectedFamilyMemberId?: string;
   onSelectFamilyMember?: (memberId: string) => void;
   onRefresh: () => void;
@@ -24,6 +26,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
   token,
   membership,
   familyMembers = [],
+  member,
   selectedFamilyMemberId,
   onSelectFamilyMember,
   onRefresh,
@@ -98,6 +101,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
 
   const currentFamilyMember =
     familyMembers.find((m) => m.id === selectedFamilyMemberId) ||
+    member ||
     familyMembers.find((m) => m.isMe) ||
     familyMembers[0];
 
