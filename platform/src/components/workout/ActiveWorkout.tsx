@@ -18,6 +18,7 @@ import {
 import { PrescribedExercise, LoggedSet } from '../../types/platform';
 import { PlateCalculator } from './PlateCalculator';
 import { sound } from '../../utils/audio';
+import { formatAgo, formatPreviousSets, type PreviousExercise } from '../../features/member/usePreviousPerformance';
 
 export interface ActiveWorkoutProps {
   exercises: PrescribedExercise[];
@@ -25,6 +26,19 @@ export interface ActiveWorkoutProps {
   onLogSet: (set: LoggedSet) => void;
   onFinishWorkout?: () => void;
   onExit?: () => void;
+  /** Lo que hizo la última vez en cada ejercicio (clave: exercise id) */
+  previous?: Record<string, PreviousExercise>;
+  /** Momento en que arrancó el entrenamiento (ms), para el cronómetro */
+  startedAt?: number | null;
+  /** Cuánto tardó la última vez en este mismo día de rutina */
+  lastDurationMin?: number | null;
+}
+
+function fmtClock(totalSeconds: number) {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
 }
 
 export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
@@ -33,7 +47,20 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   onLogSet,
   onFinishWorkout,
   onExit,
+  previous = {},
+  startedAt = null,
+  lastDurationMin = null,
 }) => {
+  // Cronómetro total del entrenamiento
+  const [elapsed, setElapsed] = useState<number>(0);
+  useEffect(() => {
+    if (!startedAt) return;
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [startedAt]);
+
   const [currentExerciseIdx, setCurrentExerciseIdx] = useState<number>(0);
   const [currentSetNumber, setCurrentSetNumber] = useState<number>(1);
   const [selectedReps, setSelectedReps] = useState<number>(8);
@@ -57,13 +84,16 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   useEffect(() => {
     if (!activeExercise) return
     const last = [...loggedSets].reverse().find((s) => s.exerciseId === activeExercise.id)
-    setSelectedWeight(last?.weightKg ?? activeExercise.targetWeightKg ?? 0)   // 0 = peso corporal
+    // Si hoy todavía no hizo series de este ejercicio, arranca con la carga de la vez pasada
+    const prevFirst = previous[activeExercise.id]?.sets[0]
+    setSelectedWeight(last?.weightKg ?? prevFirst?.weightKg ?? activeExercise.targetWeightKg ?? 0)   // 0 = peso corporal
     const parsedReps = parseInt(activeExercise.targetReps, 10) || 8
-    setSelectedReps(last?.reps ?? parsedReps)
+    setSelectedReps(last?.reps ?? prevFirst?.reps ?? parsedReps)
     setRestDuration(activeExercise.restSeconds || 60)
     setRestRemaining(activeExercise.restSeconds || 60)
+    // Se recalcula al cambiar de ejercicio o cuando termina de cargar "la vez pasada" (no con cada serie)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeId])
+  }, [activeId, activeId ? previous[activeId] : undefined])
 
   // Número de la próxima serie de este ejercicio
   useEffect(() => {
@@ -169,9 +199,20 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#edcc36] shadow-[0_0_8px_#edcc36]" />
-          <span className="text-xs font-mono font-bold text-[#edcc36] tracking-wider uppercase">
-            MODO ENTRENAMIENTO // HUD
-          </span>
+          {startedAt ? (
+            <span className="flex flex-col leading-tight">
+              <span className="text-xl font-black font-tech text-white tabular-nums" aria-label={`Tiempo de entrenamiento ${fmtClock(elapsed)}`}>
+                {fmtClock(elapsed)}
+              </span>
+              {lastDurationMin ? (
+                <span className="text-[10px] font-mono text-zinc-400">La vez pasada: {lastDurationMin} min</span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-xs font-mono font-bold text-[#edcc36] tracking-wider uppercase">
+              MODO ENTRENAMIENTO
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -185,7 +226,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-xs font-mono text-zinc-300 hover:text-[#edcc36] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               <Video className="w-4 h-4 text-[#edcc36]" />
-              <span className="hidden sm:inline">Ver Video</span>
+              <span>Ver video</span>
             </button>
           )}
 
@@ -227,6 +268,12 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           <span className="text-xs font-mono text-zinc-400">
             Objetivo: {activeExercise.targetSets} series × {activeExercise.targetReps} reps · Descanso {activeExercise.restSeconds}s
           </span>
+          {previous[activeExercise.id] ? (
+            <span className="mt-1 block text-xs font-mono text-zinc-300">
+              <span className="text-zinc-500">La vez pasada ({formatAgo(previous[activeExercise.id]!.performedAt)}):</span>{' '}
+              {formatPreviousSets(previous[activeExercise.id]!.sets)}
+            </span>
+          ) : null}
         </div>
 
         <button
