@@ -4,6 +4,8 @@ import { HeartPulse } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { daysUntil, fmtDate } from '@/features/admin/format'
+import { WhatsAppComposer, type ComposerStudent } from '@/features/admin/WhatsAppComposer'
+import { normalizeArPhone } from '@/features/admin/whatsapp'
 
 export const metadata: Metadata = { title: 'Alumnos' }
 
@@ -16,11 +18,22 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
   const supabase = await createClient()
   let q = supabase
     .from('coach_client_overview')
-    .select('member_id, member_name, medical_notes, last_checkin_at, trainer_id, trainer_name, last_workout_at, workouts_30d, program_name')
+    .select('member_id, member_name, phone, medical_notes, last_checkin_at, trainer_id, trainer_name, last_workout_at, workouts_30d, program_name')
     .eq('org_id', ctx.org.id)
     .order('member_name')
   if (!manageAll) q = q.eq('trainer_id', ctx.staff.id)
   const { data: rows } = await q
+
+  const students: ComposerStudent[] = (rows ?? []).map((r) => {
+    const idle = daysUntil(r.last_workout_at)
+    return {
+      id: r.member_id!,
+      name: r.member_name ?? 'Alumno',
+      phone: normalizeArPhone(r.phone),
+      stale: idle === null || idle < -7,
+      hasProgram: !!r.program_name,
+    }
+  })
 
   return (
     <div className="space-y-5">
@@ -32,6 +45,7 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
             : 'Recepción o administración te asignan alumnos desde la ficha de cada socio.'}
         </p>
       </div>
+      {students.length > 0 && <WhatsAppComposer slug={slug} senderName={ctx.staff.display_name} students={students} />}
       {rows?.length ? (
         <ul className="divide-y divide-zinc-900 overflow-hidden rounded-2xl border border-zinc-800/80">
           {rows.map((r) => {

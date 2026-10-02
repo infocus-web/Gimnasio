@@ -1249,6 +1249,49 @@ export type Database = {
           },
         ]
       }
+      message_outbox: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          error: string | null
+          id: number
+          member_id: string
+          org_id: string
+          phone: string
+          sender_staff_id: string
+          sent_at: string | null
+          status: string
+          template_key: string | null
+        }
+        Insert: {
+          body: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          member_id: string
+          org_id: string
+          phone: string
+          sender_staff_id: string
+          sent_at?: string | null
+          status?: string
+          template_key?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          member_id?: string
+          org_id?: string
+          phone?: string
+          sender_staff_id?: string
+          sent_at?: string | null
+          status?: string
+          template_key?: string | null
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           access_pin: number | null
