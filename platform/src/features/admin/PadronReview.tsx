@@ -84,9 +84,9 @@ export function RequestCard({
           {allowAdmin && <option value="admin">Administrador</option>}
         </select>
         <label className="sr-only" htmlFor={`method-${r.id}`}>Cómo recibe el acceso</label>
-        <select id={`method-${r.id}`} name="method" defaultValue="email" className={`${inputClass} w-auto`}>
-          <option value="email">Le llega un email para crear su contraseña</option>
-          <option value="password">Generar contraseña temporal</option>
+        <select id={`method-${r.id}`} name="method" defaultValue="password" className={`${inputClass} w-auto`}>
+          <option value="password">Generar contraseña temporal (recomendado)</option>
+          <option value="email">Mandarle un email (puede caer en spam)</option>
         </select>
         <SubmitButton>
           <Check className="h-4 w-4" aria-hidden="true" /> Aprobar

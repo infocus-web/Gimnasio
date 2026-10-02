@@ -115,7 +115,7 @@ export function PadronForm({ gymName, action }: { gymName: string; action: (p: A
             )}
             <Submit />
             <p className="text-center text-xs text-zinc-500">
-              Tus datos los ve solo la administración del gimnasio. Cuando te aprueben te llega un email para crear tu contraseña.
+              Tus datos los ve solo la administración del gimnasio. Cuando te aprueben, la administración te pasa tu contraseña para entrar.
             </p>
           </form>
         )}
