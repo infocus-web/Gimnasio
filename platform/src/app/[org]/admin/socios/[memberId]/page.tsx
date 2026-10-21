@@ -12,6 +12,9 @@ import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
 import { TrainerSelectForm } from '@/features/admin/CoachForms'
 import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
+import { createPaymentLink } from '@/features/payments/actions'
+import { mpConfigured } from '@/features/payments/mercadopago'
+import { PaymentLinkButton } from '@/features/payments/PaymentLinkButton'
 import { CHECKIN_REASON, fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 import { MemberForm } from '@/features/admin/MemberForm'
 import { AdjustEndForm, AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
@@ -229,6 +232,11 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                   plans={(plans.data ?? []).map((p) => ({ id: p.id, label: `${p.name} · ${formatMoney(p.price_cents, p.currency)}`, priceCents: p.price_cents }))}
                   currentPlanId={m.plan_id}
                 />
+                {mpConfigured() && (
+                  <div className="mt-4 border-t border-zinc-900 pt-4">
+                    <PaymentLinkButton action={createPaymentLink.bind(null, slug, memberId)} />
+                  </div>
+                )}
               </Card>
             </div>
           )}

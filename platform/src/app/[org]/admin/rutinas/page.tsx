@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createExercise, createProgram } from '@/features/admin/coach-actions'
 import { LEVELS, NewExerciseForm, ProgramForm } from '@/features/admin/CoachForms'
 import { Card } from '@/features/admin/ui'
+import { AiRoutineButton } from '@/features/floor/AiRoutineButton'
 
 export const metadata: Metadata = { title: 'Rutinas' }
 
@@ -17,21 +18,31 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
     return <p className="text-sm text-zinc-400">Esta sección es para profesores.</p>
   }
   const supabase = await createClient()
-  const [{ data: programs }, { data: assignments }, { data: exercises }] = await Promise.all([
+  const [{ data: programs }, { data: assignments }, { data: exercises }, { data: aiMachines }, { data: aiUsage }] = await Promise.all([
     supabase
       .from('workout_programs')
-      .select('id, name, goal, level, author_id, created_at, staff(display_name), program_workouts(id)')
+      .select('id, name, goal, level, author_id, created_at, is_draft, staff(display_name), program_workouts(id)')
       .eq('org_id', ctx.org.id)
       .order('created_at', { ascending: false }),
     supabase.from('program_assignments').select('program_id').eq('org_id', ctx.org.id).eq('status', 'active'),
     supabase.from('exercises').select('id, name, muscle_group, video_url').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('muscle_group').order('name'),
+    supabase.from('machines').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('name'),
+    supabase.rpc('ai_routine_usage', { p_org: ctx.org.id }),
   ])
   const inUse = new Map<string, number>()
   for (const a of assignments ?? []) inUse.set(a.program_id, (inUse.get(a.program_id) ?? 0) + 1)
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-extrabold text-white">Rutinas</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-extrabold text-white">Rutinas</h1>
+        <AiRoutineButton
+          slug={slug}
+          configured={Boolean(process.env.ANTHROPIC_API_KEY)}
+          remaining={(aiUsage as { remaining?: number } | null)?.remaining ?? null}
+          machines={aiMachines ?? []}
+        />
+      </div>
 
       <details className="rounded-2xl border border-dashed border-zinc-700 p-4 open:border-solid open:border-[#edcc36]/40">
         <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-[#edcc36]">
@@ -51,7 +62,14 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
               <li key={p.id}>
                 <Link href={`/${slug}/admin/rutinas/${p.id}` as Route}
                   className="block rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4 hover:border-[#edcc36]/50">
-                  <p className="font-bold text-white">{p.name}</p>
+                  <p className="font-bold text-white">
+                    {p.name}
+                    {p.is_draft && (
+                      <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 align-middle text-[11px] font-semibold text-amber-200">
+                        Borrador IA
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-zinc-500">
                     {[p.goal, p.level && LEVELS[p.level], `${days} ${days === 1 ? 'día' : 'días'}`, author && `por ${author.display_name}`]
                       .filter(Boolean)

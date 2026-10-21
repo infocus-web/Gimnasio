@@ -4,13 +4,14 @@ import React from 'react';
 import { ShieldCheck, AlertTriangle, Calendar, Info } from 'lucide-react';
 import { MembershipSummary } from '../../types/platform';
 import { formatPeriodEnd, getPassStatus } from './status';
+import { PayPlanButton } from '@/features/payments/PayPlanButton';
 
 export interface MembershipBannerProps {
   membership: MembershipSummary;
   isLoading?: boolean;
 }
 
-/** Resumen del plan del socio. Los pagos se hacen en recepción (no hay pago online). */
+/** Resumen del plan del socio. Pago en recepción, u online si el gimnasio conectó Mercado Pago (PayPlanButton). */
 export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, isLoading = false }) => {
   if (isLoading) {
     return <div className="w-full max-w-2xl mx-auto h-20 rounded-3xl bg-zinc-950 border border-zinc-800 animate-pulse" />;
@@ -28,6 +29,7 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, 
         <div className="space-y-0.5">
           <h3 className="font-cyber font-bold text-white text-base">Sin plan activo</h3>
           <p className="text-sm text-zinc-400 leading-snug">{status.message}</p>
+          <PayPlanButton label="Elegir y pagar un plan" />
         </div>
       </div>
     );
@@ -56,6 +58,7 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, 
               <span className="font-mono">{formatPeriodEnd(membership.currentPeriodEnd)}</span>
             </p>
           )}
+          <PayPlanButton />
         </div>
       </div>
     );
@@ -90,6 +93,7 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, 
           )}
         </div>
         <p className="text-[11px] text-zinc-500 mt-1">Las cuotas se abonan en recepción: efectivo, transferencia o tarjeta.</p>
+        <PayPlanButton label="Renovar online" />
       </div>
     </div>
   );

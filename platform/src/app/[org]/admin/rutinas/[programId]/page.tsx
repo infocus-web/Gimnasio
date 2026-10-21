@@ -16,6 +16,8 @@ import {
 import { AddDayForm, AddExerciseForm, ProgramForm, RenameDayForm } from '@/features/admin/CoachForms'
 import { Card } from '@/features/admin/ui'
 import { ActionButton, ConfirmAction } from '@/features/admin/ConfirmAction'
+import { approveDraft } from '@/features/floor/actions'
+import { DraftBanner } from '@/features/floor/DraftBanner'
 
 export const metadata: Metadata = { title: 'Armar rutina' }
 
@@ -26,7 +28,7 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
   const supabase = await createClient()
   const { data: program } = await supabase
     .from('workout_programs')
-    .select('id, name, goal, level, description, author_id')
+    .select('id, name, goal, level, description, author_id, is_draft')
     .eq('id', programId)
     .eq('org_id', ctx.org.id)
     .maybeSingle()
@@ -48,6 +50,10 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
         <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Rutinas
       </Link>
       <h1 className="text-2xl font-extrabold text-white">{program.name}</h1>
+
+      {program.is_draft && (
+        <DraftBanner canEdit={canEdit} action={approveDraft.bind(null, slug, programId)} />
+      )}
 
       {canEdit ? (
         <details className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">

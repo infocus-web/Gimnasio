@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 import { savePlan } from '@/features/admin/billing-actions'
 import { formatMoney } from '@/features/admin/format'
 import { PlanForm } from '@/features/admin/PlanForm'
+import { PlanHoursForm } from '@/features/access-plus/PlanHoursForm'
+import { savePlanHours } from '@/features/access-plus/actions'
+import { formatWindows } from '@/features/access-plus/windows'
 
 export const metadata: Metadata = { title: 'Planes' }
 
@@ -59,6 +62,7 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
                     <span className="block text-xs text-zinc-500">
                       {detail}
                       {p.max_members > 1 && ` · familiar hasta ${p.max_members}`}
+                      {p.includes_open_gym && formatWindows(p.access_windows) && ` · solo puede entrar: ${formatWindows(p.access_windows)}`}
                       {!p.is_public && ' · oculto en la web'}
                       {!p.active && ' · desactivado'}
                     </span>
@@ -67,7 +71,8 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
                   <span className="text-lg font-extrabold tabular-nums text-white">{formatMoney(p.price_cents, p.currency)}</span>
                 </summary>
                 {canEdit && (
-                  <div className="border-t border-zinc-900 p-4">
+                  <div className="space-y-4 border-t border-zinc-900 p-4">
+                    {p.includes_open_gym && <PlanHoursForm action={savePlanHours.bind(null, slug, p.id)} windows={p.access_windows} />}
                     <PlanForm
                       action={savePlan.bind(null, slug, p.id)}
                       classTypes={types ?? []}

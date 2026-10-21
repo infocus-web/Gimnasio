@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
-import { CheckCircle2, XCircle, AlertTriangle, QrCode, SwitchCamera, Wifi, WifiOff, Maximize } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, QrCode, SwitchCamera, Wifi, WifiOff, Maximize, Users } from 'lucide-react'
 import { sound } from '@/utils/audio'
+import { OCCUPANCY, PASS_DENIED, type Occupancy } from '@/features/access-plus/labels'
+import { formatWindowsShort } from '@/features/access-plus/windows'
 
 type Result = {
   allowed: boolean
@@ -12,11 +14,16 @@ type Result = {
   duplicate?: boolean
   opener_online?: boolean
   unlock_id?: number | null
+  /** pase de un día / invitado */
+  guest?: boolean
+  entries_left?: number
+  /** franjas del plan cuando el motivo es OUTSIDE_PLAN_HOURS */
+  access_windows?: unknown
 }
 type Unlock = 'waiting' | 'opened' | 'failed'
 
 const REASONS: Record<string, string> = {
-  QR_INVALID: 'Ese código no es el QR de la app.',
+  QR_INVALID: 'Ese código no es el QR de la app ni de un pase.',
   QR_EXPIRED_OR_INVALID: 'QR vencido: abrí la app de nuevo y volvé a mostrarlo.',
   MEMBER_NOT_FOUND: 'No encontramos ese socio.',
   MEMBER_FROZEN: 'Tu plan está congelado. Pasá por recepción.',
@@ -27,6 +34,16 @@ const REASONS: Record<string, string> = {
   NO_ACTIVE_MEMBERSHIP: 'No tenés un plan activo. Pasá por recepción.',
   RECENT_ENTRY: 'Ya entraste hace un momento. Si es un error, pasá por recepción.',
   TURNSTILE_OFFLINE: 'El molinete está sin conexión. Pasá por recepción.',
+  ...PASS_DENIED,
+}
+
+function deniedText(r: Result) {
+  if (r.reason === 'OUTSIDE_PLAN_HOURS') {
+    const w = formatWindowsShort(r.access_windows)
+    return w ? `Tu plan permite entrar ${w}.` : REASONS.OUTSIDE_PLAN_HOURS!
+  }
+  if (r.reason === 'RECENT_ENTRY' && r.guest) return 'Ya entraste hace un momento con este pase.'
+  return REASONS[r.reason ?? ''] ?? 'Pasá por recepción.'
 }
 const SAME_QR_IGNORE_MS = 60_000
 
@@ -46,7 +63,7 @@ function save(key: string, value: string | null) {
   }
 }
 
-type Resp = Partial<Result> & { status: string; device?: string; unlock?: Unlock | 'unknown' }
+type Resp = Partial<Result> & { status: string; device?: string; unlock?: Unlock | 'unknown'; occupancy?: Occupancy | null }
 
 async function call(k: string, qr: string | null, unlock?: number): Promise<Resp> {
   const res = await fetch('/api/access/turnstile', {
@@ -66,6 +83,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const [started, setStarted] = useState(false)
   const [online, setOnline] = useState<boolean | null>(null)
   const [device, setDevice] = useState('')
+  const [occupancy, setOccupancy] = useState<Occupancy | null>(null)
   const [result, setResult] = useState<Result | null>(null)
   const [unlock, setUnlock] = useState<Unlock | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -115,6 +133,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
         }
         setOnline(!!r.opener_online)
         if (r.device) setDevice(r.device)
+        setOccupancy(r.occupancy ?? null)
       } catch {
         if (!stop) setOnline(false)
       }
@@ -320,6 +339,12 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
       <header className="flex items-center justify-between px-5 py-3 text-sm text-zinc-400">
         <span className="font-semibold text-white">{gymName}</span>
         <span className="flex items-center gap-4">
+          {occupancy && occupancy.level !== 'closed' && (
+            <span className="hidden items-center gap-1.5 sm:flex" aria-label="Personas en el gimnasio ahora">
+              <Users className="h-4 w-4" aria-hidden="true" />
+              {occupancy.people} · <span className={OCCUPANCY[occupancy.level].className}>{OCCUPANCY[occupancy.level].label}</span>
+            </span>
+          )}
           <span className={`flex items-center gap-1.5 ${online ? 'text-emerald-300' : 'text-amber-300'}`}>
             {online ? <Wifi className="h-4 w-4" aria-hidden="true" /> : <WifiOff className="h-4 w-4" aria-hidden="true" />}
             {online === null ? 'Conectando…' : online ? device || 'Molinete conectado' : 'Molinete sin conexión'}
@@ -329,7 +354,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
       </header>
 
       <section className="flex flex-1 flex-col items-center justify-center gap-5 px-4 pb-6">
-        <h1 className="text-center text-3xl font-extrabold sm:text-4xl">Mostrá el QR de tu app</h1>
+        <h1 className="text-center text-3xl font-extrabold sm:text-4xl">Mostrá el QR de tu app o de tu pase</h1>
         <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-4 border-[#edcc36]/60">
           <div id="turnstile-camera" className="aspect-square w-full bg-zinc-950 [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover" />
         </div>
@@ -376,10 +401,12 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
               : result.allowed
                 ? unlock === 'waiting'
                   ? 'Abriendo el molinete…'
-                  : 'Pasá por el molinete.'
+                  : result.guest
+                    ? `Pasá por el molinete. ¡Que disfrutes el entrenamiento!${typeof result.entries_left === 'number' && result.entries_left > 0 ? ` Te ${result.entries_left === 1 ? 'queda 1 entrada' : `quedan ${result.entries_left} entradas`}.` : ''}`
+                    : 'Pasá por el molinete.'
                 : result.reason === 'NETWORK'
                   ? 'Sin conexión a internet. Probá de nuevo o pasá por recepción.'
-                  : REASONS[result.reason ?? ''] ?? 'Pasá por recepción.'}
+                  : deniedText(result)}
           </p>
         </div>
       )}

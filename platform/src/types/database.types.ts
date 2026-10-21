@@ -16,8 +16,386 @@ export type Database = {
     Tables: {
       // ↓ tablas agente A
       // ↓ tablas agente B
+      access_settings: {
+        Row: {
+          avg_stay_minutes: number
+          capacity: number
+          guest_passes_per_month: number
+          org_id: string
+          require_medical_cert: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          avg_stay_minutes?: number
+          capacity?: number
+          guest_passes_per_month?: number
+          org_id: string
+          require_medical_cert?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          avg_stay_minutes?: number
+          capacity?: number
+          guest_passes_per_month?: number
+          org_id?: string
+          require_medical_cert?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      day_passes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          entries_used: number
+          holder_document: string | null
+          holder_email: string | null
+          holder_name: string
+          holder_phone: string | null
+          id: string
+          invited_by_member: string | null
+          kind: 'guest' | 'trial' | 'day'
+          max_entries: number
+          org_id: string
+          payment_id: string | null
+          payment_method: string | null
+          price_cents: number | null
+          revoked_at: string | null
+          revoked_by: string | null
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          entries_used?: number
+          holder_document?: string | null
+          holder_email?: string | null
+          holder_name: string
+          holder_phone?: string | null
+          id?: string
+          invited_by_member?: string | null
+          kind: 'guest' | 'trial' | 'day'
+          max_entries?: number
+          org_id: string
+          payment_id?: string | null
+          payment_method?: string | null
+          price_cents?: number | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          valid_from: string
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          entries_used?: number
+          holder_document?: string | null
+          holder_email?: string | null
+          holder_name?: string
+          holder_phone?: string | null
+          id?: string
+          invited_by_member?: string | null
+          kind?: 'guest' | 'trial' | 'day'
+          max_entries?: number
+          org_id?: string
+          payment_id?: string | null
+          payment_method?: string | null
+          price_cents?: number | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
+      day_pass_entries: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          failed: boolean
+          id: number
+          location_id: string | null
+          method: string
+          org_id: string
+          pass_id: string
+          scanned_by: string | null
+          unlock_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          failed?: boolean
+          id?: never
+          location_id?: string | null
+          method?: string
+          org_id: string
+          pass_id: string
+          scanned_by?: string | null
+          unlock_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          failed?: boolean
+          id?: never
+          location_id?: string | null
+          method?: string
+          org_id?: string
+          pass_id?: string
+          scanned_by?: string | null
+          unlock_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_pass_entries_pass_id_fkey"
+            columns: ["pass_id"]
+            isOneToOne: false
+            referencedRelation: "day_passes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       // ↓ tablas agente C
+      payment_intents: {
+        Row: {
+          amount_cents: number
+          billing_account_id: string | null
+          buyer_email: string | null
+          buyer_name: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          day_pass_id: string | null
+          description: string
+          email_sent_at: string | null
+          id: string
+          init_point: string | null
+          kind: string
+          member_id: string | null
+          mp_payment_id: string | null
+          mp_preference_id: string | null
+          mp_status: string | null
+          mp_status_detail: string | null
+          org_id: string
+          payment_id: string | null
+          plan_id: string | null
+          result: Json | null
+          settled_at: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: { [_ in never]: never }
+        Update: { email_sent_at?: string | null }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          price_cents: number
+          sort: number
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          name: string
+          org_id: string
+          price_cents: number
+          sort?: number
+          stock?: number | null
+        }
+        Update: {
+          active?: boolean
+          name?: string
+          price_cents?: number
+          sort?: number
+          stock?: number | null
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          id: string
+          member_id: string | null
+          method: Database["public"]["Enums"]["payment_provider"]
+          note: string | null
+          org_id: string
+          sold_at: string
+          sold_by: string | null
+          status: string
+          total_cents: number
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
+      sale_items: {
+        Row: {
+          id: number
+          name: string
+          org_id: string
+          product_id: string | null
+          quantity: number
+          sale_id: string
+          subtotal_cents: number
+          unit_price_cents: number
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
+      sale_ledger: {
+        Row: {
+          id: string
+          items_summary: string | null
+          member_id: string | null
+          member_name: string | null
+          method: Database["public"]["Enums"]["payment_provider"]
+          note: string | null
+          org_id: string
+          sold_at: string
+          sold_by: string | null
+          sold_by_name: string | null
+          status: string
+          total_cents: number
+          void_reason: string | null
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
+      online_sale_settings: {
+        Row: {
+          day_pass_days: number
+          day_pass_enabled: boolean
+          day_pass_entries: number
+          day_pass_price_cents: number
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          day_pass_days?: number
+          day_pass_enabled?: boolean
+          day_pass_entries?: number
+          day_pass_price_cents?: number
+          org_id: string
+        }
+        Update: {
+          day_pass_days?: number
+          day_pass_enabled?: boolean
+          day_pass_entries?: number
+          day_pass_price_cents?: number
+        }
+        Relationships: []
+      }
+      cash_closures: {
+        Row: {
+          counted_cash_cents: number
+          created_at: string
+          difference_cents: number
+          expected_cash_cents: number
+          id: string
+          note: string | null
+          org_id: string
+          period_from: string
+          period_to: string
+          staff_name: string | null
+          staff_user_id: string
+          total_cents: number
+          totals: Json
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
       // ↓ tablas agente D
+      machines: {
+        Row: {
+          active: boolean
+          area: string | null
+          code: string
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          area?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          area?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      machine_exercises: {
+        Row: {
+          exercise_id: string
+          machine_id: string
+          org_id: string
+          position: number
+        }
+        Insert: {
+          exercise_id: string
+          machine_id: string
+          org_id: string
+          position?: number
+        }
+        Update: {
+          exercise_id?: string
+          machine_id?: string
+          org_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "machine_exercises_machine_id_org_id_fkey"
+            columns: ["machine_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
       access_commands: {
         Row: {
           attempts: number
@@ -1268,11 +1646,17 @@ export type Database = {
           id: number
           member_id: string
           org_id: string
-          phone: string
-          sender_staff_id: string
+          phone: string | null
+          sender_staff_id: string | null
           sent_at: string | null
           status: string
           template_key: string | null
+          email: string | null
+          subject: string | null
+          dedupe_key: string | null
+          locked_at: string | null
+          attempts: number
+          provider_message_id: string | null
         }
         Insert: {
           body: string
@@ -1281,8 +1665,11 @@ export type Database = {
           error?: string | null
           member_id: string
           org_id: string
-          phone: string
-          sender_staff_id: string
+          phone?: string | null
+          sender_staff_id?: string | null
+          email?: string | null
+          subject?: string | null
+          dedupe_key?: string | null
           sent_at?: string | null
           status?: string
           template_key?: string | null
@@ -1457,6 +1844,7 @@ export type Database = {
       }
       membership_plans: {
         Row: {
+          access_windows: Json | null
           active: boolean
           billing_interval: string | null
           booking_window_days: number
@@ -1479,6 +1867,7 @@ export type Database = {
           sort: number
         }
         Insert: {
+          access_windows?: Json | null
           active?: boolean
           billing_interval?: string | null
           booking_window_days?: number
@@ -1501,6 +1890,7 @@ export type Database = {
           sort?: number
         }
         Update: {
+          access_windows?: Json | null
           active?: boolean
           billing_interval?: string | null
           booking_window_days?: number
@@ -2428,7 +2818,9 @@ export type Database = {
           description: string | null
           goal: string | null
           id: string
+          ai_generated: boolean
           is_template: boolean
+          is_draft: boolean
           level: string | null
           name: string
           org_id: string
@@ -2439,7 +2831,9 @@ export type Database = {
           description?: string | null
           goal?: string | null
           id?: string
+          ai_generated?: boolean
           is_template?: boolean
+          is_draft?: boolean
           level?: string | null
           name: string
           org_id: string
@@ -2450,7 +2844,9 @@ export type Database = {
           description?: string | null
           goal?: string | null
           id?: string
+          ai_generated?: boolean
           is_template?: boolean
+          is_draft?: boolean
           level?: string | null
           name?: string
           org_id?: string
@@ -2678,9 +3074,124 @@ export type Database = {
     }
     Functions: {
       // ↓ agente A (comunicación y retención)
+      engagement_generate: { Args: { p_kinds?: string[] | null }; Returns: Json }
+      engagement_freeze_tick: { Args: never; Returns: number }
+      message_outbox_claim: { Args: { p_limit?: number }; Returns: Json }
+      message_outbox_mark: {
+        Args: { p_id: number; p_ok: boolean; p_error?: string | null; p_retry?: boolean; p_provider_id?: string | null }
+        Returns: undefined
+      }
+      engagement_admin_get: { Args: { p_org: string }; Returns: Json }
+      engagement_save_notice: {
+        Args: { p_org: string; p_kind: string; p_enabled: boolean; p_subject: string; p_body: string }
+        Returns: undefined
+      }
+      engagement_save_rules: {
+        Args: { p_org: string; p_birthday_gift_days: number; p_referral_reward_days: number; p_freeze_max_days_year: number }
+        Returns: undefined
+      }
+      engagement_at_risk: { Args: { p_org: string; p_limit?: number }; Returns: Json }
+      engagement_mark_contacted: { Args: { p_member: string }; Returns: undefined }
+      engagement_history: { Args: { p_org: string; p_status?: string | null; p_limit?: number }; Returns: Json }
+      referral_apply: { Args: { p_member_new: string; p_code: string }; Returns: Json }
+      member_achievements: { Args: { p_member: string }; Returns: Json }
+      member_engagement: { Args: { p_member: string }; Returns: Json }
+      member_freeze_create: { Args: { p_member: string; p_start: string; p_days: number }; Returns: Json }
+      member_freeze_cancel: { Args: { p_freeze: string }; Returns: undefined }
       // ↓ agente B (acceso y planes)
+      access_settings_save: {
+        Args: { p_org: string; p_guest_passes_per_month: number; p_require_medical_cert: boolean; p_avg_stay_minutes: number; p_capacity: number }
+        Returns: Database["public"]["Tables"]["access_settings"]["Row"]
+      }
+      day_pass_issue: {
+        Args: {
+          p_org: string
+          p_kind: string
+          p_holder_name: string
+          p_holder_phone?: string | null
+          p_holder_document?: string | null
+          p_holder_email?: string | null
+          p_days?: number
+          p_max_entries?: number
+          p_price_cents?: number | null
+          p_payment_method?: string | null
+        }
+        Returns: Json
+      }
+      day_pass_revoke: { Args: { p_pass: string }; Returns: undefined }
+      day_pass_public: { Args: { p_slug: string; p_code: string }; Returns: Json }
+      member_guest_quota: { Args: { p_member: string }; Returns: Json }
+      member_issue_guest_pass: {
+        Args: { p_member: string; p_holder_name: string; p_holder_document: string; p_date?: string | null; p_holder_phone?: string | null }
+        Returns: Json
+      }
+      gym_occupancy: { Args: { p_org: string }; Returns: Json }
       // ↓ agente C (pagos)
+      payment_intent_create: { Args: { p_member: string; p_plan?: string }; Returns: Json }
+      payment_intent_create_day_pass: {
+        Args: { p_document?: string; p_email: string; p_name: string; p_phone?: string; p_slug: string }
+        Returns: Json
+      }
+      public_day_pass_offer: { Args: { p_slug: string }; Returns: Json }
+      member_payment_options: { Args: { p_member: string }; Returns: Json }
+      payment_intent_set_preference: {
+        Args: { p_init_point: string; p_intent: string; p_preference_id: string }
+        Returns: undefined
+      }
+      payment_intent_settle: {
+        Args: {
+          p_amount_cents: number
+          p_currency?: string
+          p_intent: string
+          p_mp_payment_id: string
+          p_mp_status: string
+          p_status_detail: string
+        }
+        Returns: Json
+      }
+      record_sale: {
+        Args: {
+          p_items: Json
+          p_member?: string
+          p_method: Database["public"]["Enums"]["payment_provider"]
+          p_note?: string
+          p_org: string
+        }
+        Returns: Json
+      }
+      void_sale: { Args: { p_reason: string; p_sale: string }; Returns: undefined }
+      cash_shift_summary: { Args: { p_org: string }; Returns: Json }
+      cash_close_shift: {
+        Args: { p_counted_cash_cents: number; p_note?: string; p_org: string; p_to?: string }
+        Returns: Json
+      }
       // ↓ agente D (sala y dueño)
+      machine_save: {
+        Args: {
+          p_org: string
+          p_id: string | null
+          p_name: string
+          p_area?: string | null
+          p_photo_url?: string | null
+          p_active?: boolean
+          p_exercise_ids?: string[]
+        }
+        Returns: string
+      }
+      machine_view: { Args: { p_slug: string; p_code: string }; Returns: Json }
+      floor_tv_settings: { Args: { p_org: string }; Returns: Json }
+      floor_tv_link: { Args: { p_org: string }; Returns: string }
+      floor_tv_unlink: { Args: { p_org: string }; Returns: undefined }
+      floor_tv_save: { Args: { p_org: string; p_ranking: boolean; p_message: string | null }; Returns: undefined }
+      tv_feed: { Args: { p_token: string }; Returns: Json }
+      ai_routine_reserve: { Args: { p_org: string }; Returns: Json }
+      ai_routine_release: { Args: { p_org: string; p_ticket: number }; Returns: undefined }
+      ai_routine_usage: { Args: { p_org: string }; Returns: Json }
+      ai_routine_create_draft: { Args: { p_org: string; p_ticket: number; p_payload: Json }; Returns: string }
+      business_dashboard: {
+        Args: { p_org: string; p_from: string; p_to: string; p_prev_from?: string; p_prev_to?: string }
+        Returns: Json
+      }
       access_device_confirm_ip: {
         Args: { p_device: string }
         Returns: undefined

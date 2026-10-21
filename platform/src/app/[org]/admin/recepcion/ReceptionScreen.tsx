@@ -82,6 +82,14 @@ interface Entry {
   members: { first_name: string; last_name: string; access_pin: number | null } | null
 }
 
+/** Entrada con un pase de un día / invitado (day_pass_entries) */
+interface GuestEntry {
+  id: number
+  created_at: string
+  method: string
+  day_passes: { holder_name: string; kind: string } | null
+}
+
 const METHOD: Record<string, { label: string; Icon: typeof QrCode }> = {
   qr: { label: 'QR', Icon: QrCode },
   manual: { label: 'Recepción', Icon: UserCheck },
@@ -99,7 +107,11 @@ const DENIED: Record<string, string> = {
   MEMBERSHIP_EXPIRED: 'Plan vencido',
   PLAN_WITHOUT_GYM: 'Plan sin musculación',
   RECENT_ENTRY: 'Ya había entrado',
+  OUTSIDE_PLAN_HOURS: 'Fuera de horario',
+  MEDICAL_CERT_REQUIRED: 'Apto vencido',
 }
+/** Entró, pero con aviso (recepción dejó pasar) */
+const WARNED: Record<string, string> = { OUTSIDE_PLAN_HOURS: 'Fuera de horario', MEDICAL_CERT_REQUIRED: 'Sin apto' }
 
 /** Inicio del día en la zona horaria del gimnasio, como ISO (para "Entradas de hoy"). */
 function startOfDayIso(tz: string) {
@@ -141,6 +153,7 @@ export function ReceptionScreen({
   const [quick, setQuick] = useState<(Quick & { photo: string | null }) | null>(null)
   const [quickLoading, setQuickLoading] = useState(false)
   const [entries, setEntries] = useState<Entry[] | null>(null)
+  const [guestEntries, setGuestEntries] = useState<GuestEntry[]>([])
   const [matches, setMatches] = useState<{ id: string; name: string; doc: string | null; num: number | null; plan: string | null }[]>([])
 
   const signed = useCallback(
@@ -160,14 +173,26 @@ export function ReceptionScreen({
   }
 
   const loadEntries = useCallback(async () => {
-    const { data } = await supabase
-      .from('checkins')
-      .select('id, created_at, allowed, reason, method, member_id, members(first_name, last_name, access_pin)')
-      .eq('org_id', orgId)
-      .gte('created_at', startOfDayIso(timezone))
-      .order('created_at', { ascending: false })
-      .limit(60)
+    const since = startOfDayIso(timezone)
+    const [{ data }, { data: guests }] = await Promise.all([
+      supabase
+        .from('checkins')
+        .select('id, created_at, allowed, reason, method, member_id, members(first_name, last_name, access_pin)')
+        .eq('org_id', orgId)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(60),
+      supabase
+        .from('day_pass_entries')
+        .select('id, created_at, method, day_passes(holder_name, kind)')
+        .eq('org_id', orgId)
+        .eq('failed', false)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(40),
+    ])
     setEntries((data ?? []) as unknown as Entry[])
+    setGuestEntries((guests ?? []) as unknown as GuestEntry[])
   }, [supabase, orgId, timezone])
 
   useEffect(() => {
@@ -269,7 +294,7 @@ export function ReceptionScreen({
   const periodEnd = quick?.current_period_end ? new Date(quick.current_period_end) : null
   const days = periodEnd ? Math.ceil((periodEnd.getTime() - Date.now()) / 86_400_000) : null
   const planOk = !!periodEnd && days !== null && days >= 0 && ['active', 'trialing'].includes(quick?.membership_status ?? '')
-  const allowedToday = entries?.filter((e) => e.allowed).length ?? 0
+  const allowedToday = (entries?.filter((e) => e.allowed).length ?? 0) + guestEntries.length
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -422,11 +447,24 @@ export function ReceptionScreen({
             <p className="flex items-center gap-2 text-sm text-zinc-500">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Cargando…
             </p>
-          ) : entries.length === 0 ? (
+          ) : entries.length === 0 && guestEntries.length === 0 ? (
             <p className="text-sm text-zinc-500">Todavía no entró nadie hoy.</p>
           ) : (
             <ul className="max-h-[420px] space-y-0.5 overflow-y-auto pr-1 text-sm">
-              {entries.map((e) => {
+              {[...entries.map((e) => ({ at: e.created_at, e, g: null })), ...guestEntries.map((g) => ({ at: g.created_at, e: null, g }))]
+                .sort((a, b) => b.at.localeCompare(a.at))
+                .map(({ e, g }) => {
+                if (g) {
+                  const gm = METHOD[g.method] ?? METHOD.manual!
+                  return (
+                    <li key={`g${g.id}`} className="flex items-center gap-2 rounded-lg px-1.5 py-1.5">
+                      <span className="w-11 shrink-0 font-mono text-xs tabular-nums text-zinc-500">{fmtTime(g.created_at, timezone)}</span>
+                      <gm.Icon className="h-3.5 w-3.5 shrink-0 text-sky-300" aria-label={gm.label} />
+                      <span className="min-w-0 flex-1 truncate text-zinc-200">Invitado: {g.day_passes?.holder_name ?? 'pase'}</span>
+                    </li>
+                  )
+                }
+                if (!e) return null
                 const m = METHOD[e.method] ?? METHOD.manual!
                 return (
                   <li key={e.id}>
@@ -440,6 +478,9 @@ export function ReceptionScreen({
                       <span className={`min-w-0 flex-1 truncate ${e.allowed ? 'text-zinc-200' : 'text-zinc-400 line-through decoration-red-500/60'}`}>
                         {e.members ? `${e.members.first_name} ${e.members.last_name}` : 'Socio'}
                       </span>
+                      {e.allowed && WARNED[e.reason ?? ''] && (
+                        <span className="shrink-0 text-[11px] text-amber-300">{WARNED[e.reason ?? '']}</span>
+                      )}
                       {!e.allowed && (
                         <span className="flex shrink-0 items-center gap-1 text-[11px] text-red-300">
                           <AlertTriangle className="h-3 w-3" aria-hidden="true" />

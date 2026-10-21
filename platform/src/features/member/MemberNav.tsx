@@ -3,14 +3,15 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
-import { ShieldCheck, CalendarDays, Dumbbell, TrendingUp, Users } from 'lucide-react'
+import { ShieldCheck, CalendarDays, Dumbbell, TrendingUp, UserRound } from 'lucide-react'
 
 const TABS = [
   { href: 'pase', label: 'Acceso', Icon: ShieldCheck },
   { href: 'clases', label: 'Clases', Icon: CalendarDays },
   { href: 'entrenar', label: 'Entrenar', Icon: Dumbbell },
   { href: 'progreso', label: 'Progreso', Icon: TrendingUp },
-  { href: 'horarios', label: 'Concurrencia', Icon: Users },
+  // Concurrencia (/app/horarios) e Invitados (/app/invitados) se abren desde "Yo"
+  { href: 'yo', label: 'Yo', Icon: UserRound },
 ] as const
 
 /** Barra inferior fija, pensada para el pulgar (mobile-first). */
@@ -25,7 +26,9 @@ export function MemberNav({ orgSlug }: { orgSlug: string }) {
       <ul className="mx-auto grid max-w-lg grid-cols-5">
         {TABS.map(({ href, label, Icon }) => {
           const url = `/${orgSlug}/app/${href}`
-          const active = pathname?.startsWith(url)
+          const active =
+            pathname?.startsWith(url) ||
+            (href === 'yo' && ['horarios', 'invitados'].some((p) => pathname?.startsWith(`/${orgSlug}/app/${p}`)))
           return (
             <li key={href}>
               <Link

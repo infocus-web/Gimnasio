@@ -5,6 +5,9 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { daysUntil, fmtDate } from '@/features/admin/format'
 import { normalizeArPhone, whatsappLink } from '@/features/admin/whatsapp'
+import { createPaymentLink } from '@/features/payments/actions'
+import { mpConfigured } from '@/features/payments/mercadopago'
+import { PaymentLinkButton } from '@/features/payments/PaymentLinkButton'
 
 export const metadata: Metadata = { title: 'Vencidos' }
 
@@ -19,6 +22,7 @@ export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pa
   if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
 
+  const canLink = ctx.can('billing.write') && mpConfigured()
   const supabase = await createClient()
   const now = new Date().toISOString()
   const in7 = new Date(Date.now() + 7 * 86_400_000).toISOString()
@@ -77,6 +81,7 @@ export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pa
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />
                   </a>
                 )}
+                {canLink && <PaymentLinkButton compact action={createPaymentLink.bind(null, slug, m.id!)} />}
                 <Link href={`/${slug}/admin/socios/${m.id}#cobrar` as Route}
                   className="min-h-[40px] rounded-xl bg-[#edcc36] px-3 py-2 text-xs font-bold text-black">
                   Cobrar

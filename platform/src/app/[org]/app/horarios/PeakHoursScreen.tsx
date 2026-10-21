@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { PeakHours, type OccupancyLevel } from '@/components/classes/PeakHours'
 import { useMember } from '@/features/member/MemberProvider'
+import { LiveOccupancy } from '@/features/access-plus/LiveOccupancy'
 import type { PeakHourSlot } from '@/types/platform'
 
 export function PeakHoursScreen() {
@@ -54,6 +55,8 @@ export function PeakHoursScreen() {
 
   if (error) {
     return (
+      <>
+      <LiveOccupancy />
       <div role="alert" className="space-y-3 rounded-3xl border border-red-500/40 bg-zinc-950 p-6 text-center">
         <p className="text-sm text-red-200">{error}</p>
         <button
@@ -64,19 +67,23 @@ export function PeakHoursScreen() {
           Reintentar
         </button>
       </div>
+      </>
     )
   }
 
   const d = new Date()
   return (
-    <PeakHours
-      data={slots}
-      openingHours={org.openingHours}
-      currentEstimate={level}
-      currentHour={d.getHours()}
-      currentWeekday={((d.getDay() + 6) % 7) + 1}
-      isLoading={loading}
-      liveError={liveError}
-    />
+    <>
+      <LiveOccupancy />
+      <PeakHours
+        data={slots}
+        openingHours={org.openingHours}
+        currentEstimate={level}
+        currentHour={d.getHours()}
+        currentWeekday={((d.getDay() + 6) % 7) + 1}
+        isLoading={loading}
+        liveError={liveError}
+      />
+    </>
   )
 }
