@@ -47,7 +47,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
               <Dumbbell className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
             </span>
             <span className="truncate text-sm font-extrabold tracking-tight text-white">
-              {org.name.toUpperCase()}
+              {org.name}
             </span>
           </Link>
           <SignOutButton compact />

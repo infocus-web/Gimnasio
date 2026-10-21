@@ -14,10 +14,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Flag,
 } from 'lucide-react';
 import { PrescribedExercise, LoggedSet } from '../../types/platform';
 import { PlateCalculator } from './PlateCalculator';
 import { sound } from '../../utils/audio';
+import { fmtKg } from './format';
 import { formatAgo, formatPreviousSets, type PreviousExercise } from '../../features/member/usePreviousPerformance';
 
 export interface ActiveWorkoutProps {
@@ -61,11 +63,16 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     return () => clearInterval(id);
   }, [startedAt]);
 
-  const [currentExerciseIdx, setCurrentExerciseIdx] = useState<number>(0);
+  // Al retomar un entrenamiento, arranca en el primer ejercicio que todavía no completó
+  const [currentExerciseIdx, setCurrentExerciseIdx] = useState<number>(() => {
+    const i = exercises.findIndex((e) => loggedSets.filter((s) => s.exerciseId === e.id).length < e.targetSets);
+    return i >= 0 ? i : 0;
+  });
   const [currentSetNumber, setCurrentSetNumber] = useState<number>(1);
   const [selectedReps, setSelectedReps] = useState<number>(8);
   const [selectedWeight, setSelectedWeight] = useState<number>(80);
-  const [selectedRpe, setSelectedRpe] = useState<number>(8);
+  // RPE opcional: si el socio no lo marca, se guarda vacío (no un 8 inventado)
+  const [selectedRpe, setSelectedRpe] = useState<number | null>(null);
 
   // Rest Timer State
   const [isResting, setIsResting] = useState<boolean>(false);
@@ -156,9 +163,10 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       setNumber: currentSetNumber,
       reps: selectedReps,
       weightKg: selectedWeight,
-      rpe: selectedRpe,
+      rpe: selectedRpe ?? undefined,
     };
     onLogSet(newLog);
+    setSelectedRpe(null);
 
     // Arrancar descanso
     setIsResting(true);
@@ -182,9 +190,35 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     }
   };
 
+  const totalSets = loggedSets.length;
+
+  // Terminar en cualquier momento (aunque no se hayan hecho todas las series), con confirmación
+  const handleFinishEarly = () => {
+    if (!onFinishWorkout) return;
+    sound.playClick();
+    const msg =
+      totalSets === 0
+        ? '¿Terminar el entrenamiento? Todavía no registraste ninguna serie, así que no se guarda nada.'
+        : `¿Terminar el entrenamiento? Se guardan las ${totalSets} ${totalSets === 1 ? 'serie registrada' : 'series registradas'}.`;
+    if (window.confirm(msg)) onFinishWorkout();
+  };
+
+  // Salir a mitad de la sesión: se pide confirmación si ya hay series anotadas
+  const handleExit = () => {
+    if (!onExit) return;
+    sound.playClick();
+    if (
+      totalSets > 0 &&
+      !window.confirm('¿Salir del entrenamiento? Tus series quedan guardadas y lo podés retomar desde Entrenar.')
+    ) {
+      return;
+    }
+    onExit();
+  };
+
   if (!activeExercise) {
     return (
-      <div className="p-8 text-center text-zinc-400 font-mono">
+      <div className="p-8 text-center text-zinc-400">
         No hay ejercicios cargados en la sesión.
       </div>
     );
@@ -205,12 +239,12 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                 {fmtClock(elapsed)}
               </span>
               {lastDurationMin ? (
-                <span className="text-[10px] font-mono text-zinc-400">La vez pasada: {lastDurationMin} min</span>
+                <span className="text-[11px] text-zinc-400">La vez pasada: {lastDurationMin} min</span>
               ) : null}
             </span>
           ) : (
-            <span className="text-xs font-mono font-bold text-[#edcc36] tracking-wider uppercase">
-              MODO ENTRENAMIENTO
+            <span className="text-sm font-bold text-[#edcc36]">
+              Entrenamiento
             </span>
           )}
         </div>
@@ -223,7 +257,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                 sound.playClick();
                 setIsVideoModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-xs font-mono text-zinc-300 hover:text-[#edcc36] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-xs text-zinc-300 hover:text-[#edcc36] min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               <Video className="w-4 h-4 text-[#edcc36]" />
               <span>Ver video</span>
@@ -233,11 +267,8 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           {onExit && (
             <button
               type="button"
-              onClick={() => {
-                sound.playClick();
-                onExit();
-              }}
-              aria-label="Salir del modo pantalla completa"
+              onClick={handleExit}
+              aria-label="Salir del entrenamiento"
               className="p-2 rounded-xl bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 min-h-[44px] min-w-[44px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               <Minimize2 className="w-5 h-5" />
@@ -259,17 +290,23 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
         </button>
 
         <div className="text-center min-w-0 flex-1 px-2">
-          <span className="text-[11px] font-mono text-[#edcc36] uppercase tracking-wider block font-bold">
-            EJERCICIO {currentExerciseIdx + 1} DE {exercises.length}
+          <span className="text-xs text-[#edcc36] block font-semibold">
+            Ejercicio <span className="font-mono">{currentExerciseIdx + 1}</span> de <span className="font-mono">{exercises.length}</span>
           </span>
           <h2 className="text-xl sm:text-3xl font-extrabold font-cyber text-white truncate">
             {activeExercise.name}
           </h2>
-          <span className="text-xs font-mono text-zinc-400">
-            Objetivo: {activeExercise.targetSets} series × {activeExercise.targetReps} reps · Descanso {activeExercise.restSeconds}s
+          <span className="text-xs text-zinc-400">
+            Objetivo: {activeExercise.targetSets} series × {activeExercise.targetReps} reps
+            {activeExercise.targetWeightKg ? ` · ${fmtKg(activeExercise.targetWeightKg)} kg` : ''} · descanso {activeExercise.restSeconds} s
           </span>
+          {activeExercise.notes ? (
+            <p className="mt-1 text-xs text-zinc-200 bg-zinc-900/70 border border-zinc-800 rounded-lg px-2 py-1 text-left whitespace-pre-line">
+              <span className="text-[#edcc36] font-semibold">Indicación del profe:</span> {activeExercise.notes}
+            </p>
+          ) : null}
           {previous[activeExercise.id] ? (
-            <span className="mt-1 block text-xs font-mono text-zinc-300">
+            <span className="mt-1 block text-xs text-zinc-300">
               <span className="text-zinc-500">La vez pasada ({formatAgo(previous[activeExercise.id]!.performedAt)}):</span>{' '}
               {formatPreviousSets(previous[activeExercise.id]!.sets)}
             </span>
@@ -289,7 +326,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
       {/* Banner de Objetivo Cumplido */}
       {isTargetSetsMet && (
-        <div className="max-w-2xl mx-auto w-full p-3.5 rounded-2xl bg-[#edcc36]/15 border border-[#edcc36]/60 text-white flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs shadow-[0_0_15px_rgba(237,204,54,0.15)]">
+        <div className="max-w-2xl mx-auto w-full p-3.5 rounded-2xl bg-[#edcc36]/15 border border-[#edcc36]/60 text-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-[0_0_15px_rgba(237,204,54,0.15)]">
           <div className="flex items-center gap-2">
             <span className="w-5 h-5 rounded-full bg-[#edcc36] text-black font-black flex items-center justify-center text-xs">✓</span>
             <span className="font-bold text-[#edcc36]">
@@ -326,10 +363,10 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       <div className="max-w-2xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
         {/* Panel 1: Peso en Barra / Máquina */}
         <div className="p-5 rounded-3xl bg-zinc-950 border border-zinc-800 text-center flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="flex items-center gap-1.5">
               <Dumbbell className="w-4 h-4 text-[#edcc36]" />
-              <span>CARGA EFECTIVA</span>
+              <span>Carga</span>
             </span>
             <button
               type="button"
@@ -337,43 +374,43 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
                 sound.playClick();
                 setIsPlateModalOpen(true);
               }}
-              className="text-[#edcc36] hover:underline font-bold"
+              className="text-[#edcc36] hover:underline font-semibold min-h-[44px] px-1"
             >
-              Calculadora Discos
+              Calculadora de discos
             </button>
           </div>
 
           {/* Cifra Gigante de Peso */}
           <div className="my-2">
             <div className="text-6xl sm:text-8xl font-black font-tech text-white tabular-nums tracking-tight">
-              {selectedWeight}
+              {fmtKg(selectedWeight)}
             </div>
-            <span className="text-sm font-mono text-[#edcc36] font-bold uppercase tracking-widest block">
-              KILOGRAMOS (KG)
+            <span className="text-sm text-[#edcc36] font-semibold block">
+              {selectedWeight === 0 ? 'kg (peso corporal)' : 'kg'}
             </span>
           </div>
 
           {/* Ajuste Rápido de Peso (+/-) */}
-          <div className="flex items-center justify-center gap-2 pt-2 font-mono">
+          <div className="flex items-center justify-center gap-2 pt-2">
             <button
               type="button"
               onClick={() => {
                 sound.playClick();
                 setSelectedWeight((w) => Math.max(0, w - 2.5));
               }}
-              aria-label="Disminuir peso 2.5 kg"
+              aria-label="Disminuir peso 2,5 kg"
               className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-xl font-bold text-zinc-200 hover:text-white hover:border-zinc-600 flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               <Minus className="w-5 h-5" />
             </button>
-            <span className="text-xs text-zinc-400">± 2.5 kg</span>
+            <span className="text-xs text-zinc-400">± 2,5 kg</span>
             <button
               type="button"
               onClick={() => {
                 sound.playClick();
                 setSelectedWeight((w) => w + 2.5);
               }}
-              aria-label="Aumentar peso 2.5 kg"
+              aria-label="Aumentar peso 2,5 kg"
               className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 text-xl font-bold text-zinc-200 hover:text-[#edcc36] hover:border-[#edcc36] flex items-center justify-center min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               <Plus className="w-5 h-5" />
@@ -383,8 +420,8 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
 
         {/* Panel 2: Repeticiones */}
         <div className="p-5 rounded-3xl bg-zinc-950 border border-zinc-800 text-center flex flex-col justify-between">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-            <span>REPS LOGRADAS</span>
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Repeticiones</span>
             <span className="text-zinc-400">Objetivo: {activeExercise.targetReps}</span>
           </div>
 
@@ -393,13 +430,13 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             <div className="text-6xl sm:text-8xl font-black font-tech text-[#edcc36] tabular-nums tracking-tight">
               {selectedReps}
             </div>
-            <span className="text-sm font-mono text-zinc-400 font-bold uppercase tracking-widest block">
-              REPETICIONES
+            <span className="text-sm text-zinc-400 font-semibold block">
+              reps
             </span>
           </div>
 
           {/* Ajuste Rápido de Reps (+/-) */}
-          <div className="flex items-center justify-center gap-3 pt-2 font-mono">
+          <div className="flex items-center justify-center gap-3 pt-2">
             <button
               type="button"
               onClick={() => {
@@ -428,13 +465,13 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
       </div>
 
       {/* Selector de RPE (Esfuerzo Percibido 1 a 10) */}
-      <div className="max-w-2xl mx-auto w-full p-3.5 rounded-2xl bg-zinc-950 border border-zinc-900 font-mono text-xs">
+      <div className="max-w-2xl mx-auto w-full p-3.5 rounded-2xl bg-zinc-950 border border-zinc-900 text-xs">
         <div className="flex items-center justify-between mb-2">
           <span className="text-zinc-400 flex items-center gap-1.5">
             <Flame className="w-3.5 h-3.5 text-[#edcc36]" />
-            <span>RPE (Esfuerzo percibido):</span>
+            <span>Esfuerzo percibido (RPE, opcional)</span>
           </span>
-          <span className="font-bold text-[#edcc36]">{selectedRpe} / 10</span>
+          <span className="font-mono font-bold text-[#edcc36]">{selectedRpe !== null ? `${fmtKg(selectedRpe)} / 10` : '—'}</span>
         </div>
 
         <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
@@ -444,16 +481,17 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
               type="button"
               onClick={() => {
                 sound.playClick();
-                setSelectedRpe(rpe);
+                setSelectedRpe((cur) => (cur === rpe ? null : rpe));
               }}
-              aria-label={`RPE ${rpe}`}
-              className={`flex-1 py-2 px-2.5 rounded-lg font-bold transition-all min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
+              aria-label={`RPE ${fmtKg(rpe)}`}
+              aria-pressed={selectedRpe === rpe}
+              className={`flex-1 py-2 px-2.5 rounded-lg font-mono font-bold transition-all min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
                 selectedRpe === rpe
                   ? 'bg-[#edcc36] text-black shadow-[0_0_10px_rgba(237,204,54,0.4)]'
                   : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
               }`}
             >
-              {rpe}
+              {fmtKg(rpe)}
             </button>
           ))}
         </div>
@@ -465,8 +503,8 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
           <div className="flex items-center gap-3">
             <Clock className="w-6 h-6 text-[#edcc36]" />
             <div>
-              <span className="text-[10px] font-mono text-zinc-400 block uppercase">
-                Tiempo de Descanso Activo
+              <span className="text-[11px] text-zinc-400 block">
+                Descanso
               </span>
               <div className="text-2xl sm:text-3xl font-bold font-tech text-[#edcc36] tabular-nums">
                 {Math.floor(restRemaining / 60)}:{String(restRemaining % 60).padStart(2, '0')}
@@ -480,9 +518,9 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
               sound.playClick();
               setIsResting(false);
             }}
-            className="py-2 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+            className="py-2 px-4 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-300 hover:text-white min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
           >
-            Saltar Descanso
+            Saltar descanso
           </button>
         </div>
       )}
@@ -492,34 +530,45 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
         <button
           type="button"
           onClick={handleCompleteSet}
-          className="w-full py-5 px-6 rounded-2xl bg-[#edcc36] hover:bg-[#ffe156] text-black font-cyber font-black text-lg sm:text-xl tracking-wider transition-all shadow-[0_0_25px_rgba(237,204,54,0.45)] flex items-center justify-center gap-3 min-h-[64px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          className="w-full py-5 px-6 rounded-2xl bg-[#edcc36] hover:bg-[#ffe156] text-black font-black text-lg sm:text-xl transition-all shadow-[0_0_25px_rgba(237,204,54,0.45)] flex items-center justify-center gap-3 min-h-[64px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
         >
           <Check className="w-7 h-7 stroke-[3]" />
           <span>
-            {isTargetSetsMet ? `REGISTRAR SERIE EXTRA (#${currentSetNumber})` : `SERIE #${currentSetNumber} COMPLETADA`}
+            {isTargetSetsMet ? `Registrar serie extra (${currentSetNumber})` : `Completé la serie ${currentSetNumber}`}
           </span>
         </button>
 
         {/* Resumen de series ya registradas */}
         {completedForThisEx.length > 0 && (
-          <div className="flex items-center justify-center gap-2 flex-wrap font-mono text-xs text-zinc-400 pt-1">
+          <div className="flex items-center justify-center gap-2 flex-wrap text-xs text-zinc-400 pt-1">
             <span>Series guardadas:</span>
             {completedForThisEx.map((s) => {
               const isExtra = s.setNumber > activeExercise.targetSets;
               return (
                 <span
                   key={s.setNumber}
-                  className={`px-2 py-0.5 rounded border ${
+                  className={`px-2 py-0.5 rounded border font-mono ${
                     isExtra
                       ? 'bg-amber-950/40 text-amber-300 border-amber-500/40'
                       : 'bg-zinc-900 text-[#edcc36] border-zinc-800'
                   }`}
                 >
-                  #{s.setNumber}: {s.weightKg}kg × {s.reps} {isExtra ? '(Extra)' : ''}
+                  {s.setNumber}: {fmtKg(s.weightKg)} kg × {s.reps}{isExtra ? ' (extra)' : ''}
                 </span>
               );
             })}
           </div>
+        )}
+
+        {onFinishWorkout && (
+          <button
+            type="button"
+            onClick={handleFinishEarly}
+            className="w-full py-3 px-4 rounded-2xl border border-zinc-800 bg-zinc-950 text-sm font-semibold text-zinc-300 hover:text-white hover:border-zinc-600 flex items-center justify-center gap-2 min-h-[48px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          >
+            <Flag className="w-4 h-4 text-[#edcc36]" aria-hidden="true" />
+            Terminar entrenamiento
+          </button>
         )}
       </div>
 
@@ -557,8 +606,8 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             </div>
 
             {activeExercise.notes && (
-              <p className="text-xs font-mono text-zinc-400 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800">
-                <strong>Clave técnica:</strong> {activeExercise.notes}
+              <p className="text-xs text-zinc-300 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 whitespace-pre-line">
+                <strong>Indicación del profe:</strong> {activeExercise.notes}
               </p>
             )}
           </div>
