@@ -24,7 +24,8 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
   const estado = typeof sp.estado === 'string' ? sp.estado : ''
   const page = Math.max(1, Number(sp.p) || 1)
 
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('members.read')) {
     return <p className="text-sm text-zinc-400">No tenés permiso para ver el listado de socios.</p>
   }

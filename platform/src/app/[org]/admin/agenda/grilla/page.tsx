@@ -3,13 +3,15 @@ import { Plus } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { createSeries, endSeries, updateSeries } from '@/features/admin/schedule-actions'
-import { SeriesForm, SeriesRowForm, WEEKDAYS } from '@/features/admin/ScheduleForms'
+import { SeriesForm, SeriesRowForm } from '@/features/admin/ScheduleForms'
+import { WEEKDAYS } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Grilla semanal' }
 
 export default async function GridPage({ params }: PageProps<'/[org]/admin/agenda/grilla'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('schedule.manage')) return <p className="text-sm text-zinc-400">No tenés permiso para editar la grilla.</p>
 
   const supabase = await createClient()

@@ -23,7 +23,8 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default async function SessionPage({ params }: PageProps<'/[org]/admin/agenda/[sessionId]'>) {
   const { org: slug, sessionId } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const tz = ctx.org.timezone
   const supabase = await createClient()
 

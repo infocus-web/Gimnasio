@@ -23,7 +23,8 @@ interface Report {
 
 export default async function ReportsPage({ params }: PageProps<'/[org]/admin/reportes'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('reports.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver reportes.</p>
 
   const supabase = await createClient()

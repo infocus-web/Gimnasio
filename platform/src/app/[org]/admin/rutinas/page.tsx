@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: 'Rutinas' }
 
 export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/rutinas'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (ctx.staff.role !== 'trainer' && !ctx.can('training.manage_all')) {
     return <p className="text-sm text-zinc-400">Esta sección es para profesores.</p>
   }

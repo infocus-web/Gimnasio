@@ -9,7 +9,8 @@ import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 type Action = (prev: ActionState, form: FormData) => Promise<ActionState>
 type BareAction = (prev: ActionState) => Promise<ActionState>
 
-export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+import { WEEKDAYS } from './format'
+export { WEEKDAYS }
 
 export function GenerateButton({ action }: { action: BareAction }) {
   const [state, formAction] = useActionForm(action, {})

@@ -15,7 +15,8 @@ const METHOD: Record<string, string> = { facial: 'cara', palm: 'palma', fingerpr
 
 export default async function AccessPage({ params }: PageProps<'/[org]/admin/accesos'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('org.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador configura los lectores.</p>
 
   const supabase = await createClient()

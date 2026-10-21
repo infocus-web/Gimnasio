@@ -9,7 +9,8 @@ export const metadata: Metadata = { title: 'Panel' }
 
 export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
   const orgId = ctx.org.id
   const canMembers = ctx.can('members.read')

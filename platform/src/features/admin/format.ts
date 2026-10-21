@@ -78,3 +78,6 @@ export const PLAN_STATE_UI: Record<PlanState, { label: string; className: string
 export function formatMoney(cents: number, currency = 'ARS') {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100)
 }
+
+/** Días de la semana (1 = lunes … 7 = domingo → índice 0…6). En un módulo común: lo usan páginas del servidor y formularios. */
+export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']

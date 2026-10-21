@@ -18,7 +18,8 @@ export const metadata: Metadata = { title: 'Equipo' }
 
 export default async function TeamPage({ params }: PageProps<'/[org]/admin/equipo'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('staff.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador gestiona el equipo.</p>
 
   const supabase = await createClient()

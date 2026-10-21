@@ -8,7 +8,8 @@ export const metadata: Metadata = { title: 'Web' }
 
 export default async function WebPage({ params }: PageProps<'/[org]/admin/web'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('org.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador edita la web.</p>
 
   const supabase = await createClient()

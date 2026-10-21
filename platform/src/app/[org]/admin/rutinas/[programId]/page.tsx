@@ -20,7 +20,8 @@ export const metadata: Metadata = { title: 'Armar rutina' }
 
 export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin/rutinas/[programId]'>) {
   const { org: slug, programId } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
   const { data: program } = await supabase
     .from('workout_programs')

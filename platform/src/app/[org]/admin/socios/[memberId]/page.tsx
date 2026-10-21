@@ -26,7 +26,8 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   const sp = await searchParams
   const aviso = typeof sp.aviso === 'string' ? sp.aviso.slice(0, 300) : null
 
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('members.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver socios.</p>
 
   const supabase = await createClient()

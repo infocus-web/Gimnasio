@@ -16,7 +16,8 @@ function waLink(phone: string | null, text: string) {
 
 export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pagos/deudores'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
 
   const supabase = await createClient()

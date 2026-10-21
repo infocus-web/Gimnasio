@@ -12,7 +12,8 @@ export const metadata: Metadata = { title: 'Recepción' }
 
 export default async function RecepcionPage({ params }: PageProps<'/[org]/admin/recepcion'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
 
   if (!ctx.can('checkins.manage') || !ctx.org.locationId) {
     return <p className="text-sm text-zinc-400">Tu rol no tiene acceso a la recepción.</p>

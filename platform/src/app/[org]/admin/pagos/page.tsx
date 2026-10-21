@@ -18,7 +18,8 @@ function shiftDay(ymd: string, days: number) {
 export default async function CajaPage({ params, searchParams }: PageProps<'/[org]/admin/pagos'>) {
   const { org: slug } = await params
   const sp = await searchParams
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver la caja.</p>
 
   const tz = ctx.org.timezone
