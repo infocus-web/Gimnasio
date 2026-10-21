@@ -25,7 +25,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
           <p className="text-sm text-zinc-400">
             {ctx.error === 'NO_ORG'
               ? 'Revisá el link que te pasaron.'
-              : 'Pedile a recepción que vincule tu email a tu ficha de socio.'}
+              : 'Esta cuenta no tiene una ficha de socio activa. Pedile a recepción que vincule tu email a tu ficha, o entrá con otro email.'}
           </p>
           <SignOutButton />
         </div>

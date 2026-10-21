@@ -77,7 +77,11 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
   const asked = (await headers()).get('x-pathname')
   const user = await requireUser(asked?.startsWith(`/${slug}/app`) ? asked : `/${slug}/app`)
   const org = await getOrg(slug)
-  if (!org) return { error: 'NO_ORG' }
+  if (!org) {
+    // El gimnasio existe pero esta cuenta no está vinculada (socio dado de baja o borrado): no es "link roto"
+    const { data: exists } = await (await createClient()).rpc('public_gym_profile', { p_slug: slug })
+    return { error: exists ? 'NOT_A_MEMBER' : 'NO_ORG' }
+  }
 
   const supabase = await createClient()
   const { data: me } = await supabase
