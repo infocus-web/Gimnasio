@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
-import { ShieldCheck, CalendarDays, Dumbbell, TrendingUp, Clock } from 'lucide-react'
+import { ShieldCheck, CalendarDays, Dumbbell, TrendingUp, Users } from 'lucide-react'
 
 const TABS = [
   { href: 'pase', label: 'Acceso', Icon: ShieldCheck },
   { href: 'clases', label: 'Clases', Icon: CalendarDays },
   { href: 'entrenar', label: 'Entrenar', Icon: Dumbbell },
   { href: 'progreso', label: 'Progreso', Icon: TrendingUp },
-  { href: 'horarios', label: 'Horarios', Icon: Clock },
+  { href: 'horarios', label: 'Concurrencia', Icon: Users },
 ] as const
 
 /** Barra inferior fija, pensada para el pulgar (mobile-first). */
@@ -36,7 +36,7 @@ export function MemberNav({ orgSlug }: { orgSlug: string }) {
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />
-                {label}
+                <span className="max-w-full truncate px-0.5 text-[10px] min-[360px]:text-[11px]">{label}</span>
               </Link>
             </li>
           )
