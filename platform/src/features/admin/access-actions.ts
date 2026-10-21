@@ -86,6 +86,21 @@ export async function createAgentToken(slug: string, deviceId: string, _prev: Ac
   }
 }
 
+/** Vincula la tablet del molinete (pantalla /<gym>/molinete). Generar otra desvincula la anterior. */
+export async function createKioskToken(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('access_device_kiosk_token', { p_device: deviceId })
+  if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
+  refresh(slug)
+  return {
+    ok: true,
+    secret: data,
+    message: 'Abrí este link en la tablet (o escaneá el código con su cámara). Se muestra una sola vez.',
+  }
+}
+
 export async function linkDeviceUser(slug: string, deviceId: string, pin: number, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }

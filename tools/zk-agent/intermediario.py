@@ -154,6 +154,7 @@ def asistente():
             print(f"\nModo actual: {cfg.get('modo')}.")
             if nuevo == "sincronizar":
                 print("En 'sincronizar' el programa CARGA y SACA socios del lector según sus pagos.")
+                print("(La apertura con QR desde la tablet funciona en los dos modos.)")
                 print("Hacelo recién cuando los socios reales estén cargados y vinculados en la plataforma.")
             if preguntar(f"¿Pasar a '{nuevo}'? (s/n)", "n").lower() != "s":
                 return pausa()

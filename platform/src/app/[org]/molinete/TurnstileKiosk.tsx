@@ -42,16 +42,18 @@ function save(key: string, value: string | null) {
   }
 }
 
-async function call(k: string, qr: string | null) {
+type Resp = Partial<Result> & { status: string; device?: string }
+
+async function call(k: string, qr: string | null): Promise<Resp> {
   const res = await fetch('/api/access/turnstile', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ k, qr }),
     cache: 'no-store',
   })
-  if (res.status === 401) return { status: 'unauthorized' } as const
+  if (res.status === 401) return { status: 'unauthorized' }
   if (!res.ok) throw new Error(String(res.status))
-  return (await res.json()) as Result & { status: string; device?: string }
+  return (await res.json()) as Resp
 }
 
 export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; storageKey: string }) {
@@ -149,7 +151,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
           setToken(null)
           return
         }
-        setResult(r)
+        setResult({ ...r, allowed: !!r.allowed })
         setOnline((prev) => r.opener_online ?? prev)
         if (r.allowed) sound.playAccessGranted()
         else sound.playAccessDenied()

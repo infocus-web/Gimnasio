@@ -3,9 +3,10 @@ Intermediario entre la plataforma (Vercel) y un lector ZKTeco por la red local (
 Para lectores que no aceptan órdenes por la nube (ej. MB360). Corre en una PC del gimnasio.
 
 Modos (config.json → "modo"):
-  "lectura"      NO modifica el lector. Sube a la plataforma: usuarios, huellas de socios y entradas.
+  "lectura"      NO carga ni borra usuarios del lector. Sube a la plataforma: usuarios, huellas de socios y entradas.
   "sincronizar"  Además ejecuta la cola de la plataforma: carga a los socios al día, saca a vencidos/morosos,
                  restaura huellas y mantiene en hora el reloj del lector.
+En los dos modos abre el molinete cuando la tablet valida el QR de un socio ("abrir_por_qr": false lo desactiva).
 
 Uso:  python agente.py            (corre siempre)
       python agente.py --una-vez  (un solo ciclo, para probar)
@@ -34,8 +35,10 @@ from zk.exception import ZKNetworkError  # noqa: E402
 from zk.finger import Finger  # noqa: E402
 from zk.user import User  # noqa: E402
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 CICLO_SEG = 10
+APERTURAS_CADA_SEG = 1          # consulta rápida de "abrir molinete" (QR en la tablet)
+SEGUNDOS_APERTURA = 1           # pulso del relé: en un molinete libera una sola vuelta
 SALUDO_CADA_SEG = 300
 SUBIDA_COMPLETA_CADA_SEG = 1800
 RELOJ_CADA_SEG = 600
@@ -323,6 +326,38 @@ def ejecutar_cola(conn, comandos):
     return resultados, subir_todo, True
 
 
+def abrir_pendientes(cfg, plat):
+    """Aperturas pedidas por la tablet del molinete (QR). Se ejecutan al instante; no cargan ni borran nada."""
+    res = plat.llamar("unlocks")
+    comandos = res.get("commands") or []
+    if not comandos:
+        return
+    resultados = []
+    conn = None
+    try:
+        conn = conectar(cfg)
+        for c in comandos:
+            try:
+                conn.unlock(time=SEGUNDOS_APERTURA)
+                resultados.append({"id": c["id"], "ret": 0})
+                log.info("Molinete abierto (QR)")
+            except ERRORES_DE_RED:
+                raise
+            except Exception as e:
+                log.warning("El lector no aceptó abrir: %s", e)
+                resultados.append({"id": c["id"], "ret": -1})
+    except ERRORES_DE_RED as e:
+        log.error("No se pudo abrir el molinete (sin conexión con el lector): %s", e)
+        resultados += [{"id": c["id"], "ret": -2} for c in comandos if c["id"] not in {r["id"] for r in resultados}]
+    finally:
+        if conn:
+            try:
+                conn.disconnect()
+            except Exception:
+                pass
+    plat.llamar("results", results=resultados)
+
+
 # ---------------------------------------------------------------- ciclo
 def ciclo(cfg, plat, estado):
     sincronizar = cfg["modo"] == "sincronizar"
@@ -338,6 +373,7 @@ def ciclo(cfg, plat, estado):
                 "mode": cfg["modo"], "version": VERSION, "pc": socket.gethostname(),
                 "device": seguro(conn.get_device_name), "fw": seguro(conn.get_firmware_version),
                 "users": conn.users, "fingers": conn.fingers, "records": conn.records,
+                "qr": bool(cfg.get("abrir_por_qr", True)),
             }
             res = plat.llamar("hello", info=info)
             if res.get("status") != "ok":
@@ -406,21 +442,34 @@ def main():
     if cfg["modo"] == "lectura":
         log.info("Modo LECTURA: no se modifica nada en el lector.")
     errores = 0
+    proximo_ciclo = 0.0
+    error_aperturas = 0.0
+    qr = bool(cfg.get("abrir_por_qr", True))
     while True:
-        try:
-            ciclo(cfg, plat, estado)
-            errores = 0
-        except SystemExit:
-            raise
-        except Exception as e:
-            errores += 1
-            log.error("Ciclo con error (%d seguidos): %s", errores, e)
-            if una_vez:
+        if time.time() >= proximo_ciclo:
+            try:
+                ciclo(cfg, plat, estado)
+                errores = 0
+            except SystemExit:
                 raise
-        if una_vez:
-            log.info("Listo (--una-vez).")
-            return
-        time.sleep(CICLO_SEG if errores == 0 else min(300, CICLO_SEG * (2 ** min(errores, 5))))
+            except Exception as e:
+                errores += 1
+                log.error("Ciclo con error (%d seguidos): %s", errores, e)
+                if una_vez:
+                    raise
+            if una_vez:
+                log.info("Listo (--una-vez).")
+                return
+            espera = CICLO_SEG if errores == 0 else min(300, CICLO_SEG * (2 ** min(errores, 5)))
+            proximo_ciclo = time.time() + espera
+        if qr:
+            try:
+                abrir_pendientes(cfg, plat)
+            except Exception as e:
+                if time.time() - error_aperturas > 60:      # no llenar el registro si se corta internet
+                    log.error("Consulta de aperturas con error: %s", e)
+                    error_aperturas = time.time()
+        time.sleep(APERTURAS_CADA_SEG if qr else max(1.0, proximo_ciclo - time.time()))
 
 
 if __name__ == "__main__":

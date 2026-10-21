@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
 import { Card } from '@/features/admin/ui'
 import { fmtDateTime } from '@/features/admin/format'
-import { AgentPanel, CopyValue, DeviceButtons, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
-import { createAgentToken, deviceAction, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
+import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
+import { createAgentToken, createKioskToken, deviceAction, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
 
 export const metadata: Metadata = { title: 'Accesos' }
 
@@ -116,6 +116,8 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
           agent_token_at?: string
           agent_seen_at?: string
           agent?: { mode?: string; version?: string }
+          kiosk_token_at?: string
+          kiosk_seen_at?: string
         }
         const isOnline = online(d.last_seen_at)
         return (
@@ -168,6 +170,14 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
                 mode={info.agent?.mode ?? null}
                 version={info.agent?.version ?? null}
                 action={createAgentToken.bind(null, slug, d.id)}
+              />
+
+              <KioskPanel
+                slug={slug}
+                paired={!!info.kiosk_token_at}
+                online={!!info.kiosk_seen_at && Date.now() - new Date(info.kiosk_seen_at).getTime() < 60_000}
+                seenLabel={info.kiosk_seen_at ? fmtDateTime(info.kiosk_seen_at, ctx.org.timezone) : null}
+                action={createKioskToken.bind(null, slug, d.id)}
               />
 
               {unlinked.length > 0 && (
