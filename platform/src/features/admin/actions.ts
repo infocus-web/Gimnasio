@@ -6,6 +6,7 @@ import type { Route } from 'next'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { siteUrl } from '@/lib/site-url'
 import { getAdminContext } from './context'
 
@@ -271,4 +272,36 @@ export async function deleteMember(slug: string, memberId: string, _prev: Action
   revalidatePath(`/${slug}/admin/socios`, 'layout')
   revalidatePath(`/${slug}/admin/accesos`)
   redirect(`/${slug}/admin/socios` as Route)
+}
+
+/** Socio que ya tiene cuenta: le manda por email un link para entrar (sin contraseña). */
+export async function sendAccessLink(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: member } = await supabase
+    .from('members')
+    .select('email, user_id')
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+    .maybeSingle()
+  if (!member) return { message: ERRORS.MEMBER_NOT_FOUND }
+  if (!member.email) return { message: 'Cargale un email en la ficha primero.' }
+  // Cliente sin sesión: enviar el link no toca la sesión del que está en el panel
+  const anon = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const next = `/${slug}/app/pase`
+  const { error } = await anon.auth.signInWithOtp({
+    email: member.email,
+    options: { shouldCreateUser: false, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+  })
+  if (error) {
+    console.error('[sendAccessLink]', error.status, error.code, error.message)
+    if (error.status === 429 || /rate/i.test(error.code ?? '')) {
+      return { message: 'Ya se mandó un link hace un momento. Esperá un minuto, o pedile que revise Spam.' }
+    }
+    return { message: 'No se pudo enviar el link. Probá de nuevo en unos minutos.' }
+  }
+  return { ok: true, message: `Le mandamos a ${member.email} un link para entrar a la app (revisá también Spam).` }
 }

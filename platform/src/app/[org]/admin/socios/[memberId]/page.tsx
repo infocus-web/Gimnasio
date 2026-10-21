@@ -4,7 +4,7 @@ import type { Metadata, Route } from 'next'
 import { ArrowLeft, Smartphone, UserPlus, Crown, Info } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { assignPlan, deleteMember, inviteMemberToApp, updateMember } from '@/features/admin/actions'
+import { assignPlan, deleteMember, inviteMemberToApp, sendAccessLink, updateMember } from '@/features/admin/actions'
 import { DeleteMemberButton } from '@/features/admin/DeleteMemberButton'
 import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
@@ -238,9 +238,14 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
 
           <Card title="Acceso a la app">
             {m.has_app ? (
-              <p className="flex items-center gap-2 text-sm text-emerald-200">
-                <Smartphone className="h-4 w-4" aria-hidden="true" /> Tiene cuenta y puede entrar a la app.
-              </p>
+              <div className="space-y-3">
+                <p className="flex items-center gap-2 text-sm text-emerald-200">
+                  <Smartphone className="h-4 w-4" aria-hidden="true" /> Tiene cuenta y puede entrar a la app.
+                </p>
+                {canWrite && m.email && (
+                  <InviteButton action={sendAccessLink.bind(null, slug, memberId)} label="Enviarle link para entrar" />
+                )}
+              </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-zinc-400">
