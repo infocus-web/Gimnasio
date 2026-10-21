@@ -82,17 +82,33 @@ select test.check(jsonb_array_length(:'u'::jsonb -> 'commands') = 1 and :'u'::js
 select test.check(jsonb_array_length(public.agent_call('MBTEST0001', :'tok', '5.5.5.5', 'unlocks') -> 'commands') = 0, 'no se repite');
 select test.check(public.agent_call('MBTEST0001', 'mala', '5.5.5.5', 'unlocks') ->> 'status' = 'unauthorized', 'canal rápido pide clave');
 
--- Pasar el QR a otro: el mismo socio no entra de nuevo dentro de 3 minutos
-update public.checkins set created_at = now() - interval '1 minute'
- where member_id = (select id from public.members where last_name = 'AlDia');
-select test.check(public.turnstile_scan(:'kiosk', :'qr1') ->> 'reason' = 'RECENT_ENTRY', 'anti pasar el QR');
-update public.checkins set created_at = now() - interval '4 minutes'
- where member_id = (select id from public.members where last_name = 'AlDia');
-select test.check((public.turnstile_scan(:'kiosk', :'qr1') ->> 'allowed')::boolean, 'después de 3 minutos vuelve a entrar');
+-- La tablet pregunta si abrió: el intermediario confirma
+select :'r1'::jsonb ->> 'unlock_id' as uid \gset
+select test.check(public.turnstile_scan(:'kiosk', null, :'uid'::bigint) ->> 'unlock' = 'waiting', 'apertura en curso');
+select public.agent_call('MBTEST0001', :'tok', '5.5.5.5', 'results',
+         jsonb_build_object('results', jsonb_build_array(jsonb_build_object('id', :'uid'::bigint, 'ret', 0)))) as rr \gset
+select test.check(public.turnstile_scan(:'kiosk', null, :'uid'::bigint) ->> 'unlock' = 'opened', 'apertura confirmada');
 
--- Una apertura vieja nunca se ejecuta
-update public.access_commands set created_at = now() - interval '20 seconds' where device_id = :'dev' and kind = 'unlock' and status = 'pending';
+-- Pasar el QR a otro: el mismo socio no entra de nuevo dentro de 3 minutos
+update public.access_commands set created_at = now() - interval '61 seconds' where device_id = :'dev' and kind = 'unlock';
+select test.check(public.turnstile_scan(:'kiosk', :'qr1') ->> 'reason' = 'RECENT_ENTRY', 'anti pasar el QR');
+update public.access_commands set created_at = now() - interval '4 minutes' where device_id = :'dev' and kind = 'unlock';
+select public.turnstile_scan(:'kiosk', :'qr1') as r2 \gset
+select test.check((:'r2'::jsonb ->> 'allowed')::boolean and :'r2'::jsonb ->> 'unlock_id' is not null, 'después de 3 minutos vuelve a entrar');
+
+-- Una apertura vieja nunca se ejecuta, y como no abrió no cuenta como entrada
+update public.access_commands set created_at = now() - interval '25 seconds' where device_id = :'dev' and kind = 'unlock' and status = 'pending';
 select test.check(jsonb_array_length(public.agent_call('MBTEST0001', :'tok', '5.5.5.5', 'unlocks') -> 'commands') = 0, 'apertura vieja descartada');
+select test.check(public.turnstile_scan(:'kiosk', null, (:'r2'::jsonb ->> 'unlock_id')::bigint) ->> 'unlock' = 'failed', 'la tablet se entera de que no abrió');
+select test.check((public.turnstile_scan(:'kiosk', :'qr1') ->> 'allowed')::boolean
+                  and (public.turnstile_scan(:'kiosk', :'qr1') ->> 'duplicate')::boolean, 'si no abrió puede volver a pasar el QR');
+
+-- Intermediario caído: no registra ni encola nada (pasa por recepción)
+update public.access_devices set info = info || '{"agent_seen_at":"2020-01-01T00:00:00Z"}' where id = :'dev';
+select count(*) as n_before from public.checkins \gset
+select test.check(public.turnstile_scan(:'kiosk', :'qr2') ->> 'reason' = 'TURNSTILE_OFFLINE', 'molinete caído avisa');
+select test.check((select count(*) from public.checkins) = :n_before, 'molinete caído no registra');
+select public.agent_call('MBTEST0001', :'tok', '5.5.5.5', 'hello') ->> 'status' as st \gset
 
 -- Solo clases / moroso: no abren y queda registrado el rechazo una sola vez
 select test.check(public.turnstile_scan(:'kiosk', :'qr2') ->> 'reason' = 'PLAN_WITHOUT_GYM', 'plan sin musculación');
@@ -100,7 +116,8 @@ select test.check(public.turnstile_scan(:'kiosk', :'qr3') ->> 'reason' = 'PAYMEN
 select public.turnstile_scan(:'kiosk', :'qr3') as r3 \gset
 select test.check((select count(*) from public.checkins c join public.members m on m.id = c.member_id
                     where m.last_name = 'Moroso' and m.first_name = 'Qr' and not c.allowed) = 1, 'rechazo registrado una vez');
-select test.check((select count(*) from public.access_commands where device_id = :'dev' and kind = 'unlock' and status = 'pending') = 0, 'rechazos no abren');
+select test.check((select count(*) from public.access_commands c join public.members m on m.id = c.member_id
+                    where c.device_id = :'dev' and c.kind = 'unlock' and m.last_name in ('Clases', 'Moroso')) = 0, 'rechazos no abren');
 
 -- Tablet de un lector pausado: no abre
 reset role;

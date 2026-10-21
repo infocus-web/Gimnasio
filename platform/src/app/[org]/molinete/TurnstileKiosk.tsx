@@ -11,7 +11,9 @@ type Result = {
   first_name?: string
   duplicate?: boolean
   opener_online?: boolean
+  unlock_id?: number | null
 }
+type Unlock = 'waiting' | 'opened' | 'failed'
 
 const REASONS: Record<string, string> = {
   QR_INVALID: 'Ese código no es el QR de la app.',
@@ -24,7 +26,9 @@ const REASONS: Record<string, string> = {
   PLAN_WITHOUT_GYM: 'Tu plan no incluye musculación.',
   NO_ACTIVE_MEMBERSHIP: 'No tenés un plan activo. Pasá por recepción.',
   RECENT_ENTRY: 'Ya entraste hace un momento. Si es un error, pasá por recepción.',
+  TURNSTILE_OFFLINE: 'El molinete está sin conexión. Pasá por recepción.',
 }
+const SAME_QR_IGNORE_MS = 60_000
 
 function load(key: string) {
   try {
@@ -42,13 +46,13 @@ function save(key: string, value: string | null) {
   }
 }
 
-type Resp = Partial<Result> & { status: string; device?: string }
+type Resp = Partial<Result> & { status: string; device?: string; unlock?: Unlock | 'unknown' }
 
-async function call(k: string, qr: string | null): Promise<Resp> {
+async function call(k: string, qr: string | null, unlock?: number): Promise<Resp> {
   const res = await fetch('/api/access/turnstile', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ k, qr }),
+    body: JSON.stringify(unlock ? { k, unlock } : { k, qr }),
     cache: 'no-store',
   })
   if (res.status === 401) return { status: 'unauthorized' }
@@ -63,13 +67,17 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const [online, setOnline] = useState<boolean | null>(null)
   const [device, setDevice] = useState('')
   const [result, setResult] = useState<Result | null>(null)
+  const [unlock, setUnlock] = useState<Unlock | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
   const [now, setNow] = useState('')
   const scanner = useRef<Html5Qrcode | null>(null)
   const busy = useRef(false)
   const last = useRef<{ text: string; at: number }>({ text: '', at: 0 })
+  const shownAt = useRef(0)
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const camera = useRef<Promise<unknown>>(Promise.resolve())
+  const scanSeq = useRef(0)
 
   // Clave de la tablet: llega en el link (#k=…) una vez y queda guardada
   useEffect(() => {
@@ -79,6 +87,8 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
       window.history.replaceState(null, '', window.location.pathname)
     }
     setToken(fromHash ?? load(storageKey))
+    // Tablet fija: si ya se inició alguna vez, después de un corte de luz o reinicio arranca sola
+    if (load(`${storageKey}:started`)) setStarted(true)
     setReady(true)
   }, [storageKey])
 
@@ -120,11 +130,17 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   // Pantalla siempre encendida
   useEffect(() => {
     if (!started) return
-    let lock: { release: () => Promise<void> } | null = null
+    type Lock = { released: boolean; release: () => Promise<void> }
+    let lock: Lock | null = null
+    let done = false
     const ask = async () => {
+      if (document.visibilityState !== 'visible' || (lock && !lock.released)) return
       try {
-        const wl = (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
-        if (wl && document.visibilityState === 'visible') lock = await wl.request('screen')
+        const wl = (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<Lock> } }).wakeLock
+        if (!wl) return
+        const l = await wl.request('screen')
+        if (done) l.release().catch(() => {})
+        else lock = l
       } catch {
         /* sin bloqueo de pantalla: configurar "no apagar pantalla" en la tablet */
       }
@@ -132,16 +148,53 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
     ask()
     document.addEventListener('visibilitychange', ask)
     return () => {
+      done = true
       document.removeEventListener('visibilitychange', ask)
       lock?.release().catch(() => {})
     }
   }, [started])
 
+  const show = useCallback((r: Result | ((prev: Result | null) => Result), ms: number) => {
+    setResult(r)
+    shownAt.current = Date.now()
+    if (clearTimer.current) clearTimeout(clearTimer.current)
+    clearTimer.current = setTimeout(() => {
+      setResult(null)
+      setUnlock(null)
+    }, ms)
+  }, [])
+
+  // ¿Abrió el molinete? Se pregunta hasta que el intermediario confirma (máx. ~8 s)
+  const watchUnlock = useCallback(
+    async (k: string, id: number, seq: number) => {
+      setUnlock('waiting')
+      const until = Date.now() + 8000
+      while (Date.now() < until) {
+        await new Promise((ok) => setTimeout(ok, 700))
+        if (scanSeq.current !== seq) return
+        try {
+          const r = await call(k, null, id)
+          if (scanSeq.current !== seq) return
+          if (r.unlock === 'opened') return setUnlock('opened')
+          if (r.unlock === 'failed' || r.unlock === 'unknown') break
+        } catch {
+          /* reintenta */
+        }
+      }
+      if (scanSeq.current !== seq) return
+      setUnlock('failed')
+      sound.playAccessDenied()
+      show((prev) => prev ?? { allowed: true }, 6000)  // mantiene el nombre del socio en pantalla
+    },
+    [show],
+  )
+
   const onDecoded = useCallback(
     async (text: string) => {
       if (!token || busy.current) return
       const t = Date.now()
-      if (text === last.current.text && t - last.current.at < 5000) return
+      // el mismo QR sigue frente a la cámara: no se vuelve a consultar
+      if (text === last.current.text && t - last.current.at < SAME_QR_IGNORE_MS) return
       last.current = { text, at: t }
       busy.current = true
       try {
@@ -151,47 +204,75 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
           setToken(null)
           return
         }
-        setResult({ ...r, allowed: !!r.allowed })
         setOnline((prev) => r.opener_online ?? prev)
+        // QR nuevo (rota cada 30 s) del socio que acaba de pasar: silencio
+        if (r.duplicate && Date.now() - shownAt.current < SAME_QR_IGNORE_MS) return
+        const seq = ++scanSeq.current
+        setUnlock(null)
+        show({ ...r, allowed: !!r.allowed }, r.allowed ? 4000 : 5000)
         if (r.allowed) sound.playAccessGranted()
         else sound.playAccessDenied()
-        if (clearTimer.current) clearTimeout(clearTimer.current)
-        clearTimer.current = setTimeout(() => setResult(null), r.allowed ? 3500 : 5000)
+        if (r.allowed && !r.duplicate && typeof r.unlock_id === 'number') void watchUnlock(token, r.unlock_id, seq)
       } catch {
-        setResult({ allowed: false, reason: 'NETWORK' })
-        if (clearTimer.current) clearTimeout(clearTimer.current)
-        clearTimer.current = setTimeout(() => setResult(null), 4000)
+        ++scanSeq.current
+        setUnlock(null)
+        show({ allowed: false, reason: 'NETWORK' }, 4000)
       } finally {
         busy.current = false
       }
     },
-    [token, storageKey],
+    [token, storageKey, show, watchUnlock],
   )
   const decodedRef = useRef(onDecoded)
   useEffect(() => {
     decodedRef.current = onDecoded
   }, [onDecoded])
 
-  // Cámara
+  // Cámara: arrancar y apagar en orden (cambiar de cámara rápido no deja dos abiertas)
   useEffect(() => {
     if (!started || !token) return
-    const qr = new Html5Qrcode('turnstile-camera', { verbose: false })
-    scanner.current = qr
     let alive = true
-    qr.start({ facingMode: facing }, { fps: 8, qrbox: (w, h) => {
-      const s = Math.floor(Math.min(w, h) * 0.7)
-      return { width: s, height: s }
-    } }, (text) => {
-      if (alive) decodedRef.current(text)
-    }, () => {})
-      .then(() => setError(null))
-      .catch(() => setError('No se pudo usar la cámara. Revisá que el navegador tenga permiso de cámara para este sitio.'))
+    let qr: Html5Qrcode | null = null
+    camera.current = camera.current
+      .catch(() => {})
+      .then(async () => {
+        if (!alive) return
+        qr = new Html5Qrcode('turnstile-camera', { verbose: false })
+        scanner.current = qr
+        await qr.start(
+          { facingMode: facing },
+          {
+            fps: 8,
+            qrbox: (w, h) => {
+              const s = Math.floor(Math.min(w, h) * 0.7)
+              return { width: s, height: s }
+            },
+          },
+          (text) => {
+            if (alive) decodedRef.current(text)
+          },
+          () => {},
+        )
+        if (alive) setError(null)
+      })
+      .catch(() => {
+        if (alive) setError('No se pudo usar la cámara. Revisá que el navegador tenga permiso de cámara para este sitio.')
+      })
     return () => {
       alive = false
-      const s = scanner.current
-      scanner.current = null
-      if (s?.isScanning) s.stop().then(() => s.clear()).catch(() => {})
-      else s?.clear()
+      camera.current = camera.current
+        .catch(() => {})
+        .then(async () => {
+          const s = qr
+          if (scanner.current === s) scanner.current = null
+          if (!s) return
+          try {
+            if (s.isScanning) await s.stop()
+            s.clear()
+          } catch {
+            /* ya estaba apagada */
+          }
+        })
     }
   }, [started, token, facing])
 
@@ -220,6 +301,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
           onClick={() => {
             sound.playClick()
             document.documentElement.requestFullscreen?.().catch(() => {})
+            save(`${storageKey}:started`, '1')
             setStarted(true)
           }}
           className="min-h-[64px] rounded-2xl bg-[#edcc36] px-10 text-xl font-extrabold text-black"
@@ -231,13 +313,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
     )
   }
 
-  const tone = result
-    ? result.allowed
-      ? result.opener_online === false
-        ? 'warn'
-        : 'ok'
-      : 'no'
-    : null
+  const tone = result ? (result.allowed ? (unlock === 'failed' ? 'warn' : 'ok') : 'no') : null
 
   return (
     <main className="relative flex min-h-dvh flex-col bg-black text-white">
@@ -292,13 +368,15 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
             <XCircle className="h-28 w-28" aria-hidden="true" />
           )}
           <p className="text-5xl font-extrabold">
-            {result.allowed ? `¡Adelante${result.first_name ? `, ${result.first_name}` : ''}!` : 'No podés pasar'}
+            {tone === 'warn' ? 'No se abrió' : result.allowed ? `¡Adelante${result.first_name ? `, ${result.first_name}` : ''}!` : 'No podés pasar'}
           </p>
           <p className="max-w-xl text-2xl">
             {tone === 'warn'
-              ? 'Entrada registrada, pero el molinete no responde. Avisá en recepción.'
+              ? 'El molinete no abrió. Mostrá el QR de nuevo o avisá en recepción.'
               : result.allowed
-                ? 'Pasá por el molinete.'
+                ? unlock === 'waiting'
+                  ? 'Abriendo el molinete…'
+                  : 'Pasá por el molinete.'
                 : result.reason === 'NETWORK'
                   ? 'Sin conexión a internet. Probá de nuevo o pasá por recepción.'
                   : REASONS[result.reason ?? ''] ?? 'Pasá por recepción.'}

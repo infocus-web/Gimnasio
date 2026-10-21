@@ -2726,7 +2726,7 @@ export type Database = {
         }
         Returns: string
       }
-      turnstile_scan: { Args: { p_kiosk_token: string; p_qr: string | null }; Returns: Json }
+      turnstile_scan: { Args: { p_kiosk_token: string; p_qr: string | null; p_unlock?: number }; Returns: Json }
       agent_call: {
         Args: {
           p_action: string

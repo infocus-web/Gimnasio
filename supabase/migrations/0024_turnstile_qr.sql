@@ -14,7 +14,8 @@
 -- (las clases tienen acceso libre por otro lado).
 -- Anti "pasar el QR": si el mismo socio entró por el molinete hace menos de
 -- 3 minutos, no se vuelve a abrir (salvo la relectura inmediata del mismo QR).
--- Una orden "abrir" vieja (más de 12 s) no se ejecuta nunca.
+-- Una orden "abrir" vieja (más de 20 s) no se ejecuta nunca, y una que no abrió no cuenta como entrada.
+-- Si el molinete no tiene el intermediario conectado, el QR no se registra: pasa por recepción.
 -- =====================================================================
 
 alter table public.access_devices add column if not exists kiosk_token_hash text;
@@ -98,8 +99,9 @@ end $$;
 revoke execute on function public.access_device_kiosk_token(uuid) from public, anon;
 grant execute on function public.access_device_kiosk_token(uuid) to authenticated;
 
--- Tablet del molinete: lee un QR (POST /api/access/turnstile, solo el servidor)
-create or replace function public.turnstile_scan(p_kiosk_token text, p_qr text) returns jsonb
+-- Tablet del molinete (POST /api/access/turnstile, solo el servidor)
+--   p_qr = texto del QR leído · p_qr null = latido · p_unlock = ¿abrió? (id devuelto al leer)
+create or replace function public.turnstile_scan(p_kiosk_token text, p_qr text, p_unlock bigint default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 declare
   d          public.access_devices;
@@ -110,18 +112,29 @@ declare
   m          public.members;
   v_allowed  boolean;
   v_reason   text;
-  v_last     public.checkins;
+  v_last     public.access_commands;
   v_online   boolean;
+  v_cmd      public.access_commands;
+  v_unlock   bigint;
 begin
-  if coalesce(p_kiosk_token, '') = '' then return jsonb_build_object('status', 'unauthorized'); end if;
+  if coalesce(p_kiosk_token, '') !~ '^[0-9a-f]{48}$' then return jsonb_build_object('status', 'unauthorized'); end if;
   select * into d from public.access_devices
    where kiosk_token_hash = encode(extensions.digest(p_kiosk_token, 'sha256'), 'hex');
   if not found then return jsonb_build_object('status', 'unauthorized'); end if;
   select * into v_org from public.organizations where id = d.org_id;
 
+  -- Esta fila funciona también como candado: dos lecturas a la vez del mismo molinete se ordenan acá
   update public.access_devices set info = info || jsonb_build_object('kiosk_seen_at', now()) where id = d.id;
   v_online := d.active and d.agent_token_hash is not null
               and coalesce((d.info ->> 'agent_seen_at')::timestamptz > now() - interval '45 seconds', false);
+
+  -- ¿Abrió? (la tablet pregunta hasta que el intermediario confirma)
+  if p_unlock is not null then
+    select * into v_cmd from public.access_commands where id = p_unlock and device_id = d.id and kind = 'unlock';
+    return jsonb_build_object('status', 'ok', 'unlock',
+      case when v_cmd.id is null then 'unknown' when v_cmd.status = 'ok' then 'opened'
+           when v_cmd.status in ('error', 'superseded') then 'failed' else 'waiting' end);
+  end if;
 
   if p_qr is null then      -- latido de la tablet (para mostrar si el molinete está conectado)
     return jsonb_build_object('status', 'ok', 'opener_online', v_online, 'device', d.name);
@@ -130,7 +143,7 @@ begin
   -- Mismo formato y firma que el QR de la app (get_checkin_token / checkin_scan)
   v_parts := string_to_array(trim(p_qr), '.');
   if coalesce(array_length(v_parts, 1), 0) <> 4 or v_parts[1] <> 'v1'
-     or v_parts[2] !~ '^[0-9a-f-]{36}$' or v_parts[3] !~ '^[0-9]{1,12}$' then
+     or v_parts[2] !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' or v_parts[3] !~ '^[0-9]{1,12}$' then
     return jsonb_build_object('status', 'ok', 'allowed', false, 'reason', 'QR_INVALID', 'opener_online', v_online);
   end if;
   v_step     := v_parts[3]::bigint;
@@ -142,6 +155,12 @@ begin
   select * into m from public.members where id = v_parts[2]::uuid and org_id = d.org_id;
   if not found then
     return jsonb_build_object('status', 'ok', 'allowed', false, 'reason', 'MEMBER_NOT_FOUND', 'opener_online', v_online);
+  end if;
+
+  -- Molinete sin intermediario conectado (o pausado): no se registra nada, que pase por recepción
+  if not v_online then
+    return jsonb_build_object('status', 'ok', 'allowed', false, 'reason', 'TURNSTILE_OFFLINE', 'opener_online', false,
+                              'first_name', m.first_name);
   end if;
 
   v_allowed := private.member_gym_allowed(m.id);
@@ -157,24 +176,26 @@ begin
       else 'NO_ACTIVE_MEMBERSHIP' end;
   end if;
 
-  -- Última entrada por este molinete
-  select c.* into v_last from public.checkins c
-   where c.member_id = m.id and c.method = 'qr' and c.location_id = d.location_id and c.allowed
-   order by c.created_at desc limit 1;
+  -- Última apertura de este socio en este molinete que no falló (una que no abrió no cuenta)
+  select c.* into v_last from public.access_commands c
+   where c.device_id = d.id and c.kind = 'unlock' and c.member_id = m.id and c.status in ('pending', 'sent', 'ok')
+     and c.created_at > now() - interval '3 minutes'
+   order by c.id desc limit 1;
 
-  if v_allowed and v_last.id is not null and v_last.created_at > now() - interval '10 seconds' then
-    -- la tablet leyó el mismo QR dos veces: no se abre otra vez
+  if v_allowed and v_last.id is not null and v_last.created_at > now() - interval '60 seconds' then
+    -- sigue frente a la cámara con el mismo QR: no se abre otra vez ni se registra nada
     return jsonb_build_object('status', 'ok', 'allowed', true, 'duplicate', true, 'opener_online', v_online,
-                              'first_name', m.first_name);
+                              'first_name', m.first_name, 'unlock_id', v_last.id);
   end if;
-  if v_allowed and v_last.id is not null and v_last.created_at > now() - interval '3 minutes' then
+  if v_allowed and v_last.id is not null then
     v_allowed := false;
     v_reason  := 'RECENT_ENTRY';
   end if;
 
-  -- Rechazos: uno solo cada 30 s por socio (la tablet relee el mismo QR mientras está frente a la cámara)
+  -- Rechazos: uno solo por minuto por socio (la tablet relee el mismo QR mientras está frente a la cámara)
   if not v_allowed and exists (select 1 from public.checkins c where c.member_id = m.id and not c.allowed
-                                 and c.method = 'qr' and c.created_at > now() - interval '30 seconds') then
+                                 and c.method = 'qr' and c.location_id = d.location_id
+                                 and c.created_at > now() - interval '60 seconds') then
     return jsonb_build_object('status', 'ok', 'allowed', false, 'reason', v_reason, 'opener_online', v_online,
                               'first_name', m.first_name);
   end if;
@@ -188,14 +209,17 @@ begin
 
   if v_allowed then
     update public.members set last_checkin_at = now() where id = m.id;
-    perform private.access_queue(d.id, d.org_id, m.access_pin, m.id, 'unlock', 'UNLOCK 1');
+    v_unlock := private.access_queue(d.id, d.org_id, m.access_pin, m.id, 'unlock', 'UNLOCK 1');
   end if;
+  -- Limpieza: aperturas de más de una semana
+  delete from public.access_commands where device_id = d.id and kind = 'unlock' and created_at < now() - interval '7 days';
 
   return jsonb_build_object('status', 'ok', 'allowed', v_allowed, 'reason', v_reason, 'opener_online', v_online,
-                            'first_name', m.first_name);
+                            'first_name', m.first_name, 'unlock_id', v_unlock);
 end $$;
-revoke execute on function public.turnstile_scan(text, text) from public, anon, authenticated;
-grant execute on function public.turnstile_scan(text, text) to service_role;
+drop function if exists public.turnstile_scan(text, text);
+revoke execute on function public.turnstile_scan(text, text, bigint) from public, anon, authenticated;
+grant execute on function public.turnstile_scan(text, text, bigint) to service_role;
 
 -- Intermediario: nueva acción "unlocks" (consulta rápida, cada ~1 s)
 create or replace function public.agent_call(p_sn text, p_token text, p_ip text, p_action text, p_payload jsonb default '{}'::jsonb)
@@ -225,16 +249,21 @@ begin
     update public.access_devices
        set last_seen_at = now(), info = info || jsonb_build_object('agent_seen_at', now())
      where id = d.id and coalesce((info ->> 'agent_seen_at')::timestamptz < now() - interval '15 seconds', true);
-    if not d.active then return jsonb_build_object('status', 'inactive', 'commands', '[]'::jsonb); end if;
-    update public.access_commands set status = 'error', return_code = -9998, done_at = now()
-     where device_id = d.id and kind = 'unlock' and status in ('pending', 'sent') and created_at < now() - interval '12 seconds';
+    -- Una apertura vieja no se ejecuta nunca (el socio ya se fue o pasó por recepción)
+    update public.access_commands set status = 'superseded', return_code = -9998, done_at = now()
+     where device_id = d.id and kind = 'unlock'
+       and ((status = 'pending' and created_at < now() - interval '20 seconds')
+         or (status = 'sent' and created_at < now() - interval '60 seconds'));  -- tomada pero sin respuesta
+    if not d.active then
+      return jsonb_build_object('status', 'inactive', 'commands', '[]'::jsonb, 'kiosk', d.kiosk_token_hash is not null);
+    end if;
     for c in select id, command from public.access_commands
               where device_id = d.id and kind = 'unlock' and status = 'pending'
               order by id for update skip locked loop
       v_out := v_out || jsonb_build_object('id', c.id, 'cmd', c.command);
       update public.access_commands set status = 'sent', sent_at = now(), attempts = attempts + 1 where id = c.id;
     end loop;
-    return jsonb_build_object('status', 'ok', 'commands', v_out);
+    return jsonb_build_object('status', 'ok', 'commands', v_out, 'kiosk', d.kiosk_token_hash is not null);
   end if;
 
   perform set_config('app.agent_call', 'on', true);

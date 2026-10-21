@@ -35,9 +35,10 @@ from zk.exception import ZKNetworkError  # noqa: E402
 from zk.finger import Finger  # noqa: E402
 from zk.user import User  # noqa: E402
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 CICLO_SEG = 10
 APERTURAS_CADA_SEG = 1          # consulta rápida de "abrir molinete" (QR en la tablet)
+APERTURAS_SIN_TABLET_SEG = 30   # sin tablet vinculada: consulta lenta, por si se vincula
 SEGUNDOS_APERTURA = 1           # pulso del relé: en un molinete libera una sola vuelta
 SALUDO_CADA_SEG = 300
 SUBIDA_COMPLETA_CADA_SEG = 1800
@@ -326,40 +327,81 @@ def ejecutar_cola(conn, comandos):
     return resultados, subir_todo, True
 
 
-def abrir_pendientes(cfg, plat):
-    """Aperturas pedidas por la tablet del molinete (QR). Se ejecutan al instante; no cargan ni borran nada."""
-    res = plat.llamar("unlocks")
-    comandos = res.get("commands") or []
-    if not comandos:
-        return
-    resultados = []
-    conn = None
-    try:
-        conn = conectar(cfg)
-        for c in comandos:
-            try:
-                conn.unlock(time=SEGUNDOS_APERTURA)
-                resultados.append({"id": c["id"], "ret": 0})
-                log.info("Molinete abierto (QR)")
-            except ERRORES_DE_RED:
+class Aperturas:
+    """Aperturas pedidas por la tablet del molinete (QR). Se ejecutan al instante; no cargan ni borran nada.
+
+    Se consulta cada segundo si el lector tiene una tablet vinculada (y cada 30 s si no, por si se vincula),
+    también en medio de un ciclo largo, usando la conexión ya abierta con el lector."""
+
+    def __init__(self, cfg, plat):
+        self.cfg, self.plat = cfg, plat
+        self.activo = bool(cfg.get("abrir_por_qr", True))
+        self.kiosk = True            # hasta que la plataforma diga lo contrario
+        self.ultima = 0.0
+        self.ultimo_error = 0.0
+
+    def cada(self):
+        return APERTURAS_CADA_SEG if self.kiosk else APERTURAS_SIN_TABLET_SEG
+
+    def proxima(self):
+        return self.ultima + self.cada() if self.activo else float("inf")
+
+    def revisar(self, conn=None):
+        """conn: conexión ya abierta (dentro de un ciclo). Un corte con el lector se propaga en ese caso."""
+        if not self.activo or time.time() < self.proxima():
+            return
+        self.ultima = time.time()
+        try:
+            res = self.plat.llamar("unlocks")
+        except Exception as e:
+            if time.time() - self.ultimo_error > 60:      # no llenar el registro si se corta internet
+                log.error("Consulta de aperturas con error: %s", e)
+                self.ultimo_error = time.time()
+            return
+        self.kiosk = bool(res.get("kiosk", True))
+        comandos = res.get("commands") or []
+        if not comandos:
+            return
+        propia = conn is None
+        resultados = []
+        try:
+            if propia:
+                conn = conectar(self.cfg)
+            for c in comandos:
+                try:
+                    conn.unlock(time=SEGUNDOS_APERTURA)
+                    resultados.append({"id": c["id"], "ret": 0})
+                    log.info("Molinete abierto (QR)")
+                except ERRORES_DE_RED:
+                    raise
+                except Exception as e:
+                    log.warning("El lector no aceptó abrir: %s", e)
+                    resultados.append({"id": c["id"], "ret": -1})
+        except ERRORES_DE_RED as e:
+            log.error("No se pudo abrir el molinete (sin conexión con el lector): %s", e)
+            hechos = {r["id"] for r in resultados}
+            resultados += [{"id": c["id"], "ret": -2} for c in comandos if c["id"] not in hechos]
+            if not propia:
+                self._informar(resultados)
                 raise
-            except Exception as e:
-                log.warning("El lector no aceptó abrir: %s", e)
-                resultados.append({"id": c["id"], "ret": -1})
-    except ERRORES_DE_RED as e:
-        log.error("No se pudo abrir el molinete (sin conexión con el lector): %s", e)
-        resultados += [{"id": c["id"], "ret": -2} for c in comandos if c["id"] not in {r["id"] for r in resultados}]
-    finally:
-        if conn:
-            try:
-                conn.disconnect()
-            except Exception:
-                pass
-    plat.llamar("results", results=resultados)
+        finally:
+            if propia and conn:
+                try:
+                    conn.disconnect()
+                except Exception:
+                    pass
+        self._informar(resultados)
+
+    def _informar(self, resultados):
+        try:
+            self.plat.llamar("results", results=resultados)
+        except Exception as e:
+            log.error("No se pudo informar la apertura: %s", e)
 
 
 # ---------------------------------------------------------------- ciclo
-def ciclo(cfg, plat, estado):
+def ciclo(cfg, plat, estado, aperturas=None):
+    abrir = (lambda: aperturas.revisar(conn)) if aperturas else (lambda: None)
     sincronizar = cfg["modo"] == "sincronizar"
     conn = conectar(cfg)
     try:
@@ -383,11 +425,14 @@ def ciclo(cfg, plat, estado):
         if sincronizar and ahora - estado.get("ultimo_reloj", 0) > RELOJ_CADA_SEG:
             poner_en_hora(conn, estado)
 
+        abrir()
         subir_entradas(conn, plat, estado, conn.records)
+        abrir()
 
         cambio = (conn.users != estado.get("usuarios_vistos") or conn.fingers != estado.get("huellas_vistas"))
         if cambio or ahora - estado.get("ultima_subida_completa", 0) > SUBIDA_COMPLETA_CADA_SEG:
             subir_usuarios_y_huellas(conn, plat, estado)
+            abrir()
 
         if sincronizar:
             res = plat.llamar("poll")
@@ -402,8 +447,10 @@ def ciclo(cfg, plat, estado):
                 ok = sum(1 for _, r in resultados if r >= 0)
                 log.info("Cola: %d hechos, %d con error", ok, len(resultados) - ok)
                 conn.read_sizes()
+                abrir()
                 if subir_todo or conn.users != estado.get("usuarios_vistos"):
                     subir_usuarios_y_huellas(conn, plat, estado)
+        abrir()
     finally:
         try:
             conn.disconnect()
@@ -443,12 +490,11 @@ def main():
         log.info("Modo LECTURA: no se modifica nada en el lector.")
     errores = 0
     proximo_ciclo = 0.0
-    error_aperturas = 0.0
-    qr = bool(cfg.get("abrir_por_qr", True))
+    aperturas = Aperturas(cfg, plat)
     while True:
         if time.time() >= proximo_ciclo:
             try:
-                ciclo(cfg, plat, estado)
+                ciclo(cfg, plat, estado, None if una_vez else aperturas)
                 errores = 0
             except SystemExit:
                 raise
@@ -462,14 +508,8 @@ def main():
                 return
             espera = CICLO_SEG if errores == 0 else min(300, CICLO_SEG * (2 ** min(errores, 5)))
             proximo_ciclo = time.time() + espera
-        if qr:
-            try:
-                abrir_pendientes(cfg, plat)
-            except Exception as e:
-                if time.time() - error_aperturas > 60:      # no llenar el registro si se corta internet
-                    log.error("Consulta de aperturas con error: %s", e)
-                    error_aperturas = time.time()
-        time.sleep(APERTURAS_CADA_SEG if qr else max(1.0, proximo_ciclo - time.time()))
+        aperturas.revisar()
+        time.sleep(max(0.2, min(proximo_ciclo, aperturas.proxima()) - time.time()))
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  */
 export const dynamic = 'force-dynamic'
 
-const ACTIONS = new Set(['hello', 'push', 'poll', 'results'])
+const ACTIONS = new Set(['hello', 'push', 'poll', 'results', 'unlocks'])
 const MAX_BODY = 4_000_000
 
 const json = (body: unknown, status = 200) =>

@@ -34,6 +34,7 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
       .from('access_commands')
       .select('device_id, status, kind')
       .eq('org_id', ctx.org.id)
+      .neq('kind', 'unlock') // las aperturas del molinete no son cambios pendientes del lector
       .in('status', ['pending', 'sent', 'error'])
       .gte('created_at', since),
     myIp ? supabase.rpc('access_unknown_nearby', { p_org: ctx.org.id, p_ip: myIp }) : Promise.resolve({ data: [] }),
