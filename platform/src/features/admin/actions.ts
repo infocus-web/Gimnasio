@@ -51,12 +51,39 @@ async function origin() {
   return siteUrl()
 }
 
+/** Manda el email con el link para entrar (sin contraseña). Cliente sin sesión: no toca la sesión del panel. */
+async function otpLink(email: string, next: string) {
+  const anon = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const { error } = await anon.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+  })
+  return error
+}
+
+async function emailAccessLink(_slug: string, email: string, next: string) {
+  const error = await otpLink(email, next)
+  if (error) console.error('[emailAccessLink]', error.status, error.code, error.message)
+  return !error
+}
+
 /** Vincula la cuenta si ya existe; si no, manda la invitación por email (requiere SUPABASE_SECRET_KEY). */
 async function linkOrInvite(orgId: string, slug: string, email: string, next: string): Promise<ActionState> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('link_existing_user', { p_org: orgId, p_email: email })
   if (error) return { message: dbMessage(error) }
-  if (data === 'LINKED') return { ok: true, message: `${email} ya tenía cuenta: quedó vinculada.` }
+  if (data === 'LINKED') {
+    // Ya tenía cuenta: se vincula y además se le manda el link para entrar (si no, no recibía nada)
+    const sent = await emailAccessLink(slug, email, next)
+    return {
+      ok: true,
+      message: sent
+        ? `${email} ya tenía cuenta: quedó vinculada y le mandamos un email con el link para entrar.`
+        : `${email} ya tenía cuenta: quedó vinculada. Puede entrar pidiendo el link en la pantalla de ingreso.`,
+    }
+  }
 
   if (!process.env.SUPABASE_SECRET_KEY) {
     return {
@@ -298,15 +325,7 @@ export async function sendAccessLink(slug: string, memberId: string, _prev: Acti
     .maybeSingle()
   if (!member) return { message: ERRORS.MEMBER_NOT_FOUND }
   if (!member.email) return { message: 'Cargale un email en la ficha primero.' }
-  // Cliente sin sesión: enviar el link no toca la sesión del que está en el panel
-  const anon = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  const next = `/${slug}/app/pase`
-  const { error } = await anon.auth.signInWithOtp({
-    email: member.email,
-    options: { shouldCreateUser: false, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
-  })
+  const error = await otpLink(member.email, `/${slug}/app/pase`)
   if (error) {
     console.error('[sendAccessLink]', error.status, error.code, error.message)
     if (error.status === 429 || /rate/i.test(error.code ?? '')) {
