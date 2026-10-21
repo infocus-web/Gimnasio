@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 DESTINO = r"C:\Evolution\Intermediario"
 EXE = "IntermediarioEvolution.exe"
@@ -75,16 +76,28 @@ def guardar_config(cfg):
 def detener():
     schtasks("/End", "/TN", TAREA)
     schtasks("/End", "/TN", TAREA_VIGIA)
-    subprocess.run(["taskkill", "/F", "/IM", EXE, "/FI", f"PID ne {os.getpid()}"], capture_output=True)
+    # El .exe corre como dos procesos (lanzador + programa): no cerrar ninguno de los de esta ventana
+    subprocess.run(["taskkill", "/F", "/IM", EXE, "/FI", f"PID ne {os.getpid()}", "/FI", f"PID ne {os.getppid()}"],
+                   capture_output=True)
 
 
 def copiar_exe():
     os.makedirs(DESTINO, exist_ok=True)
     origen = os.path.abspath(sys.executable)
     destino = os.path.join(DESTINO, EXE)
-    if os.path.normcase(origen) != os.path.normcase(destino):
-        shutil.copy2(origen, destino)
-    return destino
+    if os.path.normcase(origen) == os.path.normcase(destino):
+        return destino
+    # La versión anterior puede tardar unos segundos en cerrarse y soltar el archivo
+    for intento in range(15):
+        try:
+            shutil.copy2(origen, destino)
+            return destino
+        except PermissionError:
+            if intento == 0:
+                print("Esperando que se cierre la versión anterior...")
+            detener()
+            time.sleep(2)
+    raise RuntimeError("No se pudo reemplazar el programa (sigue abierto). Reiniciá la PC y volvé a abrir este archivo.")
 
 
 def probar(exe):
