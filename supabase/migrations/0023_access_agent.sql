@@ -104,7 +104,7 @@ begin
   -- La clave identifica al lector: se usa la IP ya fijada para pasar el control de IP de ADMS
   v_ip := coalesce(d.trusted_ip, p_ip);
   update public.access_devices
-     set trusted_ip = v_ip, pending_ip = null, pending_ip_at = null,
+     set trusted_ip = v_ip,
          info = info || jsonb_build_object('agent_seen_at', now(), 'agent_ip', left(coalesce(p_ip, ''), 64))
                      || case when p_action = 'hello'
                              then jsonb_build_object('agent', coalesce(p_payload -> 'info', '{}'::jsonb))
@@ -128,8 +128,11 @@ begin
     for r in select * from jsonb_array_elements(v_recs) loop
       if r ->> 'k' = 'bio' then
         v_pin := nullif(regexp_replace(coalesce(r ->> 'pin', ''), '\D', '', 'g'), '')::int;
-        if v_pin is null or not exists (select 1 from public.members m
-                                         where m.org_id = d.org_id and m.access_pin = v_pin and m.status <> 'archived') then
+        if v_pin is null then continue; end if;
+        if not exists (select 1 from public.members m
+                        where m.org_id = d.org_id and m.access_pin = v_pin and m.status <> 'archived')
+           or exists (select 1 from public.access_device_users du      -- usuario cargado a mano, sin vincular
+                       where du.device_id = d.id and du.pin = v_pin and not du.managed and du.member_id is null) then
           v_skip := v_skip || to_jsonb(v_pin);
           continue;
         end if;

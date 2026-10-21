@@ -163,7 +163,8 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
               <AgentPanel
                 serial={d.serial_number}
                 hasToken={!!info.agent_token_at}
-                seenAt={info.agent_seen_at ?? null}
+                online={online(info.agent_seen_at ?? null)}
+                seenLabel={info.agent_seen_at ? fmtDateTime(info.agent_seen_at, ctx.org.timezone) : null}
                 mode={info.agent?.mode ?? null}
                 version={info.agent?.version ?? null}
                 action={createAgentToken.bind(null, slug, d.id)}

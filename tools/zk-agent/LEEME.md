@@ -19,7 +19,8 @@ gimnasio, habla con el lector por la red local (puerto 4370) y con la plataforma
 
 - `lectura`: no modifica el lector. Sube usuarios, entradas y las huellas de quienes ya son socios.
 - `sincronizar`: además carga a los socios al día, saca a vencidos/morosos, restaura huellas y pone
-  en hora el reloj del lector. Después de cambiar el modo: `Restart-ScheduledTask` o reiniciar la PC.
+  en hora el reloj del lector. Después de cambiar el modo, en PowerShell como administrador:
+  `Stop-ScheduledTask 'Evolution - Intermediario lector'; Start-ScheduledTask 'Evolution - Intermediario lector'` (o reiniciar la PC).
 
 ## Importante
 

@@ -20,14 +20,16 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(AQUI, "lib"))  # pyzk instalado por instalar.ps1
 
 from zk import ZK  # noqa: E402
+from zk.exception import ZKNetworkError  # noqa: E402
 from zk.finger import Finger  # noqa: E402
+from zk.user import User  # noqa: E402
 
 VERSION = "1.0.0"
 CICLO_SEG = 10
@@ -36,6 +38,8 @@ SUBIDA_COMPLETA_CADA_SEG = 1800
 RELOJ_CADA_SEG = 600
 DESFASE_MAX_SEG = 60
 FORMATO_HORA = "%Y-%m-%d %H:%M:%S"
+VENTANA_ENTRADAS = timedelta(days=7)      # entradas más viejas no se suben (la plataforma igual las ignora)
+ERRORES_DE_RED = (ZKNetworkError, OSError, socket.timeout)
 
 log = logging.getLogger("agente")
 
@@ -125,8 +129,9 @@ def seguro(fn):
 
 
 def pin_valido(user_id):
+    """Número del usuario normalizado ("0012" → "12"), igual que lo guarda la plataforma."""
     s = str(user_id).strip()
-    return s if s.isdigit() and 0 < int(s) < 1_000_000_000 else None
+    return str(int(s)) if s.isdigit() and 0 < int(s) < 1_000_000_000 else None
 
 
 def registros_usuarios(usuarios):
@@ -144,7 +149,7 @@ def registros_huellas(conn, usuarios):
         tmp = base64.b64encode(f.template).decode("ascii")
         out.append({
             "k": "bio", "tbl": "FP", "pin": pin, "pin_key": "PIN", "key": str(f.fid),
-            "fields": f"FID={f.fid}\tSize={len(f.template)}\tValid={f.valid}\tTMP={tmp}",
+            "fields": f"FID={f.fid}\tSize={len(tmp)}\tValid={f.valid}\tTMP={tmp}",
         })
     return out
 
@@ -155,27 +160,39 @@ def huella_hash(r):
 
 # ---------------------------------------------------------------- tareas
 def subir_entradas(conn, plat, estado, total_registros):
-    if total_registros == estado.get("registros_vistos") and estado.get("ultima_entrada"):
+    """Sube las entradas de los últimos días que todavía no se mandaron. No depende del reloj del lector
+    (si se corrige la hora no se pierden marcas): se recuerda cada marca enviada (número + hora)."""
+    if total_registros == estado.get("registros_vistos"):
         return
-    ultima = estado.get("ultima_entrada") or ""
+    try:
+        marcas = conn.get_attendance() or []
+    except ValueError as e:                     # registro corrupto en el lector (fecha imposible)
+        log.error("No se pudieron leer las entradas del lector: %s", e)
+        return
+    ahora = datetime.now()
+    enviadas = set(estado.get("entradas_enviadas") or [])
     nuevas = []
-    for a in conn.get_attendance() or []:
+    for a in marcas:
         pin = pin_valido(a.user_id)
         if not pin or not isinstance(a.timestamp, datetime):
             continue
+        if not (ahora - VENTANA_ENTRADAS <= a.timestamp <= ahora + timedelta(days=1)):
+            continue
         t = a.timestamp.strftime(FORMATO_HORA)
-        if t > ultima:
-            nuevas.append({"k": "att", "pin": pin, "t": t, "v": int(a.status or 1)})
+        clave = f"{pin}|{t}"
+        if clave in enviadas:
+            continue
+        nuevas.append({"k": "att", "pin": pin, "t": t, "v": a.status if a.status is not None else 15, "_c": clave})
     nuevas.sort(key=lambda r: r["t"])
     for i in range(0, len(nuevas), 500):
         lote = nuevas[i:i + 500]
-        res = plat.llamar("push", table="ATTLOG", records=lote)
+        res = plat.llamar("push", table="ATTLOG", records=[{k: v for k, v in r.items() if k != "_c"} for r in lote])
         if res.get("status") != "ok":
             raise RuntimeError(f"Entradas no aceptadas: {res}")
-        estado["ultima_entrada"] = lote[-1]["t"]
+        enviadas.update(r["_c"] for r in lote)
         log.info("Entradas subidas: %d (registradas como check-in: %s)", len(lote), res.get("accepted"))
-    if not nuevas and not estado.get("ultima_entrada"):
-        estado["ultima_entrada"] = "0000"
+    limite = (ahora - VENTANA_ENTRADAS - timedelta(days=1)).strftime(FORMATO_HORA)
+    estado["entradas_enviadas"] = sorted(c for c in enviadas if c.split("|", 1)[1] >= limite)
     estado["registros_vistos"] = total_registros
 
 
@@ -201,8 +218,9 @@ def subir_usuarios_y_huellas(conn, plat, estado, forzar=False):
     log.info("Lector: %d usuarios y %d huellas informados (%d huellas de socios guardadas en la nube)",
              len(usuarios), len(todas), subidas)
     estado["ultima_subida_completa"] = time.time()
-    estado["usuarios_vistos"] = len(usuarios)
-    estado["huellas_vistas"] = len(todas)
+    conn.read_sizes()
+    estado["usuarios_vistos"] = conn.users
+    estado["huellas_vistas"] = conn.fingers
 
 
 def poner_en_hora(conn, estado):
@@ -217,16 +235,21 @@ def poner_en_hora(conn, estado):
     estado["ultimo_reloj"] = time.time()
 
 
-def ejecutar_cola(conn, plat, comandos):
-    """Ejecuta los comandos de la plataforma. Devuelve [(id, ret)] y si hay que subir todo."""
+def ejecutar_cola(conn, comandos):
+    """Ejecuta los comandos de la plataforma. Devuelve [(id, ret)] y si hay que subir todo.
+    Si se corta la red a mitad de camino, se informan solo los hechos: el resto vuelve a la cola solo."""
     resultados = []
     subir_todo = False
-    usuarios = {u.user_id: u for u in (conn.get_users() or [])}
+    usuarios = {}
+    for u in conn.get_users() or []:
+        p = pin_valido(u.user_id)
+        if p:
+            usuarios.setdefault(p, []).append(u)
     huellas_por_pin = {}
     ids_huellas = {}
 
     def proximo_uid():
-        return max([u.uid for u in usuarios.values()] + [0]) + 1
+        return max([u.uid for lista in usuarios.values() for u in lista] + [0]) + 1
 
     conn.disable_device()
     try:
@@ -239,29 +262,28 @@ def ejecutar_cola(conn, plat, comandos):
                     if not pin:
                         resultados.append((cid, -3))
                         continue
-                    previo = usuarios.get(pin)
-                    uid = previo.uid if previo else proximo_uid()
-                    conn.set_user(uid=uid, name=d.get("NAME", "")[:24], privilege=0, password="",
-                                  group_id="", user_id=pin, card=0)
-                    usuarios[pin] = type("U", (), {"uid": uid, "user_id": pin})()
+                    previos = usuarios.get(pin) or []
+                    uid = previos[0].uid if previos else proximo_uid()
+                    nombre = d.get("NAME", "")[:24]
+                    conn.set_user(uid=uid, name=nombre, privilege=0, password="", group_id="", user_id=pin, card=0)
+                    usuarios[pin] = [User(uid, nombre, 0, "", "", pin, 0)] + previos[1:]
                     resultados.append((cid, 0))
 
                 elif cmd.startswith("DATA DELETE USERINFO "):
                     pin = pin_valido(kv(cmd[len("DATA DELETE USERINFO "):]).get("PIN"))
-                    if pin and pin in usuarios:
-                        conn.delete_user(uid=usuarios[pin].uid, user_id=pin)
-                        usuarios.pop(pin, None)
+                    for u in usuarios.pop(pin, []) if pin else []:
+                        conn.delete_user(uid=u.uid, user_id=u.user_id)
                     resultados.append((cid, 0))
 
                 elif cmd.startswith("DATA UPDATE FINGERTMP "):
                     d = kv(cmd[len("DATA UPDATE FINGERTMP "):])
                     pin = pin_valido(d.get("PIN"))
-                    if not pin or pin not in usuarios or "TMP" not in d:
+                    if not pin or not usuarios.get(pin) or "TMP" not in d:
                         resultados.append((cid, -10))
                         continue
                     tmpl = base64.b64decode(d["TMP"])
                     huellas_por_pin.setdefault(pin, []).append(
-                        Finger(usuarios[pin].uid, int(d.get("FID", 0)), int(d.get("VALID", 1)), tmpl))
+                        Finger(usuarios[pin][0].uid, int(d.get("FID", 0)), int(d.get("VALID", 1)), tmpl))
                     ids_huellas.setdefault(pin, []).append(cid)
 
                 elif cmd.startswith("DATA QUERY USERINFO"):
@@ -271,20 +293,31 @@ def ejecutar_cola(conn, plat, comandos):
                 else:
                     # Caras/palmas (BIODATA), registro remoto, etc.: este lector no los acepta por red
                     resultados.append((cid, -1002))
+            except ERRORES_DE_RED:
+                raise
             except Exception as e:
-                log.warning("Comando %s falló: %s (%s)", cid, cmd.split("\t")[0], e)
+                log.warning("Comando %s rechazado por el lector: %s (%s)", cid, cmd.split("\t")[0], e)
                 resultados.append((cid, -1))
 
         for pin, fingers in huellas_por_pin.items():
             try:
-                conn.save_user_template(usuarios[pin].uid, fingers)
+                conn.save_user_template(usuarios[pin][0], fingers)
                 resultados += [(cid, 0) for cid in ids_huellas[pin]]
+            except ERRORES_DE_RED:
+                raise
             except Exception as e:
-                log.warning("Huellas de %s no se pudieron cargar: %s", pin, e)
+                log.warning("Huellas de %s rechazadas por el lector: %s", pin, e)
                 resultados += [(cid, -1) for cid in ids_huellas[pin]]
+    except ERRORES_DE_RED as e:
+        log.error("Se cortó la conexión con el lector a mitad de la cola (%s): se informan %d hechos, el resto se reintenta",
+                  e, len(resultados))
+        return resultados, subir_todo, False
     finally:
-        conn.enable_device()
-    return resultados, subir_todo
+        try:
+            conn.enable_device()
+        except Exception as e:
+            log.error("No se pudo reactivar el lector (%s): se reintenta en el próximo ciclo", e)
+    return resultados, subir_todo, True
 
 
 # ---------------------------------------------------------------- ciclo
@@ -292,6 +325,8 @@ def ciclo(cfg, plat, estado):
     sincronizar = cfg["modo"] == "sincronizar"
     conn = conectar(cfg)
     try:
+        if sincronizar:
+            conn.enable_device()     # por si un ciclo anterior lo dejó bloqueado por un corte de red
         conn.read_sizes()
         ahora = time.time()
 
@@ -320,8 +355,11 @@ def ciclo(cfg, plat, estado):
             comandos = res.get("commands") or []
             if comandos:
                 log.info("Cola: %d cambios para el lector", len(comandos))
-                resultados, subir_todo = ejecutar_cola(conn, plat, comandos)
-                plat.llamar("results", results=[{"id": i, "ret": r} for i, r in resultados])
+                resultados, subir_todo, completo = ejecutar_cola(conn, comandos)
+                if resultados:
+                    plat.llamar("results", results=[{"id": i, "ret": r} for i, r in resultados])
+                if not completo:
+                    raise RuntimeError("conexión con el lector interrumpida")
                 ok = sum(1 for _, r in resultados if r >= 0)
                 log.info("Cola: %d hechos, %d con error", ok, len(resultados) - ok)
                 conn.read_sizes()

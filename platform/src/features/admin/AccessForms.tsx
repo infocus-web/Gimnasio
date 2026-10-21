@@ -145,21 +145,22 @@ export function DeviceButtons({
 export function AgentPanel({
   serial,
   hasToken,
-  seenAt,
+  online,
+  seenLabel,
   mode,
   version,
   action,
 }: {
   serial: string
   hasToken: boolean
-  seenAt: string | null
+  online: boolean
+  seenLabel: string | null
   mode: string | null
   version: string | null
   action: Bare
 }) {
   const [state, submit] = useActionForm(action)
   const [sure, setSure] = useState(false)
-  const online = !!seenAt && Date.now() - new Date(seenAt).getTime() < 2 * 60_000
   return (
     <div className="space-y-2 rounded-xl border border-zinc-800 p-3">
       <p className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -171,7 +172,7 @@ export function AgentPanel({
       </p>
       {hasToken && (
         <p className={`text-sm ${online ? 'text-emerald-300' : 'text-zinc-400'}`}>
-          {online ? 'Conectado' : seenAt ? `Sin conexión desde ${new Date(seenAt).toLocaleString('es-AR')}` : 'Clave generada, esperando que el programa se conecte'}
+          {online ? 'Conectado' : seenLabel ? `Sin conexión desde ${seenLabel}` : 'Clave generada, esperando que el programa se conecte'}
           {mode && ` · modo ${mode === 'sincronizar' ? 'sincronizar' : 'solo lectura'}`}
           {version && <span className="text-xs text-zinc-500"> · v{version}</span>}
         </p>
