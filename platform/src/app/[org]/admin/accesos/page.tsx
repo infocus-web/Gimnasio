@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { Wifi, WifiOff, ScanFace, AlertTriangle } from 'lucide-react'
+import { Wifi, WifiOff, ScanFace, AlertTriangle, ChevronDown } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
@@ -58,22 +58,9 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
   const keyMissing = !process.env.SUPABASE_SECRET_KEY
   const online = (t: string | null) => !!t && Date.now() - new Date(t).getTime() < 2 * 60_000
 
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold text-white">Accesos</h1>
-        <p className="text-sm text-zinc-400">
-          Lectores de cara/palma/huella (ZKTeco). El lector abre el molinete por su cuenta; el sistema le carga solo a los socios al
-          día y saca a los vencidos o morosos. Cada entrada queda registrada.
-        </p>
-      </div>
-
-      {keyMissing && (
-        <p role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
-          Falta cargar <code>SUPABASE_SECRET_KEY</code> en Vercel: sin esa clave el sistema no puede hablar con los lectores.
-        </p>
-      )}
-
+  const hasDevices = (devices ?? []).length > 0
+  const setup = (
+    <>
       <Card title="1 · Configurar el lector">
         <ol className="list-decimal space-y-2 pl-5 text-sm text-zinc-300">
           <li>
@@ -103,6 +90,36 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
           detected={((detected ?? []) as { serial_number: string }[]).map((d) => d.serial_number)}
         />
       </Card>
+    </>
+  )
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-2xl font-extrabold text-white">Accesos</h1>
+        <p className="text-sm text-zinc-400">
+          Lectores de cara/palma/huella (ZKTeco). El lector abre el molinete por su cuenta; el sistema le carga solo a los socios al
+          día y saca a los vencidos o morosos. Cada entrada queda registrada.
+        </p>
+      </div>
+
+      {keyMissing && (
+        <p role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+          Falta cargar <code>SUPABASE_SECRET_KEY</code> en Vercel: sin esa clave el sistema no puede hablar con los lectores.
+        </p>
+      )}
+
+      {hasDevices ? (
+        <details className="group rounded-2xl border border-zinc-800/80 bg-zinc-950 px-4 sm:px-5 [&[open]]:pb-4">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 text-sm font-bold uppercase tracking-wide text-zinc-300 [&::-webkit-details-marker]:hidden">
+            <span className="flex-1">Configurar o registrar otro lector</span>
+            <ChevronDown className="h-4 w-4 text-zinc-500 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="space-y-4 pt-2">{setup}</div>
+        </details>
+      ) : (
+        setup
+      )}
 
       {(devices ?? []).map((d) => {
         const du = (users ?? []).filter((u) => u.device_id === d.id)
@@ -124,7 +141,7 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
         const isOnline = online(d.last_seen_at)
         return (
           <Card key={d.id} title={d.name}>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 <span className={`inline-flex items-center gap-1.5 font-semibold ${isOnline ? 'text-emerald-300' : 'text-zinc-400'}`}>
                   {isOnline ? <Wifi className="h-4 w-4" aria-hidden="true" /> : <WifiOff className="h-4 w-4" aria-hidden="true" />}
@@ -138,16 +155,16 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
                 )}
               </div>
 
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   ['Socios cargados', loaded.length],
                   ['Con cara/palma/huella', withBio],
                   ['Cambios en camino', pending],
                   ['Errores (7 días)', errors],
                 ].map(([label, value]) => (
-                  <div key={label as string} className="rounded-xl border border-zinc-800 bg-black p-3">
+                  <div key={label as string} className="flex items-baseline justify-between gap-2 rounded-lg border border-zinc-800 bg-black px-3 py-1.5">
                     <dt className="text-xs text-zinc-500">{label}</dt>
-                    <dd className={`text-xl font-extrabold ${label === 'Errores (7 días)' && errors ? 'text-red-300' : 'text-white'}`}>{value}</dd>
+                    <dd className={`text-base font-bold ${label === 'Errores (7 días)' && errors ? 'text-red-300' : 'text-white'}`}>{value}</dd>
                   </div>
                 ))}
               </dl>

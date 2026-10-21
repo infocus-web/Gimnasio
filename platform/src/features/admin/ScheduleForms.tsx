@@ -5,6 +5,7 @@ import { CalendarPlus, Loader2, Search, Trash2, UserPlus, XCircle } from 'lucide
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { InfoTip } from '@/components/InfoTip'
 import { EQUIPMENT_KINDS, isKnownEquipmentKind } from './equipment'
 
 type Action = (prev: ActionState, form: FormData) => Promise<ActionState>
@@ -17,9 +18,15 @@ export function GenerateButton({ action }: { action: BareAction }) {
   const [state, formAction] = useActionForm(action, {})
   return (
     <form action={formAction} className="space-y-2">
-      <SubmitButton variant="ghost">
-        <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Generar próximas 4 semanas
-      </SubmitButton>
+      <div className="flex items-center gap-1.5">
+        <SubmitButton variant="ghost">
+          <CalendarPlus className="h-4 w-4" aria-hidden="true" /> Generar próximas 4 semanas
+        </SubmitButton>
+        <InfoTip label="Generar próximas 4 semanas">
+          <p>Crea en la agenda las clases de las próximas 4 semanas a partir de los <strong>horarios fijos</strong> de la grilla, para que los socios puedan reservarlas.</p>
+          <p>El sistema ya lo hace solo todas las mañanas; el botón sirve para ver al instante un horario que acabás de agregar. No duplica clases que ya existen.</p>
+        </InfoTip>
+      </div>
       <Notice state={state} />
     </form>
   )
@@ -32,6 +39,10 @@ export function CancelSessionForm({ action }: { action: Action }) {
     <details className="rounded-xl border border-red-500/20 p-3">
       <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-red-300">
         <XCircle className="h-4 w-4" aria-hidden="true" /> Cancelar esta clase
+        <InfoTip label="Cancelar esta clase">
+          <p>Cancela <strong>solo esta clase</strong> (este día y hora). El horario fijo sigue igual las demás semanas.</p>
+          <p>Se liberan todas las reservas y la lista de espera, se devuelven las clases a quienes tienen pack y se les avisa con el motivo que escribas.</p>
+        </InfoTip>
       </summary>
       <form action={formAction} className="mt-3 space-y-3">
         <Field label="Motivo (lo ven los inscriptos)" name="reason">
@@ -306,6 +317,14 @@ export function SeriesRowForm({
         <button type="button" onClick={() => setSure(true)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-zinc-500 hover:text-red-300">
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Dar de baja este horario
         </button>
+      )}
+      {!sure && (
+        <span className="ml-1.5 inline-flex min-h-[36px] items-center align-middle">
+          <InfoTip label="Dar de baja este horario">
+            <p>Saca este horario de la grilla: <strong>deja de repetirse todas las semanas</strong> y se borran sus clases futuras.</p>
+            <p>Las clases que ya tienen gente anotada no se borran: cancelalas una por una desde la agenda si hace falta. Para suspender un solo día, usá «Cancelar esta clase».</p>
+          </InfoTip>
+        </span>
       )}
       <Notice state={state.message ? state : endState} />
     </div>

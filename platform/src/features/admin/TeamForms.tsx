@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { UserPlus, KeyRound, Copy, Lock, Unlock, Trash2 } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { InfoTip } from '@/components/InfoTip'
 
 const ROLE_OPTIONS = [
   { value: 'trainer', label: 'Profesor', hint: 'Ve sus clases y sus alumnos, asigna rutinas.' },
@@ -220,6 +221,15 @@ export function StaffAccountActions({
             <Lock className="h-4 w-4" aria-hidden="true" /> Bloquear
           </button>
         )}
+        <span className="flex min-h-[44px] items-center">
+          <InfoTip label={active ? 'Bloquear' : 'Desbloquear'}>
+            <p>
+              <strong>Bloquear</strong> le corta a esta persona el acceso al panel del gimnasio. Si además es socio, puede seguir usando la app
+              como socio.
+            </p>
+            <p>Conserva su historial (clases, rutinas, alumnos, cobros) y se deshace con «Desbloquear». «Eliminar», en cambio, la saca del equipo.</p>
+          </InfoTip>
+        </span>
         <details className="group">
           <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-red-500/30 px-4 text-sm font-semibold text-red-300 hover:bg-red-500/10">
             <Trash2 className="h-4 w-4" aria-hidden="true" /> Eliminar

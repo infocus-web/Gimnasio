@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
 import { Card } from '@/features/admin/ui'
 import { ConfirmAction } from '@/features/admin/ConfirmAction'
+import { InfoTip } from '@/components/InfoTip'
 import { fmtDateTime, formatMoney } from '@/features/admin/format'
 import { AccessSettingsForm, IssuePassForm, PassShare } from '@/features/access-plus/DayPassForms'
 import { issueDayPass, revokeDayPass, saveAccessSettings } from '@/features/access-plus/actions'
@@ -156,6 +157,12 @@ export default async function PassesPage({ params, searchParams }: PageProps<'/[
                       >
                         <UserPlus className="h-4 w-4" aria-hidden="true" /> Convertir en socio
                       </Link>
+                    )}
+                    {canNewMember && p.status !== 'revoked' && (
+                      <InfoTip label="Convertir en socio">
+                        <p>Abre el alta de socio nuevo con los datos de este invitado ya cargados (nombre, DNI, teléfono, email).</p>
+                        <p>Revisalos, elegí el plan si querés y guardá. <strong>No registra ningún cobro</strong>: eso se hace aparte, desde la ficha del socio.</p>
+                      </InfoTip>
                     )}
                     {canIssue && !p.revoked_at && p.status !== 'expired' && (
                       <ConfirmAction

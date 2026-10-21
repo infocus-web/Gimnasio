@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Banknote, Ban } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { InfoTip } from '@/components/InfoTip'
 
 export const METHOD_LABELS: Record<string, string> = {
   cash: 'Efectivo',
@@ -124,6 +125,15 @@ export function VoidPaymentForm({ action }: { action: (prev: ActionState, form: 
         </label>
         <input id="reason" name="reason" placeholder="Motivo" className={`${inputClass} min-h-[36px] w-44`} />
         <SubmitButton variant="ghost">Confirmar</SubmitButton>
+        <span className="flex min-h-[36px] items-center">
+          <InfoTip label="Anular cobro">
+            <p>Marca este cobro como anulado (con el motivo que escribas) y deja de sumar en los totales. No se borra: queda en el historial.</p>
+            <p>
+              Ojo: <strong>no cambia el vencimiento del plan</strong>. Si el cobro había renovado la membresía, corregila en la ficha del socio con
+              «Corregir fecha de vencimiento».
+            </p>
+          </InfoTip>
+        </span>
         {(state.message || state.fieldErrors?.reason) && (
           <span role="alert" className="w-full text-xs text-red-300">
             {state.fieldErrors?.reason ?? state.message}

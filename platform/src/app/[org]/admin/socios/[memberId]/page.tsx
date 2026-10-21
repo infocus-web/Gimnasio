@@ -19,6 +19,7 @@ import { CHECKIN_REASON, fmtDate, fmtDateTime, formatMoney, planState, PLAN_STAT
 import { MemberForm } from '@/features/admin/MemberForm'
 import { AdjustEndForm, AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
+import { InfoTip } from '@/components/InfoTip'
 import { EnrollForm } from '@/features/admin/AccessForms'
 import { enrollMember } from '@/features/admin/access-actions'
 
@@ -366,14 +367,24 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
           <Card
             title="Grupo familiar"
             action={
-              canWrite && m.is_payer ? (
-                <Link
-                  href={`/${slug}/admin/socios/nuevo?titular=${memberId}` as Route}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#edcc36]"
-                >
-                  <UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> Agregar integrante
-                </Link>
-              ) : undefined
+              <span className="flex items-center gap-3">
+                {canWrite && m.is_payer && (
+                  <Link
+                    href={`/${slug}/admin/socios/nuevo?titular=${memberId}` as Route}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#edcc36]"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" aria-hidden="true" /> Agregar integrante
+                  </Link>
+                )}
+                <InfoTip label="Grupo familiar y titular">
+                  <p>
+                    El <strong>titular</strong> (la corona) es quien paga: los cobros se registran a su nombre y su plan cubre a todos los
+                    integrantes, hasta la cantidad de personas que permite el plan.
+                  </p>
+                  <p>Si la cuenta del titular queda vencida o con deuda, ningún integrante del grupo puede entrar.</p>
+                  <p>«Agregar integrante» da de alta a un socio nuevo (hijo, pareja) dentro de este grupo.</p>
+                </InfoTip>
+              </span>
             }
           >
             {(family.data ?? []).length > 1 ? (

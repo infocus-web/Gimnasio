@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { Route } from 'next'
 import { Sparkles, X, Loader2, AlertTriangle } from 'lucide-react'
 import { Field, inputClass } from '@/features/admin/ui'
+import { InfoTip } from '@/components/InfoTip'
 import { GOALS } from './types'
 
 export function AiRoutineButton({
@@ -64,6 +65,7 @@ export function AiRoutineButton({
 
   return (
     <>
+      <span className="inline-flex items-center gap-1.5">
       <button
         type="button"
         onClick={open}
@@ -71,6 +73,11 @@ export function AiRoutineButton({
       >
         <Sparkles className="h-4 w-4" aria-hidden="true" /> Sugerir con IA
       </button>
+        <InfoTip label="Sugerir con IA">
+          <p>Le pedís a la IA que arme una rutina a partir del objetivo, los días por semana, el nivel, las lesiones y las máquinas que marques.</p>
+          <p>Se crea como <strong>borrador</strong>: el alumno no la ve. La revisás, cambiás lo que haga falta y la aprobás. Hay un límite de 20 sugerencias por día.</p>
+        </InfoTip>
+      </span>
 
       <dialog
         ref={dialog}

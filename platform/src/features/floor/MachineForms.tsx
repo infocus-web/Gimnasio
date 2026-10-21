@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { Search, Tv, PlayCircle } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from '@/features/admin/ui'
+import { InfoTip } from '@/components/InfoTip'
 
 type WithForm = (prev: ActionState, form: FormData) => Promise<ActionState>
 type Bare = (prev: ActionState) => Promise<ActionState>
@@ -161,15 +162,25 @@ export function TvLinkPanel({ slug, linked, seenLabel, action }: { slug: string;
           </div>
         </div>
       ) : linked && !sure ? (
-        <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline hover:text-white">
-          Vincular otro televisor
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline hover:text-white">
+            Vincular otro televisor
+          </button>
+          <InfoTip label="Televisor del gimnasio">
+            <p>Genera un link (con su QR) para abrir en el Smart TV, o en la compu o TV Box conectada, y mostrar la pantalla del gimnasio.</p>
+            <p>Queda guardado en el televisor y después de un corte de luz arranca solo. Si vinculás otro, <strong>el anterior deja de mostrar la pantalla</strong>.</p>
+          </InfoTip>
+        </div>
       ) : (
         <form action={submit} className="flex flex-wrap items-center gap-2">
           {linked && <span className="text-xs text-amber-200">El televisor anterior deja de mostrar la pantalla.</span>}
           <SubmitButton variant={linked ? 'ghost' : 'primary'}>
             <Tv className="h-4 w-4" aria-hidden="true" /> {linked ? 'Sí, generar link nuevo' : 'Generar link para la TV'}
           </SubmitButton>
+          <InfoTip label="Televisor del gimnasio">
+            <p>Genera un link (con su QR) para abrir en el Smart TV, o en la compu o TV Box conectada, y mostrar la pantalla del gimnasio.</p>
+            <p>Queda guardado en el televisor y después de un corte de luz arranca solo. Si vinculás otro, <strong>el anterior deja de mostrar la pantalla</strong>.</p>
+          </InfoTip>
         </form>
       )}
       <Notice state={state} />

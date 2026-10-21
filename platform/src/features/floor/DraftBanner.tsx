@@ -1,6 +1,7 @@
 import { Sparkles, CheckCircle2 } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { ActionButton } from '@/features/admin/ConfirmAction'
+import { InfoTip } from '@/components/InfoTip'
 
 /** Aviso arriba del constructor cuando la rutina es un borrador sugerido por la IA. */
 export function DraftBanner({ canEdit, action }: { canEdit: boolean; action: (prev: ActionState) => Promise<ActionState> }) {
@@ -14,12 +15,18 @@ export function DraftBanner({ canEdit, action }: { canEdit: boolean; action: (pr
         </span>
       </p>
       {canEdit && (
+        <div className="flex items-center gap-1.5">
         <ActionButton
           action={action}
           className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Aprobar rutina
         </ActionButton>
+        <InfoTip label="Aprobar rutina">
+          <p>Pasa esta rutina de <strong>borrador de la IA</strong> a rutina lista. Recién ahí la podés asignar a un alumno y él la ve en su app.</p>
+          <p>Aprobala solo después de revisar ejercicios, series y cargas.</p>
+        </InfoTip>
+        </div>
       )}
     </div>
   )

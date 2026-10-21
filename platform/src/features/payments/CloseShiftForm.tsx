@@ -5,6 +5,7 @@ import { Lock } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { formatMoney } from '@/features/admin/format'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from '@/features/admin/ui'
+import { InfoTip } from '@/components/InfoTip'
 
 /** Mismo criterio que el servidor: punto = miles, coma = decimales */
 function parseArs(raw: string): number | null {
@@ -46,7 +47,12 @@ export function CloseShiftForm({
         <input name="note" maxLength={500} placeholder="Ej. retiré $10.000 para cambio" className={inputClass} />
       </Field>
       <Notice state={state} />
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-1.5">
+        <InfoTip label="Cerrar mi turno">
+            <p>Hace el <strong>cierre de tu caja</strong>: suma lo que cobraste vos desde tu último cierre, separado por medio de pago.</p>
+            <p>Contás el efectivo, lo cargás y el sistema te dice si sobra o falta. El cierre queda guardado en el historial para el dueño.</p>
+            <p>No bloquea nada: podés seguir cobrando, y eso ya cuenta para tu próximo turno.</p>
+          </InfoTip>
         <SubmitButton>
           <Lock className="h-4 w-4" aria-hidden="true" /> Cerrar mi turno
         </SubmitButton>

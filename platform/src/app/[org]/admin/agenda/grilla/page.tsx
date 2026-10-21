@@ -4,6 +4,7 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { createSeries, endSeries, updateSeries } from '@/features/admin/schedule-actions'
 import { SeriesForm, SeriesRowForm } from '@/features/admin/ScheduleForms'
+import { InfoTip } from '@/components/InfoTip'
 import { WEEKDAYS, fmtDate, todayYMD } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Grilla semanal' }
@@ -40,6 +41,10 @@ export default async function GridPage({ params }: PageProps<'/[org]/admin/agend
         <details className="rounded-2xl border border-dashed border-zinc-700 p-4 open:border-solid open:border-[#edcc36]/40">
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-[#edcc36]">
             <Plus className="h-4 w-4" aria-hidden="true" /> Agregar horario fijo
+            <InfoTip label="Agregar horario fijo">
+              <p>Crea una clase que <strong>se repite todas las semanas</strong> el mismo día y hora (ej. Funcional, martes 19 h), con su sala, profe y cupo.</p>
+              <p>Las clases de cada semana aparecen solas en la agenda. Con «Desde» elegís a partir de qué fecha empieza.</p>
+            </InfoTip>
           </summary>
           <div className="mt-4">
             <SeriesForm

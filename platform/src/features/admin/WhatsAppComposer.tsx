@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { ArrowLeft, Check, MessageCircle, Send, X } from 'lucide-react'
 import { MESSAGE_TEMPLATES, fillMessage, whatsappLink } from './whatsapp'
 import { logWhatsappMessage } from './message-actions'
+import { InfoTip } from '@/components/InfoTip'
 
 export interface ComposerStudent {
   id: string
@@ -198,14 +199,20 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
             )}
           </div>
 
+          <div className="flex items-center gap-2">
           <button
             type="button"
             disabled={!body.trim() || recipients.length === 0}
             onClick={() => setStep('send')}
-            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] text-base font-extrabold text-black disabled:opacity-40"
+            className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-base font-extrabold text-black disabled:opacity-40"
           >
             <Send className="h-5 w-5" aria-hidden="true" /> Preparar envío ({recipients.length})
           </button>
+          <InfoTip label="Preparar envío">
+            <p><strong>Todavía no manda nada.</strong> Arma la lista de las personas que marcaste, cada una con el mensaje personalizado con su nombre.</p>
+            <p>Después tocás cada nombre: se abre tu WhatsApp con el mensaje escrito, lo enviás vos y volvés para el siguiente. Sale desde tu número.</p>
+          </InfoTip>
+          </div>
         </>
       ) : (
         <>

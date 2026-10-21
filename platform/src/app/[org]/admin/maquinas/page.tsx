@@ -7,6 +7,7 @@ import { Card } from '@/features/admin/ui'
 import { fmtDateTime } from '@/features/admin/format'
 import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { MachineForm, TvLinkPanel, TvSettingsForm } from '@/features/floor/MachineForms'
+import { InfoTip } from '@/components/InfoTip'
 import { linkTv, saveMachine, saveTvSettings, unlinkTv } from '@/features/floor/actions'
 
 export const metadata: Metadata = { title: 'Máquinas' }
@@ -43,12 +44,18 @@ export default async function MachinesPage({ params }: { params: Promise<{ org: 
           <p className="text-sm text-zinc-400">Cada máquina lleva un cartel con QR: el socio lo escanea y ve cómo se usa y su último peso.</p>
         </div>
         {canFloor && (machines?.some((m) => m.active) ?? false) && (
+          <span className="flex items-center gap-1.5">
           <Link
             href={`/${slug}/maquina/carteles` as Route}
             className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
           >
             <Printer className="h-4 w-4" aria-hidden="true" /> Imprimir todos los carteles
           </Link>
+          <InfoTip label="Imprimir todos los carteles">
+            <p>Abre una página lista para imprimir con el cartel de <strong>cada máquina activa</strong>: nombre y código QR.</p>
+            <p>Pegá cada cartel en su máquina. El socio lo escanea con el celular y ve cómo se usa y el último peso que levantó.</p>
+          </InfoTip>
+          </span>
         )}
       </div>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { InfoTip } from '@/components/InfoTip'
 import type { Metadata, Route } from 'next'
 import { ChevronLeft, ChevronRight, Lock, ShoppingCart } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
@@ -101,6 +102,13 @@ export default async function CajaPage({ params, searchParams }: PageProps<'/[or
             className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]">
             <Lock className="h-4 w-4" aria-hidden="true" /> Cerrar mi turno
           </Link>
+          <span className="flex items-center">
+          <InfoTip label="Cerrar mi turno">
+            <p>Hace el <strong>cierre de tu caja</strong>: suma lo que cobraste vos desde tu último cierre, separado por medio de pago.</p>
+            <p>Contás el efectivo, lo cargás y el sistema te dice si sobra o falta. El cierre queda guardado en el historial para el dueño.</p>
+            <p>No bloquea nada: podés seguir cobrando, y eso ya cuenta para tu próximo turno.</p>
+          </InfoTip>
+          </span>
         </div>
       )}
       {canVoid && !mpConfigured() && <MpNotice slug={slug} compact />}

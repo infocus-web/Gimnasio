@@ -17,6 +17,7 @@ import {
   Ticket,
   Users,
 } from 'lucide-react'
+import { InfoTip } from '@/components/InfoTip'
 import { useMember } from '@/features/member/MemberProvider'
 import {
   badgesFrom,
@@ -350,6 +351,10 @@ function FreezeCard({ eng, memberId, onChange }: { eng: MemberEngagement; member
     <section aria-labelledby="congelar" className={card}>
       <h2 id="congelar" className="mb-1 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-zinc-300">
         <Snowflake className="h-4 w-4 text-sky-300" aria-hidden="true" /> Congelar por vacaciones
+        <InfoTip label="Congelar por vacaciones">
+          <p>Pausa tu plan mientras no venís: <strong>esos días no podés entrar al gimnasio</strong>, y se suman a tu fecha de vencimiento, así no los perdés.</p>
+          <p>Lo puede pedir solo el titular de la cuenta. Si lo programaste para más adelante, lo podés cancelar antes de que empiece y te devolvemos los días.</p>
+        </InfoTip>
       </h2>
       <p className="mb-4 text-sm text-zinc-400">
         Pausá tu plan si te vas de viaje: los días congelados se suman al vencimiento. Mínimo {f.min_days} días, hasta{' '}
