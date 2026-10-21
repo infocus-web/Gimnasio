@@ -4,14 +4,13 @@ import { MessageCircle } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { daysUntil, fmtDate } from '@/features/admin/format'
+import { normalizeArPhone, whatsappLink } from '@/features/admin/whatsapp'
 
 export const metadata: Metadata = { title: 'Vencidos' }
 
 function waLink(phone: string | null, text: string) {
-  const digits = (phone ?? '').replace(/\D/g, '')
-  if (digits.length < 8) return null
-  const intl = digits.startsWith('54') ? digits : `549${digits.replace(/^0/, '').replace(/^15/, '')}`
-  return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`
+  const intl = normalizeArPhone(phone)
+  return intl ? whatsappLink(intl, text) : null
 }
 
 export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pagos/deudores'>) {
@@ -70,7 +69,7 @@ export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pa
                   </span>
                 </span>
                 <span className={`text-sm tabular-nums ${overdueList ? 'text-red-300' : 'text-amber-200'}`}>
-                  {overdueList ? `hace ${Math.abs(d)} días` : d <= 0 ? 'hoy' : `en ${d} días`}
+                  {overdueList ? (Math.abs(d) <= 0 ? 'hoy' : `hace ${Math.abs(d)} ${Math.abs(d) === 1 ? 'día' : 'días'}`) : d <= 0 ? 'hoy' : `en ${d} ${d === 1 ? 'día' : 'días'}`}
                 </span>
                 {wa && (
                   <a href={wa} target="_blank" rel="noreferrer" aria-label={`Escribir por WhatsApp a ${m.first_name}`}

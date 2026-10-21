@@ -78,9 +78,22 @@ export function LoginForm() {
         </div>
 
         {status === 'sent' ? (
-          <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
-            Te mandamos un link a <strong>{email}</strong>. Abrilo desde este mismo celular para entrar.
-          </p>
+          <div className="space-y-3">
+            <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
+              Te mandamos un link a <strong>{email}</strong>. Abrí el email y tocá el link para entrar. Si no llega en un par de
+              minutos, revisá la carpeta de Spam o Promociones.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setStatus('idle')
+                setMessage(null)
+              }}
+              className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline"
+            >
+              Usar otro email o pedir otro link
+            </button>
+          </div>
         ) : (
           <form onSubmit={submit} className="space-y-3">
             <label className="block space-y-1">

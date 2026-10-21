@@ -267,9 +267,11 @@ export async function deleteMember(slug: string, memberId: string, _prev: Action
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('org.manage')) return { message: 'Solo el dueño o un administrador puede eliminar socios.' }
   const supabase = await createClient()
-  await removeMemberFiles(supabase, ctx.org.id, memberId)   // foto y apto físico (el bucket es privado)
   const { data, error } = await supabase.rpc('member_delete', { p_member: memberId })
   if (error) return { message: DELETE_MESSAGES[error.message.trim()] ?? dbMessage(error) ?? 'No se pudo eliminar.' }
+  // Foto y apto físico: recién cuando el socio ya se borró (si fallaba antes, quedaba sin archivos).
+  // Se borran con la clave del servidor: el socio ya no existe y las políticas del bucket lo exigen.
+  await removeMemberFiles(createAdminClient(), ctx.org.id, memberId)
   // Su usuario de la app, si ya no lo usa nadie más
   const orphan = (data as { orphan_user_id?: string | null } | null)?.orphan_user_id
   if (orphan) {
@@ -367,4 +369,37 @@ export async function removeMedicalCert(slug: string, memberId: string, _prev: A
   if (isStoragePath(prev?.medical_cert_path)) await supabase.storage.from(MEMBER_BUCKET).remove([prev.medical_cert_path])
   revalidatePath(`/${slug}/admin/socios/${memberId}`)
   return { ok: true, message: 'Apto físico quitado.' }
+}
+
+/** Corrige el vencimiento del plan vigente (error de carga, días de congelamiento, cortesía). */
+export async function adjustMembershipEnd(slug: string, memberId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('billing.write')) return { message: ERRORS.FORBIDDEN }
+  const date = String(form.get('endDate') ?? '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { fieldErrors: { endDate: 'Elegí la nueva fecha de vencimiento' } }
+  const supabase = await createClient()
+  const { data: m } = await supabase
+    .from('member_directory')
+    .select('membership_id, membership_status')
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+    .maybeSingle()
+  if (!m?.membership_id) return { message: 'No tiene un plan para ajustar: asignale uno primero.' }
+  // Vence al final de ese día en el horario del gimnasio
+  const offset =
+    new Intl.DateTimeFormat('en-US', { timeZone: ctx.org.timezone, timeZoneName: 'longOffset' })
+      .formatToParts(new Date(`${date}T12:00:00Z`))
+      .find((p) => p.type === 'timeZoneName')
+      ?.value.replace('GMT', '') || '+00:00'
+  const end = new Date(`${date}T23:59:59${offset}`)
+  if (Number.isNaN(end.getTime())) return { fieldErrors: { endDate: 'Fecha inválida' } }
+  const reactivate = end.getTime() > Date.now() && m.membership_status === 'expired'
+  const { error } = await supabase
+    .from('memberships')
+    .update({ current_period_end: end.toISOString(), ...(reactivate ? { status: 'active' as const } : {}) })
+    .eq('id', m.membership_id)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo cambiar el vencimiento.' }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: `Nuevo vencimiento: ${date.split('-').reverse().join('/')}.` }
 }

@@ -201,8 +201,8 @@ export async function deleteStaff(slug: string, staffId: string, _prev: ActionSt
       const r = await admin.auth.admin.deleteUser(target.user_id)
       if (!r.error) extra = ' También se borró su cuenta de acceso.'
     }
-  } else {
-    extra = ' Conserva su cuenta porque la usa como socio u en otro gimnasio.'
+  } else if (process.env.SUPABASE_SECRET_KEY) {
+    extra = ' Conserva su cuenta porque la usa como socio o en otro gimnasio.'
   }
 
   revalidatePath(`/${slug}/admin/equipo`)

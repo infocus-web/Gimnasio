@@ -30,7 +30,8 @@ export function StaffLoginForm() {
     if (mode === 'link') {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}${next}` },
+        // Por /auth/callback: ahí se canjea el código del link por la sesión (sin eso el link no deja logueado)
+        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
       })
       // Mismo mensaje exista o no el email: no revela quién es parte del equipo
       setStatus(error && !/not found|signups/i.test(error.message) ? 'idle' : 'sent')

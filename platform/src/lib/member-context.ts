@@ -1,6 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import type { Route } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { FamilyMember } from '@/types/platform'
@@ -72,7 +73,9 @@ async function photoSrc(supabase: Awaited<ReturnType<typeof createClient>>, path
 }
 
 export const getMemberContext = cache(async (slug: string): Promise<MemberContext | { error: 'NO_ORG' | 'NOT_A_MEMBER' }> => {
-  const user = await requireUser(`/${slug}/app`)
+  // Después de ingresar vuelve a la pantalla que se quiso abrir (ej. un acceso directo a Clases)
+  const asked = (await headers()).get('x-pathname')
+  const user = await requireUser(asked?.startsWith(`/${slug}/app`) ? asked : `/${slug}/app`)
   const org = await getOrg(slug)
   if (!org) return { error: 'NO_ORG' }
 

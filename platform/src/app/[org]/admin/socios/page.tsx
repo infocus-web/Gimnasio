@@ -43,9 +43,10 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
     .eq('org_id', ctx.org.id)
 
   query = estado === 'archivados' ? query.eq('status', 'archived') : query.neq('status', 'archived')
-  if (estado === 'al_dia') query = query.gt('current_period_end', in7)
-  if (estado === 'por_vencer') query = query.gte('current_period_end', now).lte('current_period_end', in7)
-  if (estado === 'vencido') query = query.or(`membership_id.is.null,current_period_end.lt.${now}`)
+  // Mismos criterios que los números de Inicio: solo socios activos (no interesados ni congelados)
+  if (estado === 'al_dia') query = query.eq('status', 'active').in('membership_status', ['active', 'trialing']).gt('current_period_end', in7)
+  if (estado === 'por_vencer') query = query.eq('status', 'active').gte('current_period_end', now).lte('current_period_end', in7)
+  if (estado === 'vencido') query = query.eq('status', 'active').or(`membership_id.is.null,current_period_end.lt.${now}`)
 
   if (q) {
     const terms = q.split(/\s+/).slice(0, 3)

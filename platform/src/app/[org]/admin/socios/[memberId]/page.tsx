@@ -4,7 +4,7 @@ import type { Metadata, Route } from 'next'
 import { ArrowLeft, Smartphone, UserPlus, Crown, Info } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { assignPlan, deleteMember, inviteMemberToApp, removeMedicalCert, saveMedicalCert, sendAccessLink, updateMember, updateMemberPhoto } from '@/features/admin/actions'
+import { adjustMembershipEnd, assignPlan, deleteMember, inviteMemberToApp, removeMedicalCert, saveMedicalCert, sendAccessLink, updateMember, updateMemberPhoto } from '@/features/admin/actions'
 import { MedicalCertCard, MemberPhotoForm } from '@/features/admin/MemberFileForms'
 import { signedUrl } from '@/features/admin/member-files'
 import { DeleteMemberButton } from '@/features/admin/DeleteMemberButton'
@@ -12,9 +12,9 @@ import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
 import { TrainerSelectForm } from '@/features/admin/CoachForms'
 import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
-import { fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
+import { CHECKIN_REASON, fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 import { MemberForm } from '@/features/admin/MemberForm'
-import { AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
+import { AdjustEndForm, AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
 import { EnrollForm } from '@/features/admin/AccessForms'
 import { enrollMember } from '@/features/admin/access-actions'
@@ -40,7 +40,8 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   if (!m) notFound()
 
   const [{ data: staffList }, { data: tc }] = await Promise.all([
-    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).order('display_name'),
+    // Profesores (y dueño/admin, que también pueden dar clase); recepción no
+    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).neq('role', 'staff').order('display_name'),
     supabase.from('trainer_clients').select('trainer_id').eq('member_id', memberId).maybeSingle(),
   ])
   const [family, checkins, plans, payments] = await Promise.all([
@@ -189,12 +190,24 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
             </dl>
             {m.is_payer || !m.billing_account_id ? (
               canBill ? (
-                <AssignPlanForm
-                  action={assignPlan.bind(null, slug, memberId)}
-                  plans={planOptions}
-                  today={todayYMD(ctx.org.timezone)}
-                  currentPlanId={m.plan_id}
-                />
+                <>
+                  <AssignPlanForm
+                    action={assignPlan.bind(null, slug, memberId)}
+                    plans={planOptions}
+                    today={todayYMD(ctx.org.timezone)}
+                    currentPlanId={m.plan_id}
+                  />
+                  {m.membership_id && (
+                    <AdjustEndForm
+                      action={adjustMembershipEnd.bind(null, slug, memberId)}
+                      current={
+                        m.current_period_end
+                          ? new Intl.DateTimeFormat('en-CA', { timeZone: ctx.org.timezone }).format(new Date(m.current_period_end))
+                          : null
+                      }
+                    />
+                  )}
+                </>
               ) : null
             ) : payer ? (
               <p className="text-sm text-zinc-400">
@@ -389,7 +402,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                 {checkins.data.map((c) => (
                   <li key={c.id} className="flex justify-between gap-2">
                     <span className="tabular-nums text-zinc-300">{fmtDateTime(c.created_at)}</span>
-                    <span className={c.allowed ? 'text-emerald-300' : 'text-red-300'}>{c.allowed ? 'Ingresó' : 'Rechazado'}</span>
+                    <span className={c.allowed ? 'text-emerald-300' : 'text-red-300'}>{c.allowed ? 'Ingresó' : `Rechazado${c.reason && CHECKIN_REASON[c.reason] ? ` · ${CHECKIN_REASON[c.reason]}` : ''}`}</span>
                   </li>
                 ))}
               </ul>
