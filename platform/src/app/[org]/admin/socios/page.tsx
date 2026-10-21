@@ -3,7 +3,7 @@ import type { Metadata, Route } from 'next'
 import { Search, UserPlus, Smartphone, Users } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { fmtDate, planState, PLAN_STATE_UI } from '@/features/admin/format'
+import { fmtDate, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Socios' }
 
@@ -32,10 +32,11 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
   const supabase = await createClient()
   const now = new Date().toISOString()
   const in7 = new Date(Date.now() + 7 * 86_400_000).toISOString()
+  const today = todayYMD(ctx.org.timezone)
 
   let query = supabase
     .from('member_directory')
-    .select('id, first_name, last_name, email, phone, document_id, status, has_app, is_payer, plan_name, membership_status, current_period_end, last_checkin_at', {
+    .select('id, first_name, last_name, email, phone, document_id, status, has_app, is_payer, plan_name, membership_status, current_period_end, last_checkin_at, member_number, has_medical_cert, medical_cert_expires_on', {
       count: 'exact',
     })
     .eq('org_id', ctx.org.id)
@@ -48,7 +49,9 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
   if (q) {
     const terms = q.split(/\s+/).slice(0, 3)
     for (const t of terms) {
-      query = query.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%,document_id.ilike.%${t}%,email.ilike.%${t}%`)
+      // también por número de socio (ej. 100023)
+      const num = /^\d{4,9}$/.test(t) ? `,member_number.eq.${t}` : ''
+      query = query.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%,document_id.ilike.%${t}%,email.ilike.%${t}%${num}`)
     }
   }
 
@@ -93,7 +96,7 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
           <input
             name="q"
             defaultValue={q}
-            placeholder="Nombre, apellido, DNI o email"
+            placeholder="Nombre, DNI, email o N° de socio"
             className="min-h-[44px] w-full rounded-xl border border-zinc-800 bg-black pl-9 pr-3 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
           />
         </label>
@@ -141,7 +144,13 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
                         {m.last_name ? `${m.last_name}, ${m.first_name}` : m.first_name}
                       </Link>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+                        {m.member_number && <span className="font-mono text-[#edcc36]/80">N° {m.member_number}</span>}
                         {m.document_id && <span>DNI {m.document_id}</span>}
+                        {!m.has_medical_cert ? (
+                          <span className="text-amber-300/80">Sin apto</span>
+                        ) : m.medical_cert_expires_on && m.medical_cert_expires_on < today ? (
+                          <span className="text-red-300">Apto vencido</span>
+                        ) : null}
                         {m.has_app && (
                           <span className="inline-flex items-center gap-1 text-emerald-300">
                             <Smartphone className="h-3 w-3" aria-hidden="true" /> App

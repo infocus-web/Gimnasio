@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { ActionState } from './actions'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { WebcamCapture } from './WebcamCapture'
 
 export interface MemberValues {
   firstName: string
@@ -42,6 +43,12 @@ export function MemberForm(props: Props) {
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      {props.mode === 'create' && (
+        <fieldset className="rounded-2xl border border-zinc-800 p-4">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">Foto del socio</legend>
+          <WebcamCapture />
+        </fieldset>
+      )}
       <fieldset disabled={disabled} className="grid gap-4 sm:grid-cols-2">
         <legend className="sr-only">Datos personales</legend>
         <Field label="Nombre *" name="firstName" error={err.firstName}>

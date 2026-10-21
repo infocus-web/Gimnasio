@@ -9,10 +9,10 @@ import type { CheckinToken } from '@/types/platform'
 import { AccessStatusCard } from './AccessStatusCard'
 
 /**
- * QR de acceso: apagado mientras se entra solo con los lectores ZKTeco (cara/palma/huella).
- * Para volver a mostrarlo (por ejemplo, si un día hay recepción escaneando), cambiar a true.
+ * QR de acceso: se muestra en la tablet del molinete de musculación (y en recepción).
+ * Cambia cada 30 s; también se puede entrar con cara/palma/huella en el lector.
  */
-const SHOW_QR = false
+const SHOW_QR = true
 
 export function PassScreen() {
   const { supabase, family, activeMemberId, setActiveMemberId } = useMember()

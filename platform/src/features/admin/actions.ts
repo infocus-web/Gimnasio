@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { siteUrl } from '@/lib/site-url'
 import { getAdminContext } from './context'
+import { MEMBER_BUCKET, isStoragePath, removeMemberFiles, saveMemberPhoto } from './member-files'
 
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
 
@@ -116,9 +117,14 @@ export async function createMember(slug: string, _prev: ActionState, form: FormD
     await supabase.from('members').update({ medical_notes: m.medicalNotes }).eq('id', memberId)
   }
   let notice = ''
+  const photo = String(form.get('photo') ?? '')
+  if (photo) {
+    const photoError = await saveMemberPhoto(supabase, ctx.org.id, memberId, photo)
+    if (photoError) notice = `${photoError} Podés sacarla de nuevo desde la ficha.`
+  }
   if (invite && m.email) {
     const r = await linkOrInvite(ctx.org.id, slug, m.email, `/${slug}/app/pase`)
-    notice = r.message ?? ''
+    notice = [notice, r.message ?? ''].filter(Boolean).join(' ')
   }
   revalidatePath(`/${slug}/admin`, 'layout')
   const qs = notice ? `?aviso=${encodeURIComponent(notice)}` : ''
@@ -261,6 +267,7 @@ export async function deleteMember(slug: string, memberId: string, _prev: Action
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('org.manage')) return { message: 'Solo el dueño o un administrador puede eliminar socios.' }
   const supabase = await createClient()
+  await removeMemberFiles(supabase, ctx.org.id, memberId)   // foto y apto físico (el bucket es privado)
   const { data, error } = await supabase.rpc('member_delete', { p_member: memberId })
   if (error) return { message: DELETE_MESSAGES[error.message.trim()] ?? dbMessage(error) ?? 'No se pudo eliminar.' }
   // Su usuario de la app, si ya no lo usa nadie más
@@ -304,4 +311,60 @@ export async function sendAccessLink(slug: string, memberId: string, _prev: Acti
     return { message: 'No se pudo enviar el link. Probá de nuevo en unos minutos.' }
   }
   return { ok: true, message: `Le mandamos a ${member.email} un link para entrar a la app (revisá también Spam).` }
+}
+
+/** Foto del socio (webcam o archivo) desde la ficha. */
+export async function updateMemberPhoto(slug: string, memberId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const photo = String(form.get('photo') ?? '')
+  if (!photo) return { message: 'Primero sacá la foto (o subí una).' }
+  const supabase = await createClient()
+  const err = await saveMemberPhoto(supabase, ctx.org.id, memberId, photo)
+  if (err) return { message: err }
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Foto guardada.' }
+}
+
+/** Apto físico: el navegador ya subió el archivo al bucket privado; acá se registra en la ficha. */
+export async function saveMedicalCert(
+  slug: string,
+  memberId: string,
+  path: string,
+  expiresOn: string | null,
+): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const prefix = `${ctx.org.id}/${memberId}/apto-`
+  if (!path.startsWith(prefix) || path.includes('..')) return { message: 'Archivo inválido.' }
+  const expires = expiresOn && /^\d{4}-\d{2}-\d{2}$/.test(expiresOn) ? expiresOn : null
+  const supabase = await createClient()
+  const { data: prev } = await supabase.from('members').select('medical_cert_path').eq('id', memberId).maybeSingle()
+  const { error } = await supabase
+    .from('members')
+    .update({ medical_cert_path: path, medical_cert_uploaded_at: new Date().toISOString(), medical_cert_expires_on: expires })
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo guardar el apto.' }
+  if (isStoragePath(prev?.medical_cert_path) && prev.medical_cert_path !== path) {
+    await supabase.storage.from(MEMBER_BUCKET).remove([prev.medical_cert_path])
+  }
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Apto físico guardado.' }
+}
+
+export async function removeMedicalCert(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: prev } = await supabase.from('members').select('medical_cert_path').eq('id', memberId).maybeSingle()
+  const { error } = await supabase
+    .from('members')
+    .update({ medical_cert_path: null, medical_cert_uploaded_at: null, medical_cert_expires_on: null })
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo quitar.' }
+  if (isStoragePath(prev?.medical_cert_path)) await supabase.storage.from(MEMBER_BUCKET).remove([prev.medical_cert_path])
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Apto físico quitado.' }
 }

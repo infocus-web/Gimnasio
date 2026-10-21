@@ -40,13 +40,21 @@ function toResult(raw: RawResult): CheckinResult {
 export function ReceptionScreen({ orgId, locationId }: { orgId: string; locationId: string }) {
   const supabase = useMemo(() => createClient(), [])
   const [result, setResult] = useState<CheckinResult | null>(null)
+
+  // La foto del socio está en almacenamiento privado: se pide un link que vence en 5 minutos
+  const withPhoto = async (r: CheckinResult): Promise<CheckinResult> => {
+    const path = r.member?.photoUrl
+    if (!path || /^https?:\/\//.test(path)) return r
+    const { data } = await supabase.storage.from('socios').createSignedUrl(path, 300)
+    return { ...r, member: { ...r.member!, photoUrl: data?.signedUrl ?? undefined } }
+  }
   const [loading, setLoading] = useState(false)
 
   const scan = async (text: string) => {
     setLoading(true)
     const { data, error } = await supabase.rpc('checkin_scan', { p_location_id: locationId, p_token: text.trim() })
     setLoading(false)
-    setResult(error ? { found: false, allowed: false, reason: 'QR_EXPIRED_OR_INVALID' } : toResult(data as unknown as RawResult))
+    setResult(error ? { found: false, allowed: false, reason: 'QR_EXPIRED_OR_INVALID' } : await withPhoto(toResult(data as unknown as RawResult)))
   }
 
   const [matches, setMatches] = useState<{ id: string; name: string; doc: string | null; plan: string | null }[]>([])
@@ -60,7 +68,7 @@ export function ReceptionScreen({ orgId, locationId }: { orgId: string; location
       p_method: 'manual',
     })
     setLoading(false)
-    setResult(error ? { found: false, allowed: false, reason: 'MEMBER_NOT_FOUND' } : toResult(data as unknown as RawResult))
+    setResult(error ? { found: false, allowed: false, reason: 'MEMBER_NOT_FOUND' } : await withPhoto(toResult(data as unknown as RawResult)))
   }
 
   // Búsqueda manual: DNI exacto, o nombre y apellido en cualquier orden ("juan perez", "perez").

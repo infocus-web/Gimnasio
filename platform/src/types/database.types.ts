@@ -1314,6 +1314,9 @@ export type Database = {
           last_checkin_at: string | null
           last_name: string
           medical_notes: string | null
+          medical_cert_expires_on: string | null
+          medical_cert_path: string | null
+          medical_cert_uploaded_at: string | null
           org_id: string
           phone: string | null
           photo_url: string | null
@@ -1337,6 +1340,9 @@ export type Database = {
           last_checkin_at?: string | null
           last_name?: string
           medical_notes?: string | null
+          medical_cert_expires_on?: string | null
+          medical_cert_path?: string | null
+          medical_cert_uploaded_at?: string | null
           org_id: string
           phone?: string | null
           photo_url?: string | null
@@ -1360,6 +1366,9 @@ export type Database = {
           last_checkin_at?: string | null
           last_name?: string
           medical_notes?: string | null
+          medical_cert_expires_on?: string | null
+          medical_cert_path?: string | null
+          medical_cert_uploaded_at?: string | null
           org_id?: string
           phone?: string | null
           photo_url?: string | null
@@ -2532,6 +2541,9 @@ export type Database = {
           birth_date: string | null
           created_at: string | null
           credits_remaining: number | null
+          has_medical_cert: boolean | null
+          medical_cert_expires_on: string | null
+          member_number: number | null
           current_period_end: string | null
           document_id: string | null
           email: string | null

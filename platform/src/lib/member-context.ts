@@ -63,6 +63,14 @@ export const requireUser = cache(async (next: string, door: 'login' | 'equipo' =
  * Se filtra explícitamente por user_id / cuenta familiar: si la persona además
  * es staff, RLS le dejaría ver a todos los socios y no queremos eso acá.
  */
+/** Foto del socio: está en almacenamiento privado (link firmado por 1 hora). */
+async function photoSrc(supabase: Awaited<ReturnType<typeof createClient>>, path: string | null) {
+  if (!path) return null
+  if (/^https?:\/\//.test(path)) return path
+  const { data } = await supabase.storage.from('socios').createSignedUrl(path, 3600)
+  return data?.signedUrl ?? null
+}
+
 export const getMemberContext = cache(async (slug: string): Promise<MemberContext | { error: 'NO_ORG' | 'NOT_A_MEMBER' }> => {
   const user = await requireUser(`/${slug}/app`)
   const org = await getOrg(slug)
@@ -71,7 +79,7 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
   const supabase = await createClient()
   const { data: me } = await supabase
     .from('members')
-    .select('id, first_name, last_name, photo_url, billing_account_id')
+    .select('id, first_name, last_name, photo_url, billing_account_id, access_pin')
     .eq('org_id', org.id)
     .eq('user_id', user.id)
     .neq('status', 'archived')
@@ -79,7 +87,7 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
   if (!me) return { error: 'NOT_A_MEMBER' }
 
   const family: FamilyMember[] = [
-    { id: me.id, firstName: me.first_name, lastName: me.last_name, photoUrl: me.photo_url ?? undefined, isMe: true },
+    { id: me.id, firstName: me.first_name, lastName: me.last_name, photoUrl: (await photoSrc(supabase, me.photo_url)) ?? undefined, memberNumber: me.access_pin ?? undefined, isMe: true },
   ]
   if (me.billing_account_id) {
     const { data: account } = await supabase
@@ -91,13 +99,13 @@ export const getMemberContext = cache(async (slug: string): Promise<MemberContex
     if (account) {
       const { data: deps } = await supabase
         .from('members')
-        .select('id, first_name, last_name, photo_url')
+        .select('id, first_name, last_name, photo_url, access_pin')
         .eq('billing_account_id', account.id)
         .neq('id', me.id)
         .neq('status', 'archived')
         .order('first_name')
       for (const d of deps ?? []) {
-        family.push({ id: d.id, firstName: d.first_name, lastName: d.last_name, photoUrl: d.photo_url ?? undefined, isMe: false })
+        family.push({ id: d.id, firstName: d.first_name, lastName: d.last_name, photoUrl: (await photoSrc(supabase, d.photo_url)) ?? undefined, memberNumber: d.access_pin ?? undefined, isMe: false })
       }
     }
   }

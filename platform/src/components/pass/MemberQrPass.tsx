@@ -210,14 +210,20 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
 
         {/* Socio Info */}
         <div className="flex items-center gap-3 mb-4 bg-black/60 p-2.5 rounded-2xl border border-zinc-900">
-          <div className="w-10 h-10 rounded-full bg-zinc-900 border border-[#edcc36]/40 flex items-center justify-center text-[#edcc36] shrink-0 font-bold text-sm">
-            {currentFamilyMember?.firstName?.charAt(0) || 'S'}
-          </div>
+          {currentFamilyMember?.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={currentFamilyMember.photoUrl} alt="" className="w-10 h-10 rounded-full border border-[#edcc36]/40 object-cover shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-zinc-900 border border-[#edcc36]/40 flex items-center justify-center text-[#edcc36] shrink-0 font-bold text-sm">
+              {currentFamilyMember?.firstName?.charAt(0) || 'S'}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <h4 className="font-cyber font-bold text-white text-sm truncate">
               {currentFamilyMember?.firstName} {currentFamilyMember?.lastName}
             </h4>
             <div className="text-[11px] font-mono text-zinc-400 truncate">
+              {currentFamilyMember?.memberNumber ? `N° ${currentFamilyMember.memberNumber} · ` : ''}
               {membership.planName}
             </div>
           </div>
