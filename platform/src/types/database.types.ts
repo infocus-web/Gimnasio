@@ -14,6 +14,10 @@ export type Database = {
   }
   public: {
     Tables: {
+      // ↓ tablas agente A
+      // ↓ tablas agente B
+      // ↓ tablas agente C
+      // ↓ tablas agente D
       access_commands: {
         Row: {
           attempts: number
@@ -2673,6 +2677,10 @@ export type Database = {
       }
     }
     Functions: {
+      // ↓ agente A (comunicación y retención)
+      // ↓ agente B (acceso y planes)
+      // ↓ agente C (pagos)
+      // ↓ agente D (sala y dueño)
       access_device_confirm_ip: {
         Args: { p_device: string }
         Returns: undefined

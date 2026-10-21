@@ -5,8 +5,9 @@
 #   PGHOST=localhost PGUSER=postgres ./supabase/test/run_v2.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
-psql -d postgres -q -X -c "drop database if exists gym_test" -c "create database gym_test"
-Q="psql -d gym_test -v ON_ERROR_STOP=1 -q -X"
+DB="${TEST_DB:-gym_test}"   # cada agente/prueba en paralelo usa su propia base: TEST_DB=gym_a ...
+psql -d postgres -q -X -c "drop database if exists $DB" -c "create database $DB"
+Q="psql -d $DB -v ON_ERROR_STOP=1 -q -X"
 $Q -f test/stub_supabase.sql -f test/stub_supabase_v2.sql
 for f in migrations/000[1-4]*.sql; do $Q -f "$f" >/dev/null 2>&1; done
 # simula el admin que ya existe en producción
@@ -23,3 +24,7 @@ $Q -f test/scenario_agent.sql | grep -E '^ OK|PASARON|FALLO'
 $Q -f test/scenario_turnstile.sql | grep -E '^ OK|PASARON|FALLO'
 $Q -f test/scenario_member_delete.sql | grep -E '^ OK|PASARON|FALLO'
 $Q -f test/scenario_member_files.sql | grep -E '^ OK|PASARON|FALLO'
+$Q -f test/scenario_engagement.sql | grep -E '^ OK|PASARON|FALLO'
+$Q -f test/scenario_access_plus.sql | grep -E '^ OK|PASARON|FALLO'
+$Q -f test/scenario_payments_mp.sql | grep -E '^ OK|PASARON|FALLO'
+$Q -f test/scenario_floor_owner.sql | grep -E '^ OK|PASARON|FALLO'
