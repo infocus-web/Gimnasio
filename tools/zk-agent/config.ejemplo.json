@@ -1,0 +1,8 @@
+{
+  "servidor": "https://evolution-fitness-gym-liart.vercel.app",
+  "numero_de_serie": "AEWD182260360",
+  "clave": "PEGAR_ACA_LA_CLAVE_DEL_PANEL",
+  "ip_lector": "192.168.0.99",
+  "puerto_lector": 4370,
+  "modo": "lectura"
+}

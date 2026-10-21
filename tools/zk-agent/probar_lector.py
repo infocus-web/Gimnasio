@@ -6,7 +6,9 @@ Uso (en PowerShell, dentro de la carpeta donde esta este archivo):
     pip install pyzk
     python probar_lector.py
 """
-from zk import ZK
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from zk import ZK  # noqa: E402
 
 IP_LECTOR = "192.168.0.99"
 PUERTO = 4370

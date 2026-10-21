@@ -181,6 +181,7 @@ export type Database = {
       access_devices: {
         Row: {
           active: boolean
+          agent_token_hash: string | null
           attlog_stamp: string | null
           created_at: string
           id: string
@@ -198,6 +199,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          agent_token_hash?: string | null
           attlog_stamp?: string | null
           created_at?: string
           id?: string
@@ -215,6 +217,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          agent_token_hash?: string | null
           attlog_stamp?: string | null
           created_at?: string
           id?: string
@@ -2659,6 +2662,7 @@ export type Database = {
         Args: { p_device: string }
         Returns: undefined
       }
+      access_device_agent_token: { Args: { p_device: string }; Returns: string }
       access_device_delete: { Args: { p_device: string }; Returns: undefined }
       access_device_query_users: {
         Args: { p_device: string }
@@ -2717,6 +2721,16 @@ export type Database = {
           p_start?: string
         }
         Returns: string
+      }
+      agent_call: {
+        Args: {
+          p_action: string
+          p_ip: string
+          p_payload?: Json
+          p_sn: string
+          p_token: string
+        }
+        Returns: Json
       }
       adms_hello: {
         Args: { p_info?: Json; p_ip: string; p_sn: string }

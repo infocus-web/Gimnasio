@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check } from 'lucide-react'
+import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from './ui'
 
@@ -138,6 +138,65 @@ export function DeviceButtons({
         )}
       </div>
       <Notice state={shown} />
+    </div>
+  )
+}
+
+export function AgentPanel({
+  serial,
+  hasToken,
+  seenAt,
+  mode,
+  version,
+  action,
+}: {
+  serial: string
+  hasToken: boolean
+  seenAt: string | null
+  mode: string | null
+  version: string | null
+  action: Bare
+}) {
+  const [state, submit] = useActionForm(action)
+  const [sure, setSure] = useState(false)
+  const online = !!seenAt && Date.now() - new Date(seenAt).getTime() < 2 * 60_000
+  return (
+    <div className="space-y-2 rounded-xl border border-zinc-800 p-3">
+      <p className="flex items-center gap-2 text-sm font-semibold text-white">
+        <Monitor className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Intermediario en la PC del gimnasio
+      </p>
+      <p className="text-xs text-zinc-400">
+        Para lectores que se manejan por la red local (ej. MB360). Un programa en una PC del gimnasio carga y saca socios del lector y sube las
+        entradas.
+      </p>
+      {hasToken && (
+        <p className={`text-sm ${online ? 'text-emerald-300' : 'text-zinc-400'}`}>
+          {online ? 'Conectado' : seenAt ? `Sin conexión desde ${new Date(seenAt).toLocaleString('es-AR')}` : 'Clave generada, esperando que el programa se conecte'}
+          {mode && ` · modo ${mode === 'sincronizar' ? 'sincronizar' : 'solo lectura'}`}
+          {version && <span className="text-xs text-zinc-500"> · v{version}</span>}
+        </p>
+      )}
+      {state.secret ? (
+        <div className="space-y-2 rounded-lg border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-[#f5e38a]">
+          <p>Número de serie y clave para el archivo config.json:</p>
+          <div className="flex flex-wrap gap-2">
+            <CopyValue value={serial} />
+            <CopyValue value={state.secret} />
+          </div>
+        </div>
+      ) : hasToken && !sure ? (
+        <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline">
+          Generar una clave nueva
+        </button>
+      ) : (
+        <form action={submit} className="flex flex-wrap items-center gap-2">
+          {hasToken && <span className="text-xs text-amber-200">La clave anterior deja de funcionar.</span>}
+          <SubmitButton variant="ghost">
+            <KeyRound className="h-4 w-4" aria-hidden="true" /> {hasToken ? 'Sí, generar otra' : 'Generar clave del intermediario'}
+          </SubmitButton>
+        </form>
+      )}
+      <Notice state={state} />
     </div>
   )
 }

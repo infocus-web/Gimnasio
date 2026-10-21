@@ -71,6 +71,21 @@ export async function deviceAction(slug: string, deviceId: string, op: DeviceOp,
   return { ok: true, message: done[op] }
 }
 
+/** Clave para el intermediario de la PC del gimnasio. Se muestra una sola vez; generar otra invalida la anterior. */
+export async function createAgentToken(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('access_device_agent_token', { p_device: deviceId })
+  if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
+  refresh(slug)
+  return {
+    ok: true,
+    secret: data,
+    message: 'Copiá esta clave en el archivo config.json del intermediario. No se vuelve a mostrar (si la perdés, generá otra).',
+  }
+}
+
 export async function linkDeviceUser(slug: string, deviceId: string, pin: number, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
