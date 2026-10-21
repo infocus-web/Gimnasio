@@ -4,7 +4,8 @@ import type { Metadata, Route } from 'next'
 import { ArrowLeft, Smartphone, UserPlus, Crown, Info } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { assignPlan, inviteMemberToApp, updateMember } from '@/features/admin/actions'
+import { assignPlan, deleteMember, inviteMemberToApp, updateMember } from '@/features/admin/actions'
+import { DeleteMemberButton } from '@/features/admin/DeleteMemberButton'
 import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
 import { TrainerSelectForm } from '@/features/admin/CoachForms'
@@ -348,6 +349,15 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
               <p className="text-sm text-zinc-500">Sin entradas registradas.</p>
             )}
           </Card>
+
+          {ctx.can('org.manage') && (
+            <Card title="Eliminar">
+              <DeleteMemberButton
+                action={deleteMember.bind(null, slug, memberId)}
+                name={`${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
+              />
+            </Card>
+          )}
         </div>
       </div>
     </div>

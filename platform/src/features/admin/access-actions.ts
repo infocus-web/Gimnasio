@@ -149,3 +149,26 @@ export async function enrollMember(slug: string, memberId: string, _prev: Action
       'Pedido enviado: en unos segundos el lector muestra la pantalla de registro. Que el socio se pare frente al lector. Si no aparece, registralo desde el menú del lector (Usuarios → buscar su número → Cara).',
   }
 }
+
+/** Abre el molinete una vuelta (recepción / dueño). Espera hasta ~6 s la confirmación del intermediario. */
+export async function openTurnstile(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('checkins.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: id, error } = await supabase.rpc('access_device_open', { p_device: deviceId })
+  if (error) {
+    return {
+      message:
+        error.message.trim() === 'TURNSTILE_OFFLINE'
+          ? 'El molinete no está conectado (el intermediario de la PC está apagado o el lector está pausado).'
+          : msg(error),
+    }
+  }
+  for (let i = 0; i < 12; i++) {
+    await new Promise((ok) => setTimeout(ok, 500))
+    const { data: c } = await supabase.from('access_commands').select('status').eq('id', id).maybeSingle()
+    if (c?.status === 'ok') return { ok: true, message: 'Molinete abierto: puede pasar una persona.' }
+    if (c?.status === 'error' || c?.status === 'superseded') return { message: 'El lector no respondió. Probá de nuevo.' }
+  }
+  return { message: 'Se envió la orden pero no llegó la confirmación. Fijate si se abrió.' }
+}

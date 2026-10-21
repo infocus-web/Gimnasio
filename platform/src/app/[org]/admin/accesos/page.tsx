@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
 import { Card } from '@/features/admin/ui'
 import { fmtDateTime } from '@/features/admin/format'
-import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
-import { createAgentToken, createKioskToken, deviceAction, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
+import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, OpenTurnstileButton, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
+import { createAgentToken, createKioskToken, deviceAction, openTurnstile, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
 
 export const metadata: Metadata = { title: 'Accesos' }
 
@@ -150,6 +150,8 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
                   </div>
                 ))}
               </dl>
+
+              {info.agent_token_at && <OpenTurnstileButton action={openTurnstile.bind(null, slug, d.id)} />}
 
               <DeviceButtons
                 active={d.active}

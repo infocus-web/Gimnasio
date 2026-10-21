@@ -2668,6 +2668,8 @@ export type Database = {
       access_device_agent_token: { Args: { p_device: string }; Returns: string }
       access_device_delete: { Args: { p_device: string }; Returns: undefined }
       access_device_kiosk_token: { Args: { p_device: string }; Returns: string }
+      access_device_open: { Args: { p_device: string }; Returns: number }
+      member_delete: { Args: { p_member: string }; Returns: Json }
       access_device_query_users: {
         Args: { p_device: string }
         Returns: undefined

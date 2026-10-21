@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { ActionState } from './actions'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
@@ -34,6 +35,10 @@ export function MemberForm(props: Props) {
   const v = props.mode === 'edit' ? props.values : null
   const err = state.fieldErrors ?? {}
   const disabled = props.mode === 'edit' && props.readOnly
+  // Controlado: después de guardar, el formulario se reinicia y un <select> sin controlar volvía al valor viejo
+  const savedStatus = v?.status ?? 'active'
+  const [status, setStatus] = useState(savedStatus)
+  useEffect(() => setStatus(savedStatus), [savedStatus, state])
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
@@ -72,7 +77,7 @@ export function MemberForm(props: Props) {
         </div>
         {props.mode === 'edit' && (
           <Field label="Estado" name="status">
-            <select id="status" name="status" defaultValue={v?.status ?? 'active'} className={inputClass}>
+            <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>
               <option value="active">Activo</option>
               <option value="frozen">Congelado</option>
               <option value="lead">Interesado (todavía no se inscribió)</option>

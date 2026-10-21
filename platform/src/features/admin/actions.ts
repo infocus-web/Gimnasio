@@ -248,3 +248,27 @@ export async function resendInvitation(slug: string, email: string, _prev: Actio
   revalidatePath(`/${slug}/admin/equipo`)
   return r
 }
+
+const DELETE_MESSAGES: Record<string, string> = {
+  MEMBER_IS_PAYER: 'Es el titular de un grupo familiar: primero eliminá o pasá a otra cuenta a los integrantes.',
+  MEMBER_NOT_FOUND: 'Ese socio ya no existe.',
+  FORBIDDEN: ERRORS.FORBIDDEN ?? 'No tenés permiso.',
+}
+
+/** Elimina al socio y todo lo suyo (pagos, plan, entradas, rutinas). Solo dueño/admin. */
+export async function deleteMember(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: 'Solo el dueño o un administrador puede eliminar socios.' }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('member_delete', { p_member: memberId })
+  if (error) return { message: DELETE_MESSAGES[error.message.trim()] ?? dbMessage(error) ?? 'No se pudo eliminar.' }
+  // Su usuario de la app, si ya no lo usa nadie más
+  const orphan = (data as { orphan_user_id?: string | null } | null)?.orphan_user_id
+  if (orphan) {
+    const { error: authError } = await createAdminClient().auth.admin.deleteUser(orphan)
+    if (authError) console.error('[deleteMember] auth', authError.message)
+  }
+  revalidatePath(`/${slug}/admin/socios`, 'layout')
+  revalidatePath(`/${slug}/admin/accesos`)
+  redirect(`/${slug}/admin/socios` as Route)
+}

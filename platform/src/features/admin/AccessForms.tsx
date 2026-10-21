@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound, Tablet } from 'lucide-react'
+import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound, Tablet, DoorOpen } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from './ui'
 
@@ -327,6 +327,19 @@ export function EnrollForm({ action, devices }: { action: WithForm; devices: { i
       {state.fieldErrors?.consent && <p className="text-xs text-red-300">{state.fieldErrors.consent}</p>}
       <SubmitButton>
         <ScanFace className="h-4 w-4" aria-hidden="true" /> Registrar en el lector
+      </SubmitButton>
+      <Notice state={state} />
+    </form>
+  )
+}
+
+/** Botón "Abrir molinete": una vuelta, para recepción o el dueño. */
+export function OpenTurnstileButton({ action, label = 'Abrir molinete' }: { action: Bare; label?: string }) {
+  const [state, submit] = useActionForm(action)
+  return (
+    <form action={submit} className="space-y-2">
+      <SubmitButton>
+        <DoorOpen className="h-4 w-4" aria-hidden="true" /> {label}
       </SubmitButton>
       <Notice state={state} />
     </form>
