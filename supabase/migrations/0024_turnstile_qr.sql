@@ -211,13 +211,11 @@ begin
     update public.members set last_checkin_at = now() where id = m.id;
     v_unlock := private.access_queue(d.id, d.org_id, m.access_pin, m.id, 'unlock', 'UNLOCK 1');
   end if;
-  -- Limpieza: aperturas de más de una semana
-  delete from public.access_commands where device_id = d.id and kind = 'unlock' and created_at < now() - interval '7 days';
+  -- (las aperturas viejas se limpian con el resto de la cola: access_cleanup, 30 días)
 
   return jsonb_build_object('status', 'ok', 'allowed', v_allowed, 'reason', v_reason, 'opener_online', v_online,
                             'first_name', m.first_name, 'unlock_id', v_unlock);
 end $$;
-drop function if exists public.turnstile_scan(text, text);
 revoke execute on function public.turnstile_scan(text, text, bigint) from public, anon, authenticated;
 grant execute on function public.turnstile_scan(text, text, bigint) to service_role;
 
