@@ -23,8 +23,11 @@ import urllib.request
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
-AQUI = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(AQUI, "lib"))  # pyzk instalado por instalar.ps1
+if getattr(sys, "frozen", False):          # .exe (PyInstaller): config y registros junto al ejecutable
+    AQUI = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    AQUI = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.join(AQUI, "lib"))  # pyzk instalado por instalar.ps1
 
 from zk import ZK  # noqa: E402
 from zk.exception import ZKNetworkError  # noqa: E402
@@ -373,8 +376,22 @@ def ciclo(cfg, plat, estado):
         guardar_estado(estado)
 
 
+def una_sola_instancia():
+    """Evita dos copias corriendo a la vez (el lector atiende una conexión por vez)."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", 47370))
+    except OSError:
+        return None
+    return s
+
+
 def main():
     os.chdir(AQUI)
+    candado = una_sola_instancia()
+    if candado is None:
+        print("El intermediario ya está corriendo en esta PC.")
+        return
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",

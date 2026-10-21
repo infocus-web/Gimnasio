@@ -1,0 +1,36 @@
+name: Intermediario del lector (.exe)
+
+on:
+  push:
+    branches: [main, intermediario-lector]
+    paths: ['tools/zk-agent/**', '.github/workflows/zk-agent-exe.yml']
+  workflow_dispatch:
+
+jobs:
+  windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependencias
+        run: python -m pip install pyinstaller==6.11.1 -r tools/zk-agent/requirements.txt
+      - name: Compilar
+        working-directory: tools/zk-agent
+        run: >
+          pyinstaller --noconfirm --onefile --console --uac-admin
+          --name IntermediarioEvolution --hidden-import agente intermediario.py
+      - name: Probar que arranca
+        working-directory: tools/zk-agent
+        shell: pwsh
+        run: |
+          # sin config.json tiene que salir con el aviso (no colgarse)
+          $p = Start-Process dist\IntermediarioEvolution.exe -ArgumentList '--una-vez' -NoNewWindow -PassThru -Wait -RedirectStandardOutput out.txt -RedirectStandardError err.txt
+          Get-Content out.txt, err.txt
+          if (-not (Select-String -Path out.txt, err.txt -Pattern 'config.json' -Quiet)) { throw 'el .exe no arranca bien' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IntermediarioEvolution
+          path: tools/zk-agent/dist/IntermediarioEvolution.exe
+          retention-days: 30

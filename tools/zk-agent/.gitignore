@@ -3,3 +3,6 @@ estado.json
 agente.log*
 lib/
 __pycache__/
+build/
+dist/
+*.spec
