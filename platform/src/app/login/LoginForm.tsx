@@ -37,7 +37,14 @@ export function LoginForm() {
       })
       if (error) {
         setStatus('error')
-        setMessage('No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.')
+        const code = error.code ?? ''
+        setMessage(
+          code.includes('rate_limit') || error.status === 429
+            ? 'Ya te mandamos un link hace un momento. Revisá tu correo (también Spam) o probá de nuevo en un minuto.'
+            : code === 'otp_disabled' || code === 'signup_disabled' || code === 'user_not_found' || error.status === 422
+              ? 'No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.'
+              : 'No pudimos enviar el link. Probá de nuevo en un minuto.',
+        )
       } else {
         setStatus('sent')
       }
