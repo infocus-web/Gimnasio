@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
 import {
@@ -200,12 +200,20 @@ export function ReceptionScreen({
     void loadEntries()
   }
 
+  const scanning = useRef(false)
   const scan = async (text: string) => {
+    if (scanning.current) return // una lectura por vez (cámara o lector USB)
+    scanning.current = true
     setLoading(true)
-    const { data, error } = await supabase.rpc('checkin_scan', { p_location_id: locationId, p_token: text.trim() })
-    setLoading(false)
-    await afterCheckin(error ? null : (data as unknown as RawResult), 'QR_EXPIRED_OR_INVALID')
+    try {
+      const { data, error } = await supabase.rpc('checkin_scan', { p_location_id: locationId, p_token: text.trim() })
+      await afterCheckin(error ? null : (data as unknown as RawResult), 'QR_EXPIRED_OR_INVALID')
+    } finally {
+      setLoading(false)
+      scanning.current = false
+    }
   }
+  const clearResult = useCallback(() => setResult(null), [])
 
   const checkinMember = async (memberId: string) => {
     setMatches([])
@@ -270,7 +278,7 @@ export function ReceptionScreen({
           lastResult={result}
           onScan={scan}
           onSearch={search}
-          onClearResult={() => setResult(null)}
+          onClearResult={clearResult}
           isLoading={loading}
         />
 

@@ -34,7 +34,10 @@ export function PassScreen() {
     try {
       for (let attempt = 0; attempt <= SILENT_RETRIES; attempt++) {
         try {
-          const { data, error } = await supabase.rpc('get_checkin_token', { p_member_id: activeMemberId })
+          // Con wifi inestable un pedido puede quedar colgado: se corta a los 8 s y se reintenta
+          const { data, error } = await supabase
+            .rpc('get_checkin_token', { p_member_id: activeMemberId })
+            .abortSignal(AbortSignal.timeout(8000))
           if (seq !== requestSeq.current) return // cambió el socio mientras respondía
           if (!error && data) {
             const d = data as { token: string; expires_at: string; refresh_in_seconds: number }
@@ -65,11 +68,20 @@ export function PassScreen() {
   }, [refresh])
 
   // Sin conexión: se sigue intentando solo cada 10 s (la tablet se recupera sin que nadie toque nada)
+  const [, setTick] = useState(0)
   useEffect(() => {
     if (!error) return
-    const id = setInterval(() => void refresh(), 10_000)
+    const id = setInterval(() => {
+      setTick((t) => t + 1) // re-evalúa si el código anterior sigue sirviendo
+      void refresh()
+    }, 10_000)
     return () => clearInterval(id)
   }, [error, refresh])
+
+  // Si falla la renovación pero el código anterior todavía es válido (el servidor acepta el paso anterior),
+  // se sigue mostrando el QR: el error a pantalla completa solo cuando ya no hay código que sirva.
+  const tokenStillValid = !!token && Date.parse(token.expiresAt) + token.refreshInSeconds * 1000 > Date.now()
+  const shownError = error && !tokenStillValid ? error : null
 
   const canEnter = getPassStatus(membership).kind === 'valid'
 
@@ -100,7 +112,7 @@ export function PassScreen() {
         onRefresh={() => void refresh()}
         orgName={org.name}
         isLoading={!membership || (canEnter && loading && !token)}
-        error={error}
+        error={shownError}
       />
       {membership && <MembershipBanner membership={membership} />}
     </div>

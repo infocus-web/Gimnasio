@@ -41,6 +41,8 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
+  // La foto es un link firmado que vence (1 h): si ya no carga, se muestra la inicial
+  const [photoBroken, setPhotoBroken] = useState(false);
   const status = getPassStatus(membership);
   const canEnter = status.kind === 'valid';
 
@@ -212,9 +214,9 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
 
         {/* Socio Info */}
         <div className="flex items-center gap-3 mb-4 bg-black/60 p-2.5 rounded-2xl border border-zinc-900">
-          {currentFamilyMember?.photoUrl ? (
+          {currentFamilyMember?.photoUrl && !photoBroken ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={currentFamilyMember.photoUrl} alt="" className="w-10 h-10 rounded-full border border-[#edcc36]/40 object-cover shrink-0" />
+            <img src={currentFamilyMember.photoUrl} alt="" onError={() => setPhotoBroken(true)} className="w-10 h-10 rounded-full border border-[#edcc36]/40 object-cover shrink-0" />
           ) : (
             <div className="w-10 h-10 rounded-full bg-zinc-900 border border-[#edcc36]/40 flex items-center justify-center text-[#edcc36] shrink-0 font-bold text-sm">
               {currentFamilyMember?.firstName?.charAt(0) || 'S'}

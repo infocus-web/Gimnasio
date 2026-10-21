@@ -23,3 +23,11 @@ select test.expect_error(format($q$insert into storage.objects (bucket_id, name)
 reset role;
 select test.ok('archivos del socio: bucket privado, solo staff de la org sube/ve, número de socio automático');
 \echo 'ARCHIVOS DEL SOCIO: TODAS LAS PRUEBAS PASARON'
+
+-- El socio no puede marcarse el apto ni cambiar su foto
+set role authenticated;
+select test.login('00000000-0000-0000-0000-00000000000d');
+select test.expect_error($q$update public.members set medical_cert_expires_on = '2099-12-31' where user_id = '00000000-0000-0000-0000-00000000000d'$q$, 'FIELD_NOT_EDITABLE_BY_MEMBER');
+select test.expect_error($q$update public.members set photo_url = 'https://x/y.jpg' where user_id = '00000000-0000-0000-0000-00000000000d'$q$, 'FIELD_NOT_EDITABLE_BY_MEMBER');
+reset role;
+\echo 'GUARDIA DE FOTO Y APTO: OK'

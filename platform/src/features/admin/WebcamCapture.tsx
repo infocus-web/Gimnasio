@@ -35,6 +35,7 @@ export function WebcamCapture({
   const [photo, setPhoto] = useState<string | null>(null)
   const [on, setOn] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const mounted = useRef(true)
 
   const stop = useCallback(() => {
     stream.current?.getTracks().forEach((t) => t.stop())
@@ -50,6 +51,11 @@ export function WebcamCapture({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
         audio: false,
       })
+      if (!mounted.current) {
+        // se cerró la pantalla mientras se pedía permiso: apagar la cámara
+        s.getTracks().forEach((t) => t.stop())
+        return
+      }
       stream.current?.getTracks().forEach((t) => t.stop())
       stream.current = s
       setOn(true)
@@ -69,8 +75,12 @@ export function WebcamCapture({
   }, [on])
 
   useEffect(() => {
+    mounted.current = true
     if (autoStart) void start()
-    return () => stream.current?.getTracks().forEach((t) => t.stop())
+    return () => {
+      mounted.current = false
+      stream.current?.getTracks().forEach((t) => t.stop())
+    }
   }, [autoStart, start])
 
   const shoot = () => {

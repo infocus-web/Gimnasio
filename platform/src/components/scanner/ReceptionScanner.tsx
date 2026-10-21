@@ -41,9 +41,13 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
   const scannerRef = useRef<Html5Qrcode | null>(null);
   // La cámara no se reinicia cada vez que cambia la pantalla: se lee siempre la última función
   const onScanRef = useRef(onScan);
+  const onClearRef = useRef(onClearResult);
   useEffect(() => {
     onScanRef.current = onScan;
-  }, [onScan]);
+    onClearRef.current = onClearResult;
+  }, [onScan, onClearResult]);
+  // La cámara decodifica ~10 veces por segundo: el mismo QR se ignora por 3 s
+  const lastDecoded = useRef<{ text: string; at: number }>({ text: '', at: 0 });
   const usbInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sound effects on new result
@@ -60,11 +64,11 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
 
     // Auto-dismiss after 3.2 seconds back to ready state
     const timer = setTimeout(() => {
-      onClearResult?.();
+      onClearRef.current?.();
     }, 3200);
 
     return () => clearTimeout(timer);
-  }, [lastResult, onClearResult]);
+  }, [lastResult]);
 
   // Keep USB scanner hidden input focused
   useEffect(() => {
@@ -165,6 +169,9 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
         cameraConfig,
         config,
         (decodedText) => {
+          const t = Date.now();
+          if (decodedText === lastDecoded.current.text && t - lastDecoded.current.at < 3000) return;
+          lastDecoded.current = { text: decodedText, at: t };
           sound.playScanPing();
           onScanRef.current(decodedText);
         },
