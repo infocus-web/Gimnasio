@@ -1,5 +1,3 @@
-'use client'
-
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -41,6 +39,11 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  // La cámara no se reinicia cada vez que cambia la pantalla: se lee siempre la última función
+  const onScanRef = useRef(onScan);
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
   const usbInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sound effects on new result
@@ -163,7 +166,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
         config,
         (decodedText) => {
           sound.playScanPing();
-          onScan(decodedText);
+          onScanRef.current(decodedText);
         },
         () => {
           // ignore frame errors
@@ -196,7 +199,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
         }
       }
     };
-  }, [isCameraActive, selectedCameraId, onScan]);
+  }, [isCameraActive, selectedCameraId]);
 
   const handleManualSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,11 +224,11 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
   const isGrace = lastResult?.allowed && lastResult?.reason === 'IN_GRACE_PERIOD';
 
   const reasonLabels: Record<string, string> = {
-    QR_EXPIRED_OR_INVALID: 'Token QR expirado o firma inválida. Pedir al socio regenerar el pase.',
-    MEMBER_NOT_FOUND: 'Socio no registrado en la base del gimnasio.',
-    NO_ACTIVE_MEMBERSHIP: 'Cuota vencida. El socio debe regularizar el pago en recepción.',
-    IN_GRACE_PERIOD: 'Cuota en período de tolerancia (vence pronto). Ingreso habilitado.',
-    MEMBER_FROZEN: 'Membresía pausada temporalmente a pedido del socio.',
+    QR_EXPIRED_OR_INVALID: 'QR vencido o inválido: que el socio vuelva a abrir su pase en la app.',
+    MEMBER_NOT_FOUND: 'No encontramos ese socio.',
+    NO_ACTIVE_MEMBERSHIP: 'No tiene un plan vigente: hay que cobrarle o renovarle el plan.',
+    IN_GRACE_PERIOD: 'Plan vencido, dentro de los días de tolerancia: puede entrar, recordale renovar.',
+    MEMBER_FROZEN: 'Su plan está congelado.',
   };
 
   return (
@@ -284,10 +287,10 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
                 }`}
               >
                 {isAllowed
-                  ? 'Molinete destrabado · Ingreso autorizado'
+                  ? lastResult.duplicate ? 'Ya había entrado recién' : 'Entrada registrada'
                   : isGrace
-                  ? 'Ingreso permitido · Período de tolerancia'
-                  : 'Acceso denegado · Cuota pendiente'}
+                  ? 'Entrada registrada · En tolerancia'
+                  : 'No puede entrar'}
               </span>
 
               {lastResult.member && (
@@ -329,7 +332,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
               <div className="bg-black/60 p-3 rounded-xl border border-zinc-800 text-left space-y-1 font-mono text-xs">
                 <span className="text-[10px] text-zinc-400 flex items-center gap-1 uppercase font-semibold">
                   <FileText className="w-3 h-3 text-[#edcc36]" />
-                  <span>Ficha Médica & Observaciones:</span>
+                  <span>Notas médicas</span>
                 </span>
                 <p className="text-zinc-300 leading-snug">{lastResult.member.medicalNotes}</p>
               </div>
@@ -344,7 +347,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
                 }}
                 className="w-full py-3 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono text-xs transition-colors min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
               >
-                Cerrar (vuelve solo en 3 s)
+                Cerrar
               </button>
             </div>
           </div>
@@ -357,14 +360,14 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
           <div>
             <div className="flex items-center gap-2 text-[10px] font-mono text-[#edcc36] tracking-wider uppercase font-bold">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>PUESTO DE CONTROL DE ACCESO</span>
+              <span>Control de acceso</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold font-cyber text-white">Escáner de Recepción</h2>
+            <h2 className="text-lg font-bold text-white">Escanear QR del socio</h2>
           </div>
 
           <div className="flex items-center gap-2 font-mono text-xs text-zinc-400">
             <span className="w-2 h-2 rounded-full bg-[#edcc36] animate-pulse" />
-            <span>Lector USB & Teclado listo</span>
+            <span>Lector USB listo</span>
           </div>
         </div>
 
@@ -399,7 +402,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
             }`}
           >
             <Camera className="w-4 h-4" />
-            <span>{isCameraActive ? 'Detener Cámara' : 'Encender Cámara'}</span>
+            <span>{isCameraActive ? 'Apagar cámara' : 'Encender cámara'}</span>
           </button>
         </div>
 
@@ -419,9 +422,9 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
           {!isCameraActive && (
             <div className="text-center p-6 space-y-2">
               <Camera className="w-10 h-10 text-zinc-500 mx-auto" />
-              <div className="font-cyber font-bold text-white text-sm">Cámara en Espera</div>
+              <div className="font-bold text-white text-sm">Cámara apagada</div>
               <p className="text-xs text-zinc-400 font-mono max-w-xs">
-                Encendé la cámara para escanear con la lente o usá el lector USB/teclado para tipear el código.
+                Encendé la cámara para leer el QR del celular del socio, o usá un lector USB.
               </p>
             </div>
           )}
@@ -430,14 +433,14 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
         {/* Formulario de Búsqueda Manual */}
         <form onSubmit={handleManualSearch} className="pt-2">
           <label className="text-xs font-mono text-zinc-400 block mb-1.5 font-semibold">
-            Búsqueda manual en mostrador (Nombre, Apellido o DNI)
+            Buscar socio (nombre, DNI o N° de socio)
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Ej. Lucas Ferrero o 41.892.401"
+                placeholder="Ej. Lucas Ferrero, 41892401 o 100023"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-xs bg-zinc-900 border border-zinc-800 rounded-xl text-white focus:outline-none focus:border-[#edcc36] font-mono min-h-[44px]"
