@@ -15,6 +15,7 @@ import {
 } from '@/features/admin/coach-actions'
 import { AddDayForm, AddExerciseForm, ProgramForm, RenameDayForm } from '@/features/admin/CoachForms'
 import { Card } from '@/features/admin/ui'
+import { ActionButton, ConfirmAction } from '@/features/admin/ConfirmAction'
 
 export const metadata: Metadata = { title: 'Armar rutina' }
 
@@ -76,11 +77,14 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
             title={`Día ${d.day_index}`}
             action={
               canEdit ? (
-                <form action={deleteWorkoutDay.bind(null, slug, programId, d.id)}>
-                  <button type="submit" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-red-300">
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Borrar día
-                  </button>
-                </form>
+                <ConfirmAction
+                  action={deleteWorkoutDay.bind(null, slug, programId, d.id)}
+                  confirmText={rows.length ? `Se borra el día con sus ${rows.length} ejercicios.` : 'Se borra este día.'}
+                  yesLabel="Sí, borrar día"
+                  className="flex flex-col items-end gap-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Borrar día
+                </ConfirmAction>
               ) : undefined
             }
           >
@@ -124,11 +128,14 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
                             <ArrowDown className="h-4 w-4" aria-hidden="true" />
                           </button>
                         </form>
-                        <form action={deleteProgramExercise.bind(null, slug, programId, r.id)}>
-                          <button type="submit" aria-label={`Quitar ${r.exercises?.name ?? 'ejercicio'}`} className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 hover:bg-red-500/10 hover:text-red-300">
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        </form>
+                        <ActionButton
+                          action={deleteProgramExercise.bind(null, slug, programId, r.id)}
+                          ariaLabel={`Quitar ${r.exercises?.name ?? 'ejercicio'}`}
+                          iconOnly
+                          className="grid h-9 w-9 place-items-center rounded-lg text-zinc-500 hover:bg-red-500/10 hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </ActionButton>
                       </span>
                     )}
                   </li>

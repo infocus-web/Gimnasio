@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { UserPlus, KeyRound, Copy, Lock, Unlock, Trash2 } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
@@ -153,6 +153,9 @@ export function CreateStaffAccountForm({
   )
 }
 
+const GHOST =
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
+
 export function StaffAccountActions({
   name,
   active,
@@ -169,21 +172,54 @@ export function StaffAccountActions({
   const [resetState, reset] = useActionForm(resetAction, {})
   const [blockState, block] = useActionForm(blockAction, {})
   const [delState, del] = useActionForm(deleteAction, {})
+  const [sure, setSure] = useState<'reset' | 'block' | null>(null)
   const shown = delState.message ? delState : blockState.message ? blockState : resetState
+  useEffect(() => {
+    if (resetState.ok || blockState.ok) setSure(null)
+  }, [resetState, blockState])
   return (
     <div className="w-full space-y-2">
       <div className="flex flex-wrap gap-2">
-        <form action={reset}>
-          <SubmitButton variant="ghost">
+        {sure === 'reset' ? (
+          <form action={reset} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
+            <span className="text-xs text-zinc-300">
+              <strong className="text-white">¿Seguro?</strong> La contraseña actual de {name} deja de andar.
+            </span>
+            <SubmitButton variant="ghost">
+              <KeyRound className="h-4 w-4" aria-hidden="true" /> Sí, generar nueva
+            </SubmitButton>
+            <button type="button" onClick={() => setSure(null)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
+              Cancelar
+            </button>
+          </form>
+        ) : (
+          <button type="button" onClick={() => setSure('reset')} className={GHOST}>
             <KeyRound className="h-4 w-4" aria-hidden="true" /> Nueva contraseña
-          </SubmitButton>
-        </form>
-        <form action={block}>
-          <SubmitButton variant="ghost">
-            {active ? <Lock className="h-4 w-4" aria-hidden="true" /> : <Unlock className="h-4 w-4" aria-hidden="true" />}
-            {active ? 'Bloquear' : 'Desbloquear'}
-          </SubmitButton>
-        </form>
+          </button>
+        )}
+        {!active ? (
+          <form action={block}>
+            <SubmitButton variant="ghost">
+              <Unlock className="h-4 w-4" aria-hidden="true" /> Desbloquear
+            </SubmitButton>
+          </form>
+        ) : sure === 'block' ? (
+          <form action={block} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
+            <span className="text-xs text-zinc-300">
+              <strong className="text-white">¿Seguro?</strong> {name} no va a poder entrar hasta que lo desbloquees.
+            </span>
+            <SubmitButton variant="ghost">
+              <Lock className="h-4 w-4" aria-hidden="true" /> Sí, bloquear
+            </SubmitButton>
+            <button type="button" onClick={() => setSure(null)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
+              Cancelar
+            </button>
+          </form>
+        ) : (
+          <button type="button" onClick={() => setSure('block')} className={GHOST}>
+            <Lock className="h-4 w-4" aria-hidden="true" /> Bloquear
+          </button>
+        )}
         <details className="group">
           <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-red-500/30 px-4 text-sm font-semibold text-red-300 hover:bg-red-500/10">
             <Trash2 className="h-4 w-4" aria-hidden="true" /> Eliminar

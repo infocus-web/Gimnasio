@@ -110,12 +110,14 @@ export async function renameWorkoutDay(slug: string, programId: string, workoutI
   return { ok: true, message: 'Guardado.' }
 }
 
-export async function deleteWorkoutDay(slug: string, programId: string, workoutId: string): Promise<void> {
+export async function deleteWorkoutDay(slug: string, programId: string, workoutId: string, _prev?: ActionState): Promise<ActionState> {
   const ctx = await coach(slug)
-  if (!ctx) return
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.from('program_workouts').delete().eq('id', workoutId)
+  const { error } = await supabase.from('program_workouts').delete().eq('id', workoutId)
+  if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin/rutinas/${programId}`)
+  return { ok: true, message: 'Día borrado.' }
 }
 
 const exerciseRowSchema = z.object({
@@ -161,12 +163,14 @@ export async function addProgramExercise(slug: string, programId: string, workou
   return { ok: true, message: 'Ejercicio agregado.' }
 }
 
-export async function deleteProgramExercise(slug: string, programId: string, rowId: string): Promise<void> {
+export async function deleteProgramExercise(slug: string, programId: string, rowId: string, _prev?: ActionState): Promise<ActionState> {
   const ctx = await coach(slug)
-  if (!ctx) return
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.from('program_exercises').delete().eq('id', rowId)
+  const { error } = await supabase.from('program_exercises').delete().eq('id', rowId)
+  if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin/rutinas/${programId}`)
+  return { ok: true, message: 'Ejercicio quitado.' }
 }
 
 export async function moveProgramExercise(slug: string, programId: string, workoutId: string, rowId: string, dir: -1 | 1): Promise<void> {
@@ -245,11 +249,25 @@ export async function assignProgram(slug: string, memberId: string, _prev: Actio
 // ---------------------------------------------------------------------
 // Asistencia a clases
 // ---------------------------------------------------------------------
-export async function markAttendance(slug: string, bookingId: string, status: 'checked_in' | 'no_show' | 'booked'): Promise<void> {
+const ATTENDANCE_ERRORS: Record<string, string> = {
+  SESSION_NOT_STARTED: 'La asistencia se marca desde 30 minutos antes de la clase.',
+  BOOKING_NOT_FOUND: 'Esa reserva ya no existe. Recargá la página.',
+  BOOKING_NOT_CANCELABLE: 'Esa reserva fue cancelada: no se puede marcar asistencia.',
+  INVALID_STATUS: 'Estado de asistencia inválido.',
+}
+
+export async function markAttendance(
+  slug: string,
+  bookingId: string,
+  status: 'checked_in' | 'no_show' | 'booked',
+  _prev?: ActionState,
+): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
-  if (!ctx) return
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.rpc('mark_attendance', { p_booking: bookingId, p_status: status })
+  const { error } = await supabase.rpc('mark_attendance', { p_booking: bookingId, p_status: status })
+  if (error) return { message: ATTENDANCE_ERRORS[error.message.trim()] ?? dbMessage(error) }
   revalidatePath(`/${slug}/admin/agenda`, 'layout')
   revalidatePath(`/${slug}/admin/mis-clases`)
+  return { ok: true, message: status === 'checked_in' ? 'Presente.' : status === 'no_show' ? 'Marcado como ausente.' : 'Asistencia desmarcada.' }
 }

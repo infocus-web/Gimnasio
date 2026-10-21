@@ -240,12 +240,14 @@ export async function updateStaff(slug: string, staffId: string, _prev: ActionSt
   return { ok: true, message: 'Rol actualizado.' }
 }
 
-export async function cancelInvitation(slug: string, invitationId: string): Promise<void> {
+export async function cancelInvitation(slug: string, invitationId: string, _prev?: ActionState): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
-  if (!ctx?.can('staff.manage')) return
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.from('staff_invitations').delete().eq('id', invitationId).eq('org_id', ctx.org.id)
+  const { error } = await supabase.from('staff_invitations').delete().eq('id', invitationId).eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo cancelar la invitación.' }
   revalidatePath(`/${slug}/admin/equipo`)
+  return { ok: true, message: 'Invitación cancelada.' }
 }
 
 export async function resendInvitation(slug: string, email: string, _prev: ActionState): Promise<ActionState> {

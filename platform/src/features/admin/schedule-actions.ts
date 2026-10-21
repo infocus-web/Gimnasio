@@ -66,12 +66,17 @@ export async function bookForMember(slug: string, sessionId: string, _prev: Acti
   return done(slug, status === 'waitlisted' ? 'Clase llena: quedó en lista de espera.' : 'Reserva confirmada.')
 }
 
-export async function cancelBookingDesk(slug: string, bookingId: string): Promise<void> {
+export async function cancelBookingDesk(slug: string, bookingId: string, _prev?: ActionState): Promise<ActionState> {
   const ctx = await guard(slug, 'bookings.manage')
-  if (!ctx) return
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.rpc('cancel_booking', { p_booking_id: bookingId })
-  revalidatePath(`/${slug}/admin/agenda`, 'layout')
+  const { data, error } = await supabase.rpc('cancel_booking', { p_booking_id: bookingId })
+  if (error) {
+    if (error.message.trim() === 'BOOKING_NOT_FOUND') return { message: 'Esa reserva ya no existe. Recargá la página.' }
+    return { message: dbMessage(error) }
+  }
+  const status = (data as { status?: string } | null)?.status
+  return done(slug, status === 'late_canceled' ? 'Reserva cancelada (fuera de término: no se devuelve la clase del pack).' : 'Reserva cancelada.')
 }
 
 // ---------------------------------------------------------------------
@@ -191,12 +196,18 @@ export async function addEquipment(slug: string, roomId: string, _prev: ActionSt
   return done(slug, `Se agregaron ${count} equipos "${kind}".`)
 }
 
-export async function setEquipmentStatus(slug: string, equipmentId: string, status: 'active' | 'maintenance' | 'retired'): Promise<void> {
+export async function setEquipmentStatus(
+  slug: string,
+  equipmentId: string,
+  status: 'active' | 'maintenance' | 'retired',
+  _prev?: ActionState,
+): Promise<ActionState> {
   const ctx = await guard(slug)
-  if (!ctx) return
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.from('equipment').update({ status }).eq('id', equipmentId).eq('org_id', ctx.org.id)
-  revalidatePath(`/${slug}/admin/agenda`, 'layout')
+  const { error } = await supabase.from('equipment').update({ status }).eq('id', equipmentId).eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) }
+  return done(slug, status === 'active' ? 'Equipo activo de nuevo.' : status === 'maintenance' ? 'Equipo en mantenimiento.' : 'Equipo dado de baja.')
 }
 
 const typeSchema = z.object({

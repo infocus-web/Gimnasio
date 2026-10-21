@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { CalendarPlus, Search, Trash2, UserPlus, XCircle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { CalendarPlus, Loader2, Search, Trash2, UserPlus, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { EQUIPMENT_KINDS, isKnownEquipmentKind } from './equipment'
 
 type Action = (prev: ActionState, form: FormData) => Promise<ActionState>
 type BareAction = (prev: ActionState) => Promise<ActionState>
@@ -49,21 +50,48 @@ export function BookForMemberForm({ action, orgId }: { action: Action; orgId: st
   const supabase = useMemo(() => createClient(), [])
   const [state, formAction] = useActionForm(action, {})
   const [q, setQ] = useState('')
-  const [results, setResults] = useState<{ id: string; name: string; plan: string | null }[]>([])
+  const [results, setResults] = useState<{ id: string; name: string; plan: string | null; number: number | null }[]>([])
   const [picked, setPicked] = useState<{ id: string; name: string } | null>(null)
-  const [nonce] = useState(() => crypto.randomUUID())
+  const [nonce, setNonce] = useState(() => crypto.randomUUID())
+  const [searched, setSearched] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+
+  // Reserva hecha: limpiar para anotar al siguiente
+  useEffect(() => {
+    if (!state.ok) return
+    setPicked(null)
+    setQ('')
+    setResults([])
+    setSearched(false)
+    setNonce(crypto.randomUUID())
+  }, [state])
 
   const search = async () => {
     const term = q.replace(/[,()*%\\:]/g, ' ').trim()
     if (term.length < 2) return
-    const { data } = await supabase
+    const digits = term.replace(/[.\s-]/g, '')
+    setSearching(true)
+    setSearchError(null)
+    let query = supabase
       .from('member_directory')
-      .select('id, first_name, last_name, plan_name')
+      .select('id, first_name, last_name, plan_name, member_number')
       .eq('org_id', orgId)
       .neq('status', 'archived')
-      .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,document_id.ilike.%${term}%`)
-      .limit(8)
-    setResults((data ?? []).map((m) => ({ id: m.id!, name: `${m.first_name} ${m.last_name}`, plan: m.plan_name })))
+    if (/^\d{4,6}$/.test(digits)) query = query.eq('member_number', Number(digits))
+    else if (/^\d{7,}$/.test(digits)) query = query.ilike('document_id', `%${digits}%`)
+    else query = query.or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,document_id.ilike.%${term}%`)
+    const { data, error } = await query.limit(8)
+    setSearching(false)
+    setSearched(true)
+    if (error) {
+      setResults([])
+      setSearchError('No se pudo buscar. Probá de nuevo.')
+      return
+    }
+    setResults(
+      (data ?? []).map((m) => ({ id: m.id!, name: `${m.first_name} ${m.last_name}`, plan: m.plan_name, number: m.member_number ?? null })),
+    )
   }
 
   return (
@@ -74,27 +102,48 @@ export function BookForMemberForm({ action, orgId }: { action: Action; orgId: st
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
           <input
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value)
+              setSearched(false)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
                 void search()
               }
             }}
-            placeholder="Nombre o DNI"
+            placeholder="Nombre, DNI o N° de socio"
             className={`${inputClass} pl-9`}
           />
         </label>
-        <button type="button" onClick={search} className="min-h-[44px] rounded-xl border border-zinc-700 px-3 text-sm text-zinc-200">
-          Buscar
+        <button
+          type="button"
+          onClick={search}
+          disabled={searching}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-3 text-sm text-zinc-200 disabled:opacity-60"
+        >
+          {searching && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />} Buscar
         </button>
       </div>
+      {searchError && (
+        <p role="alert" className="text-sm text-red-300">
+          {searchError}
+        </p>
+      )}
+      {searched && !searchError && results.length === 0 && !picked && (
+        <p role="status" className="rounded-xl border border-zinc-800 px-3 py-2.5 text-sm text-zinc-400">
+          Sin resultados para «{q.trim()}».
+        </p>
+      )}
       {results.length > 0 && !picked && (
         <ul className="divide-y divide-zinc-900 rounded-xl border border-zinc-800">
           {results.map((r) => (
             <li key={r.id}>
-              <button type="button" onClick={() => setPicked(r)} className="flex min-h-[44px] w-full items-center justify-between px-3 text-left text-sm hover:bg-zinc-900">
-                <span className="text-white">{r.name}</span>
+              <button type="button" onClick={() => setPicked(r)} className="flex min-h-[44px] w-full items-center justify-between gap-2 px-3 text-left text-sm hover:bg-zinc-900">
+                <span className="text-white">
+                  {r.name}
+                  {r.number != null && <span className="ml-2 text-xs text-zinc-500">#{r.number}</span>}
+                </span>
                 <span className="text-xs text-zinc-500">{r.plan ?? 'sin plan'}</span>
               </button>
             </li>
@@ -106,7 +155,7 @@ export function BookForMemberForm({ action, orgId }: { action: Action; orgId: st
           <input type="hidden" name="memberId" value={picked.id} />
           <input type="hidden" name="nonce" value={nonce} />
           <span className="flex-1 text-sm text-white">{picked.name}</span>
-          <button type="button" onClick={() => setPicked(null)} className="text-xs text-zinc-400 hover:text-white">
+          <button type="button" onClick={() => setPicked(null)} className="min-h-[44px] px-2 text-xs text-zinc-400 hover:text-white">
             Cambiar
           </button>
           <SubmitButton>
@@ -218,6 +267,7 @@ export function SeriesRowForm({
 }) {
   const [state, formAction] = useActionForm(action, {})
   const [endState, endFormAction] = useActionForm(endAction, {})
+  const [sure, setSure] = useState(false)
   if (endState.ok) return <Notice state={endState} />
   return (
     <div className="space-y-2">
@@ -240,11 +290,23 @@ export function SeriesRowForm({
         <input name="capacity" type="number" min={1} defaultValue={capacity} aria-label="Cupo" className={`${inputClass} w-20`} />
         <SubmitButton variant="ghost">Guardar</SubmitButton>
       </form>
-      <form action={endFormAction}>
-        <button type="submit" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-red-300">
+      {sure ? (
+        <form action={endFormAction} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
+          <span className="text-xs text-zinc-300">
+            <strong className="text-white">¿Seguro?</strong> Se borran las clases futuras de este horario.
+          </span>
+          <SubmitButton variant="ghost">
+            <Trash2 className="h-4 w-4" aria-hidden="true" /> Sí, dar de baja
+          </SubmitButton>
+          <button type="button" onClick={() => setSure(false)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
+            Cancelar
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setSure(true)} className="inline-flex min-h-[36px] items-center gap-1 text-xs text-zinc-500 hover:text-red-300">
           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" /> Dar de baja este horario
         </button>
-      </form>
+      )}
       <Notice state={state.message ? state : endState} />
     </div>
   )
@@ -278,21 +340,61 @@ export function RoomForm({ action, values }: { action: Action; values?: { name: 
   )
 }
 
+const OTHER = '__other'
+
+/** Tipo de equipo: se guarda en inglés (bike, rower…) pero se elige en castellano */
+function EquipmentKindField({
+  label,
+  name,
+  defaultValue,
+  allowNone,
+  error,
+  hint,
+}: {
+  label: string
+  name: string
+  defaultValue: string
+  allowNone?: boolean
+  error?: string
+  hint?: string
+}) {
+  const known = !defaultValue || isKnownEquipmentKind(defaultValue)
+  const [choice, setChoice] = useState(known ? defaultValue.toLowerCase() : OTHER)
+  const [other, setOther] = useState(known ? '' : defaultValue)
+  return (
+    <div className="space-y-2">
+      <Field label={label} name={name} error={error} hint={hint}>
+        <select id={name} name={choice === OTHER ? undefined : name} value={choice} onChange={(e) => setChoice(e.target.value)} className={inputClass}>
+          {allowNone && <option value="">No usa equipo</option>}
+          {EQUIPMENT_KINDS.map((k) => (
+            <option key={k.value} value={k.value}>
+              {k.label}
+            </option>
+          ))}
+          <option value={OTHER}>Otro…</option>
+        </select>
+      </Field>
+      {choice === OTHER && (
+        <input
+          name={name}
+          value={other}
+          onChange={(e) => setOther(e.target.value)}
+          placeholder="Ej. trx"
+          aria-label={`${label}: otro tipo`}
+          className={inputClass}
+        />
+      )}
+    </div>
+  )
+}
+
 export function EquipmentForm({ action }: { action: Action }) {
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="flex flex-wrap items-end gap-2" noValidate>
-      <div className="w-32">
-        <Field label="Tipo" name="kind" error={err.kind}>
-          <input id="kind" name="kind" defaultValue="bike" list="equipment-kinds" className={inputClass} />
-        </Field>
-        <datalist id="equipment-kinds">
-          <option value="bike" />
-          <option value="rower" />
-          <option value="reformer" />
-          <option value="treadmill" />
-        </datalist>
+      <div className="w-40">
+        <EquipmentKindField label="Tipo" name="kind" defaultValue="bike" error={err.kind} />
       </div>
       <div className="w-24">
         <Field label="Cantidad" name="count" error={err.count}>
@@ -344,14 +446,13 @@ export function ClassTypeForm({
           </Field>
         </div>
         <div className="lg:col-span-2">
-          <Field label="Usa equipo asignado" name="equipmentKind" hint="Ej. bike para spinning: cada socio elige su bici. Vacío = no.">
-            <input id="equipmentKind" name="equipmentKind" defaultValue={values?.equipmentKind ?? ''} list="equipment-kinds-t" className={inputClass} />
-          </Field>
-          <datalist id="equipment-kinds-t">
-            <option value="bike" />
-            <option value="rower" />
-            <option value="reformer" />
-          </datalist>
+          <EquipmentKindField
+            label="Usa equipo asignado"
+            name="equipmentKind"
+            defaultValue={values?.equipmentKind ?? ''}
+            allowNone
+            hint="Ej. Bici para spinning: cada socio elige su bici."
+          />
         </div>
       </div>
       {values && (

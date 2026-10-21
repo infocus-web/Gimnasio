@@ -95,6 +95,10 @@ export function MedicalCertCard({
   const [pending, start] = useTransition()
   const [removeState, doRemove] = useActionForm(remove, {})
   const [replacing, setReplacing] = useState(false)
+  const [sureRemove, setSureRemove] = useState(false)
+  useEffect(() => {
+    if (removeState.ok) setSureRemove(false)
+  }, [removeState])
 
   const upload = () =>
     start(async () => {
@@ -178,11 +182,27 @@ export function MedicalCertCard({
                 >
                   <Upload className="h-4 w-4" aria-hidden="true" /> Reemplazar
                 </button>
-                <form action={doRemove}>
-                  <SubmitButton variant="ghost">
+                {sureRemove ? (
+                  <form action={doRemove} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
+                    <span className="text-xs text-zinc-300">
+                      <strong className="text-white">¿Seguro?</strong> Se borra el archivo del apto físico.
+                    </span>
+                    <SubmitButton variant="ghost">
+                      <Trash2 className="h-4 w-4" aria-hidden="true" /> Sí, quitar
+                    </SubmitButton>
+                    <button type="button" onClick={() => setSureRemove(false)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
+                      Cancelar
+                    </button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setSureRemove(true)}
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-red-500/30 px-4 text-sm font-semibold text-red-300 hover:bg-red-500/10"
+                  >
                     <Trash2 className="h-4 w-4" aria-hidden="true" /> Quitar
-                  </SubmitButton>
-                </form>
+                  </button>
+                )}
               </div>
             ))}
         </div>
