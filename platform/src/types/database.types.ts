@@ -186,6 +186,7 @@ export type Database = {
           created_at: string
           id: string
           info: Json
+          kiosk_token_hash: string | null
           last_ip: string | null
           last_seen_at: string | null
           location_id: string
@@ -204,6 +205,7 @@ export type Database = {
           created_at?: string
           id?: string
           info?: Json
+          kiosk_token_hash?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
           location_id: string
@@ -222,6 +224,7 @@ export type Database = {
           created_at?: string
           id?: string
           info?: Json
+          kiosk_token_hash?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
           location_id?: string
@@ -2664,6 +2667,7 @@ export type Database = {
       }
       access_device_agent_token: { Args: { p_device: string }; Returns: string }
       access_device_delete: { Args: { p_device: string }; Returns: undefined }
+      access_device_kiosk_token: { Args: { p_device: string }; Returns: string }
       access_device_query_users: {
         Args: { p_device: string }
         Returns: undefined
@@ -2722,6 +2726,7 @@ export type Database = {
         }
         Returns: string
       }
+      turnstile_scan: { Args: { p_kiosk_token: string; p_qr: string | null }; Returns: Json }
       agent_call: {
         Args: {
           p_action: string
