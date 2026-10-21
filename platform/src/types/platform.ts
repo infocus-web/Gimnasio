@@ -48,6 +48,7 @@ export interface FamilyMember {
   firstName: string;
   lastName: string;
   photoUrl?: string;
+  memberNumber?: number;
   isMe: boolean;
 }
 

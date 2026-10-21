@@ -6,8 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
 import { Card } from '@/features/admin/ui'
 import { fmtDateTime } from '@/features/admin/format'
-import { CopyValue, DeviceButtons, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
-import { deviceAction, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
+import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, OpenTurnstileButton, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
+import { createAgentToken, createKioskToken, deviceAction, openTurnstile, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
 
 export const metadata: Metadata = { title: 'Accesos' }
 
@@ -15,7 +15,8 @@ const METHOD: Record<string, string> = { facial: 'cara', palm: 'palma', fingerpr
 
 export default async function AccessPage({ params }: PageProps<'/[org]/admin/accesos'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('org.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador configura los lectores.</p>
 
   const supabase = await createClient()
@@ -34,6 +35,7 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
       .from('access_commands')
       .select('device_id, status, kind')
       .eq('org_id', ctx.org.id)
+      .neq('kind', 'unlock') // las aperturas del molinete no son cambios pendientes del lector
       .in('status', ['pending', 'sent', 'error'])
       .gte('created_at', since),
     myIp ? supabase.rpc('access_unknown_nearby', { p_org: ctx.org.id, p_ip: myIp }) : Promise.resolve({ data: [] }),
@@ -61,7 +63,7 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
       <div>
         <h1 className="text-2xl font-extrabold text-white">Accesos</h1>
         <p className="text-sm text-zinc-400">
-          Lectores de cara/palma/huella (ZKTeco SpeedFace). El lector abre el molinete por su cuenta; el sistema le carga solo a los socios al
+          Lectores de cara/palma/huella (ZKTeco). El lector abre el molinete por su cuenta; el sistema le carga solo a los socios al
           día y saca a los vencidos o morosos. Cada entrada queda registrada.
         </p>
       </div>
@@ -89,6 +91,10 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
           </li>
           <li>Guardá. En 1 minuto el lector aparece acá abajo para registrarlo.</li>
         </ol>
+        <p className="mt-3 text-xs text-zinc-500">
+          Lectores sin nube completa (ej. ZKTeco MB360): se registran igual con su número de serie y se manejan por la red local con el
+          intermediario en una PC del gimnasio (ver la ficha del lector).
+        </p>
       </Card>
 
       <Card title="2 · Registrar lector">
@@ -106,7 +112,15 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
         const dc = (cmds ?? []).filter((c) => c.device_id === d.id)
         const pending = dc.filter((c) => c.status !== 'error').length
         const errors = dc.filter((c) => c.status === 'error').length
-        const info = (d.info ?? {}) as Record<string, string>
+        const info = (d.info ?? {}) as {
+          DeviceName?: string
+          FWVersion?: string
+          agent_token_at?: string
+          agent_seen_at?: string
+          agent?: { mode?: string; version?: string }
+          kiosk_token_at?: string
+          kiosk_seen_at?: string
+        }
         const isOnline = online(d.last_seen_at)
         return (
           <Card key={d.id} title={d.name}>
@@ -138,6 +152,8 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
                 ))}
               </dl>
 
+              {info.agent_token_at && <OpenTurnstileButton action={openTurnstile.bind(null, slug, d.id)} />}
+
               <DeviceButtons
                 active={d.active}
                 pendingIp={d.pending_ip}
@@ -148,6 +164,24 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
                   toggle: deviceAction.bind(null, slug, d.id, d.active ? 'disable' : 'enable'),
                   remove: deviceAction.bind(null, slug, d.id, 'delete'),
                 }}
+              />
+
+              <AgentPanel
+                serial={d.serial_number}
+                hasToken={!!info.agent_token_at}
+                online={online(info.agent_seen_at ?? null)}
+                seenLabel={info.agent_seen_at ? fmtDateTime(info.agent_seen_at, ctx.org.timezone) : null}
+                mode={info.agent?.mode ?? null}
+                version={info.agent?.version ?? null}
+                action={createAgentToken.bind(null, slug, d.id)}
+              />
+
+              <KioskPanel
+                slug={slug}
+                paired={!!info.kiosk_token_at}
+                online={!!info.kiosk_seen_at && Date.now() - new Date(info.kiosk_seen_at).getTime() < 60_000}
+                seenLabel={info.kiosk_seen_at ? fmtDateTime(info.kiosk_seen_at, ctx.org.timezone) : null}
+                action={createKioskToken.bind(null, slug, d.id)}
               />
 
               {unlinked.length > 0 && (

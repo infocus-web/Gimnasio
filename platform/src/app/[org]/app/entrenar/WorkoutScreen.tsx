@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Dumbbell, Play, PlayCircle, Timer, Trophy, X } from 'lucide-react'
 import { ActiveWorkout } from '@/components/workout/ActiveWorkout'
+import { fmtKg } from '@/components/workout/format'
 import { VideoEmbed } from '@/components/workout/VideoEmbed'
 import { useMember } from '@/features/member/MemberProvider'
 import { useProgram } from '@/features/member/useProgram'
@@ -11,7 +12,7 @@ import type { LoggedSet } from '@/types/platform'
 
 export function WorkoutScreen() {
   const { supabase, org, activeMemberId } = useMember()
-  const { program, loading, error } = useProgram()
+  const { program, loading, error, reload } = useProgram()
   const [dayIdx, setDayIdx] = useState<number | null>(null)
   const [lastWorkoutId, setLastWorkoutId] = useState<string | null>(null)
   const logPromise = useRef<Promise<string> | null>(null)
@@ -56,7 +57,18 @@ export function WorkoutScreen() {
     return <div className="h-48 animate-pulse rounded-3xl border border-zinc-800 bg-zinc-950" aria-busy="true" />
   }
   if (error) {
-    return <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>
+    return (
+      <div role="alert" className="space-y-3 rounded-3xl border border-red-500/40 bg-zinc-950 p-6 text-center">
+        <p className="text-sm text-red-200">{error}</p>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          className="min-h-[44px] w-full rounded-xl border border-[#edcc36]/40 bg-zinc-900 px-4 text-sm font-semibold text-[#edcc36] hover:bg-[#edcc36] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+        >
+          Reintentar
+        </button>
+      </div>
+    )
   }
   if (!program || program.days.length === 0) {
     return (
@@ -69,6 +81,33 @@ export function WorkoutScreen() {
   }
 
   if (!selected) return null
+
+  // Hay un entrenamiento empezado (se salió a mitad con series anotadas): se puede retomar
+  const inProgress = !running && startedAt.current !== null && loggedSets.length > 0
+
+  const finishWorkout = async () => {
+    // Si la primera serie todavía se está guardando, se espera a tener el registro
+    const logId = workoutLogId.current ?? (logPromise.current ? await logPromise.current.catch(() => null) : null)
+    const minutes = startedAt.current ? Math.max(1, Math.round((Date.now() - startedAt.current) / 60000)) : null
+    if (logId && minutes) {
+      setSummary({ minutes, lastMin: previous.lastDurationMin, sets: loggedSets.length })
+      void supabase
+        .from('workout_logs')
+        .update({ duration_min: minutes })
+        .eq('id', logId)
+        .then(({ error }) => {
+          if (error) setSaveError('El entrenamiento quedó guardado, pero no pudimos registrar la duración.')
+          setRefreshKey((k) => k + 1)
+        })
+      setLastWorkoutId(selected.workoutId)
+    }
+    workoutLogId.current = null
+    logPromise.current = null
+    startedAt.current = null
+    setLoggedSets([])
+    setDayIdx(null)
+    setRunning(false)
+  }
 
   const logSet = async (set: LoggedSet) => {
     setLoggedSets((prev) => [...prev.filter((s) => !(s.exerciseId === set.exerciseId && s.setNumber === set.setNumber)), set])
@@ -118,25 +157,11 @@ export function WorkoutScreen() {
           previous={previous.byExercise}
           startedAt={startedAt.current}
           lastDurationMin={previous.lastDurationMin}
-          onFinishWorkout={() => {
-            // Guarda la duración, muestra el resumen y deja listo para el próximo entrenamiento
-            if (workoutLogId.current && startedAt.current) {
-              const minutes = Math.max(1, Math.round((Date.now() - startedAt.current) / 60000))
-              setSummary({ minutes, lastMin: previous.lastDurationMin, sets: loggedSets.length })
-              void supabase
-                .from('workout_logs')
-                .update({ duration_min: minutes })
-                .eq('id', workoutLogId.current)
-                .then(() => setRefreshKey((k) => k + 1))
-            }
-            if (workoutLogId.current) setLastWorkoutId(selected.workoutId)
-            workoutLogId.current = null
-            logPromise.current = null
-            setLoggedSets([])
-            setDayIdx(null)
+          onFinishWorkout={() => void finishWorkout()}
+          onExit={() => {
+            setSaveError(null)
             setRunning(false)
           }}
-          onExit={() => setRunning(false)}
         />
         {saveError && (
           <p role="alert" className="fixed inset-x-4 top-4 z-[60] rounded-2xl border border-red-500/50 bg-black p-3 text-sm text-red-200">
@@ -149,6 +174,11 @@ export function WorkoutScreen() {
 
   return (
     <div className="space-y-4">
+      {saveError && (
+        <p role="alert" className="rounded-2xl border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
+          {saveError}
+        </p>
+      )}
       {summary && (
         <div role="status" className="relative rounded-3xl border border-[#edcc36]/50 bg-[#edcc36]/10 p-4">
           <button
@@ -188,8 +218,9 @@ export function WorkoutScreen() {
               type="button"
               role="tab"
               aria-selected={d.workoutId === selected.workoutId}
+              disabled={inProgress}
               onClick={() => setDayIdx(i)}
-              className={`min-h-[44px] shrink-0 rounded-xl border px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
+              className={`min-h-[44px] shrink-0 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
                 d.workoutId === selected.workoutId
                   ? 'border-[#edcc36] bg-[#edcc36] text-black'
                   : 'border-zinc-800 bg-zinc-950 text-zinc-300'
@@ -211,13 +242,18 @@ export function WorkoutScreen() {
         {selected.exercises.map((e) => {
           const prev = previous.byExercise[e.id]
           return (
-            <li key={e.id} className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+            <li key={e.id} className="flex items-start justify-between gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
               <div className="min-w-0">
                 <p className="truncate font-semibold text-white">{e.name}</p>
                 <p className="text-xs text-zinc-400">
                   {e.targetSets} × {e.targetReps}
-                  {e.targetWeightKg ? ` · ${e.targetWeightKg} kg` : ''} · descanso {e.restSeconds}s
+                  {e.targetWeightKg ? ` · ${fmtKg(e.targetWeightKg)} kg` : ''} · descanso {e.restSeconds} s
                 </p>
+                {e.notes && (
+                  <p className="mt-1 whitespace-pre-line text-xs text-zinc-300">
+                    <span className="font-semibold text-[#edcc36]">Indicación del profe:</span> {e.notes}
+                  </p>
+                )}
                 {prev && (
                   <p className="mt-0.5 truncate text-xs text-zinc-300">
                     <span className="text-zinc-500">Última vez ({formatAgo(prev.performedAt)}):</span> {formatPreviousSets(prev.sets)}
@@ -272,6 +308,32 @@ export function WorkoutScreen() {
         </div>
       )}
 
+      {inProgress ? (
+        <div className="space-y-2">
+          <p className="text-center text-sm text-zinc-300">
+            Tenés un entrenamiento en curso ({loggedSets.length} {loggedSets.length === 1 ? 'serie' : 'series'}).
+          </p>
+          <button
+            type="button"
+            onClick={() => setRunning(true)}
+            className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <Play className="h-5 w-5" aria-hidden="true" />
+            Continuar entrenamiento
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`¿Terminar el entrenamiento? Se guardan las ${loggedSets.length} series registradas.`)) {
+                void finishWorkout()
+              }
+            }}
+            className="min-h-[48px] w-full rounded-2xl border border-zinc-800 bg-zinc-950 text-sm font-semibold text-zinc-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          >
+            Terminar entrenamiento
+          </button>
+        </div>
+      ) : (
       <button
         type="button"
         onClick={() => {
@@ -287,6 +349,7 @@ export function WorkoutScreen() {
         <Play className="h-5 w-5" aria-hidden="true" />
         Empezar entrenamiento
       </button>
+      )}
     </div>
   )
 }

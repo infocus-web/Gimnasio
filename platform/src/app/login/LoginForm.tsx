@@ -37,7 +37,14 @@ export function LoginForm() {
       })
       if (error) {
         setStatus('error')
-        setMessage('No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.')
+        const code = error.code ?? ''
+        setMessage(
+          code.includes('rate_limit') || error.status === 429
+            ? 'Ya te mandamos un link hace un momento. Revisá tu correo (también Spam) o probá de nuevo en un minuto.'
+            : code === 'otp_disabled' || code === 'signup_disabled' || code === 'user_not_found' || error.status === 422
+              ? 'No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.'
+              : 'No pudimos enviar el link. Probá de nuevo en un minuto.',
+        )
       } else {
         setStatus('sent')
       }
@@ -71,9 +78,22 @@ export function LoginForm() {
         </div>
 
         {status === 'sent' ? (
-          <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
-            Te mandamos un link a <strong>{email}</strong>. Abrilo desde este mismo celular para entrar.
-          </p>
+          <div className="space-y-3">
+            <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
+              Te mandamos un link a <strong>{email}</strong>. Abrí el email y tocá el link para entrar. Si no llega en un par de
+              minutos, revisá la carpeta de Spam o Promociones.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setStatus('idle')
+                setMessage(null)
+              }}
+              className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline"
+            >
+              Usar otro email o pedir otro link
+            </button>
+          </div>
         ) : (
           <form onSubmit={submit} className="space-y-3">
             <label className="block space-y-1">

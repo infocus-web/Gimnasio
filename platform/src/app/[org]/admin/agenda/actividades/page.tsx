@@ -4,12 +4,14 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { saveClassType } from '@/features/admin/schedule-actions'
 import { ClassTypeForm } from '@/features/admin/ScheduleForms'
+import { equipmentLabel } from '@/features/admin/equipment'
 
 export const metadata: Metadata = { title: 'Actividades' }
 
 export default async function ActivitiesPage({ params }: PageProps<'/[org]/admin/agenda/actividades'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('schedule.manage')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
 
   const supabase = await createClient()
@@ -40,7 +42,7 @@ export default async function ActivitiesPage({ params }: PageProps<'/[org]/admin
                   <span className="font-bold text-white">{t.name}</span>
                   <span className="block text-xs text-zinc-500">
                     {t.default_duration_min} min · cupo {t.default_capacity}
-                    {t.equipment_kind && ` · usa ${t.equipment_kind}`}
+                    {t.equipment_kind && ` · usa ${equipmentLabel(t.equipment_kind)}`}
                     {!t.active && ' · desactivada'}
                   </span>
                 </span>

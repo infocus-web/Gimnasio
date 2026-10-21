@@ -5,12 +5,15 @@ import { createClient } from '@/lib/supabase/server'
 import { addEquipment, saveRoom, setEquipmentStatus } from '@/features/admin/schedule-actions'
 import { EquipmentForm, RoomForm } from '@/features/admin/ScheduleForms'
 import { Card } from '@/features/admin/ui'
+import { ActionButton } from '@/features/admin/ConfirmAction'
+import { equipmentLabel } from '@/features/admin/equipment'
 
 export const metadata: Metadata = { title: 'Salas y equipos' }
 
 export default async function RoomsPage({ params }: PageProps<'/[org]/admin/agenda/salas'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('schedule.manage')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
 
   const supabase = await createClient()
@@ -35,7 +38,7 @@ export default async function RoomsPage({ params }: PageProps<'/[org]/admin/agen
             {kinds.map((k) => (
               <div key={k}>
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {k} · {eq.filter((e) => e.kind === k && e.status === 'active').length} activos
+                  {equipmentLabel(k)} · {eq.filter((e) => e.kind === k && e.status === 'active').length} activos
                 </h3>
                 <ul className="flex flex-wrap gap-2">
                   {eq
@@ -43,20 +46,19 @@ export default async function RoomsPage({ params }: PageProps<'/[org]/admin/agen
                     .sort((a, b) => sortLabel(a.label, b.label))
                     .map((e) => (
                       <li key={e.id}>
-                        <form action={setEquipmentStatus.bind(null, slug, e.id, e.status === 'active' ? 'maintenance' : 'active')}>
-                          <button
-                            type="submit"
-                            title={e.status === 'active' ? 'Marcar en mantenimiento' : 'Volver a activo'}
-                            className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${
-                              e.status === 'active'
-                                ? 'border-zinc-700 text-zinc-200 hover:border-amber-500/50'
-                                : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
-                            }`}
-                          >
-                            {e.status === 'active' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Wrench className="h-3 w-3" aria-hidden="true" />}
-                            {e.label}
-                          </button>
-                        </form>
+                        <ActionButton
+                          action={setEquipmentStatus.bind(null, slug, e.id, e.status === 'active' ? 'maintenance' : 'active')}
+                          title={e.status === 'active' ? 'Marcar en mantenimiento' : 'Volver a activo'}
+                          ariaLabel={`${equipmentLabel(e.kind)} ${e.label}: ${e.status === 'active' ? 'activo, tocá para pasarlo a mantenimiento' : 'en mantenimiento, tocá para activarlo'}`}
+                          className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${
+                            e.status === 'active'
+                              ? 'border-zinc-700 text-zinc-200 hover:border-amber-500/50'
+                              : 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+                          }`}
+                        >
+                          {e.status === 'active' ? <Check className="h-3 w-3" aria-hidden="true" /> : <Wrench className="h-3 w-3" aria-hidden="true" />}
+                          {e.label}
+                        </ActionButton>
                       </li>
                     ))}
                 </ul>

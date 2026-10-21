@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { fmtKg } from '@/components/workout/format'
 import { useMember } from './MemberProvider'
 
 export interface PreviousSet {
@@ -71,7 +72,7 @@ export function usePreviousPerformance(workoutId: string | null, refreshKey = 0)
 export function formatPreviousSets(sets: PreviousSet[]) {
   return sets
     .map((s, i) => {
-      const w = s.weightKg ? `${String(s.weightKg).replace('.', ',')}${i === 0 ? ' kg' : ''}` : 'PC'
+      const w = s.weightKg ? `${fmtKg(s.weightKg)}${i === 0 ? ' kg' : ''}` : 'PC'
       return `${w} × ${s.reps ?? '–'}`
     })
     .join(' · ')

@@ -25,7 +25,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
           <p className="text-sm text-zinc-400">
             {ctx.error === 'NO_ORG'
               ? 'Revisá el link que te pasaron.'
-              : 'Pedile a recepción que vincule tu email a tu ficha de socio.'}
+              : 'Esta cuenta no tiene una ficha de socio activa. Pedile a recepción que vincule tu email a tu ficha, o entrá con otro email.'}
           </p>
           <SignOutButton />
         </div>
@@ -47,7 +47,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
               <Dumbbell className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
             </span>
             <span className="truncate text-sm font-extrabold tracking-tight text-white">
-              {org.name.toUpperCase()}
+              {org.name}
             </span>
           </Link>
           <SignOutButton compact />

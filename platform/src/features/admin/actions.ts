@@ -6,8 +6,10 @@ import type { Route } from 'next'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { siteUrl } from '@/lib/site-url'
 import { getAdminContext } from './context'
+import { MEMBER_BUCKET, isStoragePath, removeMemberFiles, saveMemberPhoto } from './member-files'
 
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
 
@@ -49,12 +51,39 @@ async function origin() {
   return siteUrl()
 }
 
+/** Manda el email con el link para entrar (sin contraseña). Cliente sin sesión: no toca la sesión del panel. */
+async function otpLink(email: string, next: string) {
+  const anon = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+  const { error } = await anon.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false, emailRedirectTo: `${await origin()}/auth/callback?next=${encodeURIComponent(next)}` },
+  })
+  return error
+}
+
+async function emailAccessLink(_slug: string, email: string, next: string) {
+  const error = await otpLink(email, next)
+  if (error) console.error('[emailAccessLink]', error.status, error.code, error.message)
+  return !error
+}
+
 /** Vincula la cuenta si ya existe; si no, manda la invitación por email (requiere SUPABASE_SECRET_KEY). */
 async function linkOrInvite(orgId: string, slug: string, email: string, next: string): Promise<ActionState> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('link_existing_user', { p_org: orgId, p_email: email })
   if (error) return { message: dbMessage(error) }
-  if (data === 'LINKED') return { ok: true, message: `${email} ya tenía cuenta: quedó vinculada.` }
+  if (data === 'LINKED') {
+    // Ya tenía cuenta: se vincula y además se le manda el link para entrar (si no, no recibía nada)
+    const sent = await emailAccessLink(slug, email, next)
+    return {
+      ok: true,
+      message: sent
+        ? `${email} ya tenía cuenta: quedó vinculada y le mandamos un email con el link para entrar.`
+        : `${email} ya tenía cuenta: quedó vinculada. Puede entrar pidiendo el link en la pantalla de ingreso.`,
+    }
+  }
 
   if (!process.env.SUPABASE_SECRET_KEY) {
     return {
@@ -115,9 +144,14 @@ export async function createMember(slug: string, _prev: ActionState, form: FormD
     await supabase.from('members').update({ medical_notes: m.medicalNotes }).eq('id', memberId)
   }
   let notice = ''
+  const photo = String(form.get('photo') ?? '')
+  if (photo) {
+    const photoError = await saveMemberPhoto(supabase, ctx.org.id, memberId, photo)
+    if (photoError) notice = `${photoError} Podés sacarla de nuevo desde la ficha.`
+  }
   if (invite && m.email) {
     const r = await linkOrInvite(ctx.org.id, slug, m.email, `/${slug}/app/pase`)
-    notice = r.message ?? ''
+    notice = [notice, r.message ?? ''].filter(Boolean).join(' ')
   }
   revalidatePath(`/${slug}/admin`, 'layout')
   const qs = notice ? `?aviso=${encodeURIComponent(notice)}` : ''
@@ -233,12 +267,14 @@ export async function updateStaff(slug: string, staffId: string, _prev: ActionSt
   return { ok: true, message: 'Rol actualizado.' }
 }
 
-export async function cancelInvitation(slug: string, invitationId: string): Promise<void> {
+export async function cancelInvitation(slug: string, invitationId: string, _prev?: ActionState): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
-  if (!ctx?.can('staff.manage')) return
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
-  await supabase.from('staff_invitations').delete().eq('id', invitationId).eq('org_id', ctx.org.id)
+  const { error } = await supabase.from('staff_invitations').delete().eq('id', invitationId).eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo cancelar la invitación.' }
   revalidatePath(`/${slug}/admin/equipo`)
+  return { ok: true, message: 'Invitación cancelada.' }
 }
 
 export async function resendInvitation(slug: string, email: string, _prev: ActionState): Promise<ActionState> {
@@ -247,4 +283,144 @@ export async function resendInvitation(slug: string, email: string, _prev: Actio
   const r = await linkOrInvite(ctx.org.id, slug, email, `/${slug}/admin`)
   revalidatePath(`/${slug}/admin/equipo`)
   return r
+}
+
+const DELETE_MESSAGES: Record<string, string> = {
+  MEMBER_IS_PAYER: 'Es el titular de un grupo familiar: primero eliminá o pasá a otra cuenta a los integrantes.',
+  MEMBER_NOT_FOUND: 'Ese socio ya no existe.',
+  FORBIDDEN: ERRORS.FORBIDDEN ?? 'No tenés permiso.',
+}
+
+/** Elimina al socio y todo lo suyo (pagos, plan, entradas, rutinas). Solo dueño/admin. */
+export async function deleteMember(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: 'Solo el dueño o un administrador puede eliminar socios.' }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('member_delete', { p_member: memberId })
+  if (error) return { message: DELETE_MESSAGES[error.message.trim()] ?? dbMessage(error) ?? 'No se pudo eliminar.' }
+  // Foto y apto físico: recién cuando el socio ya se borró (si fallaba antes, quedaba sin archivos).
+  // Se borran con la clave del servidor: el socio ya no existe y las políticas del bucket lo exigen.
+  await removeMemberFiles(createAdminClient(), ctx.org.id, memberId)
+  // Su usuario de la app, si ya no lo usa nadie más
+  const orphan = (data as { orphan_user_id?: string | null } | null)?.orphan_user_id
+  if (orphan) {
+    const { error: authError } = await createAdminClient().auth.admin.deleteUser(orphan)
+    if (authError) console.error('[deleteMember] auth', authError.message)
+  }
+  revalidatePath(`/${slug}/admin/socios`, 'layout')
+  revalidatePath(`/${slug}/admin/accesos`)
+  redirect(`/${slug}/admin/socios` as Route)
+}
+
+/** Socio que ya tiene cuenta: le manda por email un link para entrar (sin contraseña). */
+export async function sendAccessLink(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: member } = await supabase
+    .from('members')
+    .select('email, user_id')
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+    .maybeSingle()
+  if (!member) return { message: ERRORS.MEMBER_NOT_FOUND }
+  if (!member.email) return { message: 'Cargale un email en la ficha primero.' }
+  const error = await otpLink(member.email, `/${slug}/app/pase`)
+  if (error) {
+    console.error('[sendAccessLink]', error.status, error.code, error.message)
+    if (error.status === 429 || /rate/i.test(error.code ?? '')) {
+      return { message: 'Ya se mandó un link hace un momento. Esperá un minuto, o pedile que revise Spam.' }
+    }
+    return { message: 'No se pudo enviar el link. Probá de nuevo en unos minutos.' }
+  }
+  return { ok: true, message: `Le mandamos a ${member.email} un link para entrar a la app (revisá también Spam).` }
+}
+
+/** Foto del socio (webcam o archivo) desde la ficha. */
+export async function updateMemberPhoto(slug: string, memberId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const photo = String(form.get('photo') ?? '')
+  if (!photo) return { message: 'Primero sacá la foto (o subí una).' }
+  const supabase = await createClient()
+  const err = await saveMemberPhoto(supabase, ctx.org.id, memberId, photo)
+  if (err) return { message: err }
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Foto guardada.' }
+}
+
+/** Apto físico: el navegador ya subió el archivo al bucket privado; acá se registra en la ficha. */
+export async function saveMedicalCert(
+  slug: string,
+  memberId: string,
+  path: string,
+  expiresOn: string | null,
+): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const prefix = `${ctx.org.id}/${memberId}/apto-`
+  if (!path.startsWith(prefix) || path.includes('..')) return { message: 'Archivo inválido.' }
+  const expires = expiresOn && /^\d{4}-\d{2}-\d{2}$/.test(expiresOn) ? expiresOn : null
+  const supabase = await createClient()
+  const { data: prev } = await supabase.from('members').select('medical_cert_path').eq('id', memberId).maybeSingle()
+  const { error } = await supabase
+    .from('members')
+    .update({ medical_cert_path: path, medical_cert_uploaded_at: new Date().toISOString(), medical_cert_expires_on: expires })
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo guardar el apto.' }
+  if (isStoragePath(prev?.medical_cert_path) && prev.medical_cert_path !== path) {
+    await supabase.storage.from(MEMBER_BUCKET).remove([prev.medical_cert_path])
+  }
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Apto físico guardado.' }
+}
+
+export async function removeMedicalCert(slug: string, memberId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('members.write')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: prev } = await supabase.from('members').select('medical_cert_path').eq('id', memberId).maybeSingle()
+  const { error } = await supabase
+    .from('members')
+    .update({ medical_cert_path: null, medical_cert_uploaded_at: null, medical_cert_expires_on: null })
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo quitar.' }
+  if (isStoragePath(prev?.medical_cert_path)) await supabase.storage.from(MEMBER_BUCKET).remove([prev.medical_cert_path])
+  revalidatePath(`/${slug}/admin/socios/${memberId}`)
+  return { ok: true, message: 'Apto físico quitado.' }
+}
+
+/** Corrige el vencimiento del plan vigente (error de carga, días de congelamiento, cortesía). */
+export async function adjustMembershipEnd(slug: string, memberId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('billing.write')) return { message: ERRORS.FORBIDDEN }
+  const date = String(form.get('endDate') ?? '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { fieldErrors: { endDate: 'Elegí la nueva fecha de vencimiento' } }
+  const supabase = await createClient()
+  const { data: m } = await supabase
+    .from('member_directory')
+    .select('membership_id, membership_status')
+    .eq('id', memberId)
+    .eq('org_id', ctx.org.id)
+    .maybeSingle()
+  if (!m?.membership_id) return { message: 'No tiene un plan para ajustar: asignale uno primero.' }
+  // Vence al final de ese día en el horario del gimnasio
+  const offset =
+    new Intl.DateTimeFormat('en-US', { timeZone: ctx.org.timezone, timeZoneName: 'longOffset' })
+      .formatToParts(new Date(`${date}T12:00:00Z`))
+      .find((p) => p.type === 'timeZoneName')
+      ?.value.replace('GMT', '') || '+00:00'
+  const end = new Date(`${date}T23:59:59${offset}`)
+  if (Number.isNaN(end.getTime())) return { fieldErrors: { endDate: 'Fecha inválida' } }
+  const reactivate = end.getTime() > Date.now() && m.membership_status === 'expired'
+  const { error } = await supabase
+    .from('memberships')
+    .update({ current_period_end: end.toISOString(), ...(reactivate ? { status: 'active' as const } : {}) })
+    .eq('id', m.membership_id)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) ?? 'No se pudo cambiar el vencimiento.' }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: `Nuevo vencimiento: ${date.split('-').reverse().join('/')}.` }
 }

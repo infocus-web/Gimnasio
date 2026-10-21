@@ -1,10 +1,9 @@
-'use client'
-
 'use client';
 
 import React, { useState } from 'react';
 import { Dumbbell, X, Plus, Minus, Info } from 'lucide-react';
 import { sound } from '../../utils/audio';
+import { fmtKg } from './format';
 
 export interface PlateCalculatorProps {
   targetKg: number;
@@ -72,8 +71,8 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
             <Dumbbell className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-cyber font-bold text-white text-base">Calculadora de Discos</h3>
-            <span className="text-[10px] font-mono text-zinc-400">Barra olímpica estándar de {barKg} kg</span>
+            <h3 className="font-cyber font-bold text-white text-base">Calculadora de discos</h3>
+            <span className="text-[11px] text-zinc-400">Barra olímpica de {fmtKg(barKg)} kg</span>
           </div>
         </div>
 
@@ -95,9 +94,9 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
       {/* Selector de Carga Objetivo */}
       <div className="p-4 rounded-2xl bg-black border border-zinc-900 flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-mono text-zinc-400 uppercase block">Carga Objetivo</span>
+          <span className="text-[11px] text-zinc-400 block">Carga objetivo</span>
           <div className="text-2xl sm:text-3xl font-bold font-tech text-[#edcc36] tabular-nums">
-            {currentWeight} <span className="text-xs text-zinc-400">kg</span>
+            {fmtKg(currentWeight)} <span className="text-xs text-zinc-400">kg</span>
           </div>
         </div>
 
@@ -113,18 +112,18 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
           <button
             type="button"
             onClick={() => adjustWeight(-2.5)}
-            aria-label="Restar 2.5 kg"
+            aria-label="Restar 2,5 kg"
             className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center font-bold text-xs min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
           >
-            -2.5
+            -2,5
           </button>
           <button
             type="button"
             onClick={() => adjustWeight(2.5)}
-            aria-label="Sumar 2.5 kg"
+            aria-label="Sumar 2,5 kg"
             className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-[#edcc36] flex items-center justify-center font-bold text-xs min-h-[44px] min-w-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
           >
-            +2.5
+            +2,5
           </button>
           <button
             type="button"
@@ -139,8 +138,8 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
 
       {/* Visualizador de Barra Cargada (mitad derecha de la manga) */}
       <div className="p-4 rounded-2xl bg-black border border-zinc-900 flex flex-col items-center justify-center min-h-[140px]">
-        <span className="text-[10px] font-mono text-zinc-400 mb-3 uppercase tracking-wider">
-          Manga (Por cada lado de la barra):
+        <span className="text-[11px] text-zinc-400 mb-3">
+          Discos por cada lado de la barra
         </span>
 
         {/* Gráfico SVG/CSS de la barra y discos */}
@@ -150,7 +149,7 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
 
           {/* Discos cargados */}
           {platesPerSide.length === 0 ? (
-            <div className="text-xs font-mono text-zinc-400 italic">Barra olímpica sin discos (20 kg)</div>
+            <div className="text-xs text-zinc-400 italic">Barra sin discos ({fmtKg(barKg)} kg)</div>
           ) : (
             platesPerSide.map((group) =>
               Array.from({ length: group.count }).map((_, i) => (
@@ -159,7 +158,7 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
                   style={{ height: `${getPlateHeightPx(group.weight)}px` }}
                   className="w-6 rounded-md bg-[#edcc36] border border-black flex flex-col items-center justify-center text-black font-tech font-black text-[9px] shadow-[0_0_8px_rgba(237,204,54,0.3)] shrink-0 select-none"
                 >
-                  <span className="transform -rotate-90">{group.weight}</span>
+                  <span className="transform -rotate-90">{fmtKg(group.weight)}</span>
                 </div>
               ))
             )
@@ -171,10 +170,10 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
       </div>
 
       {/* Lista Desglosada de Discos por lado */}
-      <div className="space-y-1.5 font-mono text-xs">
+      <div className="space-y-1.5 text-xs">
         <div className="flex items-center justify-between text-zinc-400 text-[11px] pb-1 border-b border-zinc-900">
           <span>Desglose por lado:</span>
-          <span>{targetPerSide.toFixed(2)} kg / lado</span>
+          <span><span className="font-mono">{fmtKg(targetPerSide)}</span> kg por lado</span>
         </div>
 
         {platesPerSide.length > 0 ? (
@@ -185,22 +184,22 @@ export const PlateCalculator: React.FC<PlateCalculatorProps> = ({
                 className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between text-zinc-200"
               >
                 <span className="font-bold text-[#edcc36]">{p.count} ×</span>
-                <span>Disco {p.weight} kg</span>
+                <span>Disco de {fmtKg(p.weight)} kg</span>
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-2 text-zinc-400 text-xs">
-            Solo barra (20 kg)
+            Solo la barra ({fmtKg(barKg)} kg)
           </div>
         )}
       </div>
 
       {!isExact && (
-        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs font-mono text-amber-200 flex items-center gap-2">
+        <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-200 flex items-center gap-2">
           <Info className="w-4 h-4 shrink-0 text-amber-400" />
           <span>
-            Peso alcanzable más cercano con discos estándar: {actualWeight} kg
+            Peso alcanzable más cercano con discos estándar: {fmtKg(actualWeight)} kg
           </span>
         </div>
       )}

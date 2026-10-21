@@ -71,6 +71,36 @@ export async function deviceAction(slug: string, deviceId: string, op: DeviceOp,
   return { ok: true, message: done[op] }
 }
 
+/** Clave para el intermediario de la PC del gimnasio. Se muestra una sola vez; generar otra invalida la anterior. */
+export async function createAgentToken(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('access_device_agent_token', { p_device: deviceId })
+  if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
+  refresh(slug)
+  return {
+    ok: true,
+    secret: data,
+    message: 'Copiá esta clave en el archivo config.json del intermediario. No se vuelve a mostrar (si la perdés, generá otra).',
+  }
+}
+
+/** Vincula la tablet del molinete (pantalla /<gym>/molinete). Generar otra desvincula la anterior. */
+export async function createKioskToken(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('access_device_kiosk_token', { p_device: deviceId })
+  if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
+  refresh(slug)
+  return {
+    ok: true,
+    secret: data,
+    message: 'Abrí este link en la tablet (o escaneá el código con su cámara). Se muestra una sola vez.',
+  }
+}
+
 export async function linkDeviceUser(slug: string, deviceId: string, pin: number, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('org.manage')) return { message: ERRORS.FORBIDDEN }
@@ -118,4 +148,27 @@ export async function enrollMember(slug: string, memberId: string, _prev: Action
     message:
       'Pedido enviado: en unos segundos el lector muestra la pantalla de registro. Que el socio se pare frente al lector. Si no aparece, registralo desde el menú del lector (Usuarios → buscar su número → Cara).',
   }
+}
+
+/** Abre el molinete una vuelta (recepción / dueño). Espera hasta ~6 s la confirmación del intermediario. */
+export async function openTurnstile(slug: string, deviceId: string, _prev: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('checkins.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: id, error } = await supabase.rpc('access_device_open', { p_device: deviceId })
+  if (error) {
+    return {
+      message:
+        error.message.trim() === 'TURNSTILE_OFFLINE'
+          ? 'El molinete no está conectado (el intermediario de la PC está apagado o el lector está pausado).'
+          : msg(error),
+    }
+  }
+  for (let i = 0; i < 12; i++) {
+    await new Promise((ok) => setTimeout(ok, 500))
+    const { data: c } = await supabase.from('access_commands').select('status').eq('id', id).maybeSingle()
+    if (c?.status === 'ok') return { ok: true, message: 'Molinete abierto: puede pasar una persona.' }
+    if (c?.status === 'error' || c?.status === 'superseded') return { message: 'El lector no respondió. Probá de nuevo.' }
+  }
+  return { message: 'Se envió la orden pero no llegó la confirmación. Fijate si se abrió.' }
 }

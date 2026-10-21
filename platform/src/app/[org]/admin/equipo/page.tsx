@@ -10,6 +10,7 @@ import { fmtDate } from '@/features/admin/format'
 import { CreateStaffAccountForm, InviteStaffForm, StaffAccountActions, StaffRowForm } from '@/features/admin/TeamForms'
 import { InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
+import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { approveStaffRequest, rejectStaffRequest } from '@/features/admin/padron-actions'
 import { RequestCard, ShareLink, type RequestRow } from '@/features/admin/PadronReview'
 import { fmtDateTime } from '@/features/admin/format'
@@ -18,7 +19,8 @@ export const metadata: Metadata = { title: 'Equipo' }
 
 export default async function TeamPage({ params }: PageProps<'/[org]/admin/equipo'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('staff.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador gestiona el equipo.</p>
 
   const supabase = await createClient()
@@ -159,15 +161,16 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
                     </div>
                     <div className="flex items-start gap-2">
                       <InviteButton action={resendInvitation.bind(null, slug, i.email)} label="Reenviar" />
-                      <form action={cancelInvitation.bind(null, slug, i.id)}>
-                        <button
-                          type="submit"
-                          aria-label={`Cancelar invitación de ${i.display_name}`}
-                          className="grid min-h-[44px] min-w-[44px] place-items-center rounded-xl border border-zinc-800 text-zinc-400 hover:border-red-500/50 hover:text-red-300"
-                        >
-                          <X className="h-4 w-4" aria-hidden="true" />
-                        </button>
-                      </form>
+                      <ConfirmAction
+                        action={cancelInvitation.bind(null, slug, i.id)}
+                        variant="icon"
+                        ariaLabel={`Cancelar invitación de ${i.display_name}`}
+                        confirmText="El link del mail deja de funcionar."
+                        yesLabel="Sí, cancelar invitación"
+                        className="flex flex-col items-end gap-1"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </ConfirmAction>
                     </div>
                   </li>
                 ))}

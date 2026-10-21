@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { ActionState } from './actions'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { WebcamCapture } from './WebcamCapture'
 
 export interface MemberValues {
   firstName: string
@@ -34,9 +36,19 @@ export function MemberForm(props: Props) {
   const v = props.mode === 'edit' ? props.values : null
   const err = state.fieldErrors ?? {}
   const disabled = props.mode === 'edit' && props.readOnly
+  // Controlado: después de guardar, el formulario se reinicia y un <select> sin controlar volvía al valor viejo
+  const savedStatus = v?.status ?? 'active'
+  const [status, setStatus] = useState(savedStatus)
+  useEffect(() => setStatus(savedStatus), [savedStatus, state])
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      {props.mode === 'create' && (
+        <fieldset className="rounded-2xl border border-zinc-800 p-4">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-400">Foto del socio</legend>
+          <WebcamCapture />
+        </fieldset>
+      )}
       <fieldset disabled={disabled} className="grid gap-4 sm:grid-cols-2">
         <legend className="sr-only">Datos personales</legend>
         <Field label="Nombre *" name="firstName" error={err.firstName}>
@@ -72,7 +84,7 @@ export function MemberForm(props: Props) {
         </div>
         {props.mode === 'edit' && (
           <Field label="Estado" name="status">
-            <select id="status" name="status" defaultValue={v?.status ?? 'active'} className={inputClass}>
+            <select id="status" name="status" value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>
               <option value="active">Activo</option>
               <option value="frozen">Congelado</option>
               <option value="lead">Interesado (todavía no se inscribió)</option>

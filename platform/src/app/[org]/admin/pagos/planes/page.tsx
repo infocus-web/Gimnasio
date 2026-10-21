@@ -12,7 +12,8 @@ const PERIOD: Record<string, string> = { day: 'día', week: 'semana', month: 'me
 
 export default async function PlansPage({ params }: PageProps<'/[org]/admin/pagos/planes'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
   const canEdit = ctx.can('billing.write')
 

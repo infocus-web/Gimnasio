@@ -14,7 +14,8 @@ export default async function NewMemberPage({ params, searchParams }: PageProps<
   const sp = await searchParams
   const payerParam = typeof sp.titular === 'string' ? sp.titular : null
 
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('members.write')) return <p className="text-sm text-zinc-400">No tenés permiso para cargar socios.</p>
 
   const supabase = await createClient()

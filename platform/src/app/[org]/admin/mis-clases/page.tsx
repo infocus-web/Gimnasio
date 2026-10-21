@@ -9,7 +9,8 @@ export const metadata: Metadata = { title: 'Mis clases' }
 
 export default async function MyClassesPage({ params }: PageProps<'/[org]/admin/mis-clases'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const tz = ctx.org.timezone
   const supabase = await createClient()
   const from = new Date(Date.now() - 3 * 3600_000).toISOString()

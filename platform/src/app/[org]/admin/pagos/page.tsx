@@ -18,7 +18,8 @@ function shiftDay(ymd: string, days: number) {
 export default async function CajaPage({ params, searchParams }: PageProps<'/[org]/admin/pagos'>) {
   const { org: slug } = await params
   const sp = await searchParams
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver la caja.</p>
 
   const tz = ctx.org.timezone
@@ -72,7 +73,7 @@ export default async function CajaPage({ params, searchParams }: PageProps<'/[or
         <div className="col-span-2 rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/5 p-4 lg:col-span-1">
           <p className="text-xs text-zinc-400">Total cobrado</p>
           <p className="text-3xl font-extrabold tabular-nums text-white">{formatMoney(total)}</p>
-          <p className="text-xs text-zinc-500">{ok.length} cobros</p>
+          <p className="text-xs text-zinc-500">{ok.length} {ok.length === 1 ? 'cobro' : 'cobros'}</p>
         </div>
         {[...byMethod.entries()].map(([m, v]) => (
           <div key={m} className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">

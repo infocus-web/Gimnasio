@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
+import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound, Tablet, DoorOpen } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from './ui'
 
@@ -142,6 +143,126 @@ export function DeviceButtons({
   )
 }
 
+export function AgentPanel({
+  serial,
+  hasToken,
+  online,
+  seenLabel,
+  mode,
+  version,
+  action,
+}: {
+  serial: string
+  hasToken: boolean
+  online: boolean
+  seenLabel: string | null
+  mode: string | null
+  version: string | null
+  action: Bare
+}) {
+  const [state, submit] = useActionForm(action)
+  const [sure, setSure] = useState(false)
+  return (
+    <div className="space-y-2 rounded-xl border border-zinc-800 p-3">
+      <p className="flex items-center gap-2 text-sm font-semibold text-white">
+        <Monitor className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Intermediario en la PC del gimnasio
+      </p>
+      <p className="text-xs text-zinc-400">
+        Para lectores que se manejan por la red local (ej. MB360). Un programa en una PC del gimnasio carga y saca socios del lector y sube las
+        entradas.
+      </p>
+      {hasToken && (
+        <p className={`text-sm ${online ? 'text-emerald-300' : 'text-zinc-400'}`}>
+          {online ? 'Conectado' : seenLabel ? `Sin conexión desde ${seenLabel}` : 'Clave generada, esperando que el programa se conecte'}
+          {mode && ` · modo ${mode === 'sincronizar' ? 'sincronizar' : 'solo lectura'}`}
+          {version && <span className="text-xs text-zinc-500"> · v{version}</span>}
+        </p>
+      )}
+      {state.secret ? (
+        <div className="space-y-2 rounded-lg border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-[#f5e38a]">
+          <p>Número de serie y clave para el archivo config.json:</p>
+          <div className="flex flex-wrap gap-2">
+            <CopyValue value={serial} />
+            <CopyValue value={state.secret} />
+          </div>
+        </div>
+      ) : hasToken && !sure ? (
+        <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline">
+          Generar una clave nueva
+        </button>
+      ) : (
+        <form action={submit} className="flex flex-wrap items-center gap-2">
+          {hasToken && <span className="text-xs text-amber-200">La clave anterior deja de funcionar.</span>}
+          <SubmitButton variant="ghost">
+            <KeyRound className="h-4 w-4" aria-hidden="true" /> {hasToken ? 'Sí, generar otra' : 'Generar clave del intermediario'}
+          </SubmitButton>
+        </form>
+      )}
+      <Notice state={state} />
+    </div>
+  )
+}
+
+export function KioskPanel({
+  slug,
+  paired,
+  online,
+  seenLabel,
+  action,
+}: {
+  slug: string
+  paired: boolean
+  online: boolean
+  seenLabel: string | null
+  action: Bare
+}) {
+  const [state, submit] = useActionForm(action)
+  const [sure, setSure] = useState(false)
+  const [qr, setQr] = useState<string | null>(null)
+  const link = state.secret && typeof window !== 'undefined' ? `${window.location.origin}/${slug}/molinete#k=${state.secret}` : null
+  useEffect(() => {
+    if (!link) return
+    QRCode.toDataURL(link, { margin: 1, width: 240 }).then(setQr).catch(() => setQr(null))
+  }, [link])
+  return (
+    <div className="space-y-2 rounded-xl border border-zinc-800 p-3">
+      <p className="flex items-center gap-2 text-sm font-semibold text-white">
+        <Tablet className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Tablet del molinete (entrada con QR)
+      </p>
+      <p className="text-xs text-zinc-400">
+        Una tablet o celular junto al molinete lee el QR de la app del socio y el intermediario abre el molinete. Solo pasan socios con plan de
+        musculación al día.
+      </p>
+      {paired && (
+        <p className={`text-sm ${online ? 'text-emerald-300' : 'text-zinc-400'}`}>
+          {online ? 'Tablet funcionando' : seenLabel ? `Tablet sin conexión desde ${seenLabel}` : 'Vinculada, esperando que se abra en la tablet'}
+        </p>
+      )}
+      {link ? (
+        <div className="flex flex-wrap items-start gap-4 rounded-lg border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-[#f5e38a]">
+          {qr && <img src={qr} alt="Código para abrir el link en la tablet" width={160} height={160} className="rounded-lg bg-white p-1" />}
+          <div className="min-w-0 flex-1 space-y-2">
+            <p>Escaneá este código con la cámara de la tablet, o abrí el link en su navegador:</p>
+            <p className="break-all font-mono text-xs text-white">{link}</p>
+          </div>
+        </div>
+      ) : paired && !sure ? (
+        <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline">
+          Vincular otra tablet
+        </button>
+      ) : (
+        <form action={submit} className="flex flex-wrap items-center gap-2">
+          {paired && <span className="text-xs text-amber-200">La tablet anterior deja de funcionar.</span>}
+          <SubmitButton variant="ghost">
+            <Tablet className="h-4 w-4" aria-hidden="true" /> {paired ? 'Sí, vincular otra' : 'Vincular tablet del molinete'}
+          </SubmitButton>
+        </form>
+      )}
+      <Notice state={state} />
+    </div>
+  )
+}
+
 export function UnlinkedUserRow({ pin, name, link, forget }: { pin: number; name: string; link: WithForm; forget: Bare }) {
   const [ls, doLink] = useActionForm(link)
   const [fs, doForget] = useActionForm(forget)
@@ -206,6 +327,19 @@ export function EnrollForm({ action, devices }: { action: WithForm; devices: { i
       {state.fieldErrors?.consent && <p className="text-xs text-red-300">{state.fieldErrors.consent}</p>}
       <SubmitButton>
         <ScanFace className="h-4 w-4" aria-hidden="true" /> Registrar en el lector
+      </SubmitButton>
+      <Notice state={state} />
+    </form>
+  )
+}
+
+/** Botón "Abrir molinete": una vuelta, para recepción o el dueño. */
+export function OpenTurnstileButton({ action, label = 'Abrir molinete' }: { action: Bare; label?: string }) {
+  const [state, submit] = useActionForm(action)
+  return (
+    <form action={submit} className="space-y-2">
+      <SubmitButton>
+        <DoorOpen className="h-4 w-4" aria-hidden="true" /> {label}
       </SubmitButton>
       <Notice state={state} />
     </form>

@@ -4,14 +4,17 @@ import type { Metadata, Route } from 'next'
 import { ArrowLeft, Smartphone, UserPlus, Crown, Info } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { assignPlan, inviteMemberToApp, updateMember } from '@/features/admin/actions'
+import { adjustMembershipEnd, assignPlan, deleteMember, inviteMemberToApp, removeMedicalCert, saveMedicalCert, sendAccessLink, updateMember, updateMemberPhoto } from '@/features/admin/actions'
+import { MedicalCertCard, MemberPhotoForm } from '@/features/admin/MemberFileForms'
+import { signedUrl } from '@/features/admin/member-files'
+import { DeleteMemberButton } from '@/features/admin/DeleteMemberButton'
 import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
 import { TrainerSelectForm } from '@/features/admin/CoachForms'
 import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
-import { fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
+import { CHECKIN_REASON, fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
 import { MemberForm } from '@/features/admin/MemberForm'
-import { AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
+import { AdjustEndForm, AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
 import { EnrollForm } from '@/features/admin/AccessForms'
 import { enrollMember } from '@/features/admin/access-actions'
@@ -23,7 +26,8 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   const sp = await searchParams
   const aviso = typeof sp.aviso === 'string' ? sp.aviso.slice(0, 300) : null
 
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('members.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver socios.</p>
 
   const supabase = await createClient()
@@ -36,7 +40,8 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   if (!m) notFound()
 
   const [{ data: staffList }, { data: tc }] = await Promise.all([
-    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).order('display_name'),
+    // Profesores (y dueño/admin, que también pueden dar clase); recepción no
+    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).neq('role', 'staff').order('display_name'),
     supabase.from('trainer_clients').select('trainer_id').eq('member_id', memberId).maybeSingle(),
   ])
   const [family, checkins, plans, payments] = await Promise.all([
@@ -74,10 +79,21 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
 
   // Lectores de acceso (cara/palma/huella)
   const [{ data: pinRow }, { data: accessDevices }] = await Promise.all([
-    supabase.from('members').select('access_pin, biometric_consent_at').eq('id', memberId).maybeSingle(),
+    supabase
+      .from('members')
+      .select('access_pin, biometric_consent_at, photo_url, medical_cert_path, medical_cert_uploaded_at, medical_cert_expires_on')
+      .eq('id', memberId)
+      .maybeSingle(),
     supabase.from('access_devices').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('created_at'),
   ])
   const accessPin = pinRow?.access_pin ?? null
+  // Foto y apto físico: archivos privados, se muestran con links que vencen en 10 minutos
+  const [photoSrc, certUrl] = await Promise.all([
+    signedUrl(supabase, pinRow?.photo_url),
+    signedUrl(supabase, pinRow?.medical_cert_path),
+  ])
+  const certExpires = pinRow?.medical_cert_expires_on ?? null
+  const certExpired = !!certExpires && certExpires < todayYMD(ctx.org.timezone)
   const [{ data: onDevices }, { data: lastEnroll }] =
     accessPin && accessDevices?.length
       ? await Promise.all([
@@ -113,6 +129,17 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
           {m.first_name} {m.last_name}
         </h1>
         <span className={`rounded-md border px-2 py-0.5 text-xs font-semibold ${st.className}`}>{st.label}</span>
+        {accessPin && (
+          <span className="rounded-md border border-[#edcc36]/40 bg-[#edcc36]/10 px-2 py-0.5 font-mono text-xs font-semibold text-[#edcc36]">
+            N° de socio {accessPin}
+          </span>
+        )}
+        {certExpired && (
+          <span className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-300">Apto vencido</span>
+        )}
+        {!pinRow?.medical_cert_path && (
+          <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-200">Sin apto físico</span>
+        )}
         {m.status === 'archived' && (
           <span className="rounded-md border border-zinc-700 px-2 py-0.5 text-xs text-zinc-400">Archivado</span>
         )}
@@ -163,12 +190,24 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
             </dl>
             {m.is_payer || !m.billing_account_id ? (
               canBill ? (
-                <AssignPlanForm
-                  action={assignPlan.bind(null, slug, memberId)}
-                  plans={planOptions}
-                  today={todayYMD(ctx.org.timezone)}
-                  currentPlanId={m.plan_id}
-                />
+                <>
+                  <AssignPlanForm
+                    action={assignPlan.bind(null, slug, memberId)}
+                    plans={planOptions}
+                    today={todayYMD(ctx.org.timezone)}
+                    currentPlanId={m.plan_id}
+                  />
+                  {m.membership_id && (
+                    <AdjustEndForm
+                      action={adjustMembershipEnd.bind(null, slug, memberId)}
+                      current={
+                        m.current_period_end
+                          ? new Intl.DateTimeFormat('en-CA', { timeZone: ctx.org.timezone }).format(new Date(m.current_period_end))
+                          : null
+                      }
+                    />
+                  )}
+                </>
               ) : null
             ) : payer ? (
               <p className="text-sm text-zinc-400">
@@ -220,6 +259,24 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
         </div>
 
         <div className="space-y-5">
+          <Card title="Foto">
+            <MemberPhotoForm current={photoSrc} canWrite={canWrite} action={updateMemberPhoto.bind(null, slug, memberId)} />
+          </Card>
+
+          <Card title="Apto físico">
+            <MedicalCertCard
+              orgId={ctx.org.id}
+              memberId={memberId}
+              viewUrl={certUrl}
+              uploadedLabel={pinRow?.medical_cert_uploaded_at ? fmtDate(pinRow.medical_cert_uploaded_at, ctx.org.timezone) : null}
+              expiresOn={certExpires ? fmtDate(certExpires, ctx.org.timezone) : null}
+              expired={certExpired}
+              canWrite={canWrite}
+              save={saveMedicalCert.bind(null, slug, memberId)}
+              remove={removeMedicalCert.bind(null, slug, memberId)}
+            />
+          </Card>
+
           <Card title="Profesor a cargo">
             {canWrite ? (
               <TrainerSelectForm
@@ -237,9 +294,14 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
 
           <Card title="Acceso a la app">
             {m.has_app ? (
-              <p className="flex items-center gap-2 text-sm text-emerald-200">
-                <Smartphone className="h-4 w-4" aria-hidden="true" /> Tiene cuenta y puede entrar a la app.
-              </p>
+              <div className="space-y-3">
+                <p className="flex items-center gap-2 text-sm text-emerald-200">
+                  <Smartphone className="h-4 w-4" aria-hidden="true" /> Tiene cuenta y puede entrar a la app.
+                </p>
+                {canWrite && m.email && (
+                  <InviteButton action={sendAccessLink.bind(null, slug, memberId)} label="Enviarle link para entrar" />
+                )}
+              </div>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-zinc-400">
@@ -340,7 +402,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                 {checkins.data.map((c) => (
                   <li key={c.id} className="flex justify-between gap-2">
                     <span className="tabular-nums text-zinc-300">{fmtDateTime(c.created_at)}</span>
-                    <span className={c.allowed ? 'text-emerald-300' : 'text-red-300'}>{c.allowed ? 'Ingresó' : 'Rechazado'}</span>
+                    <span className={c.allowed ? 'text-emerald-300' : 'text-red-300'}>{c.allowed ? 'Ingresó' : `Rechazado${c.reason && CHECKIN_REASON[c.reason] ? ` · ${CHECKIN_REASON[c.reason]}` : ''}`}</span>
                   </li>
                 ))}
               </ul>
@@ -348,6 +410,15 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
               <p className="text-sm text-zinc-500">Sin entradas registradas.</p>
             )}
           </Card>
+
+          {ctx.can('org.manage') && (
+            <Card title="Eliminar">
+              <DeleteMemberButton
+                action={deleteMember.bind(null, slug, memberId)}
+                name={`${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
+              />
+            </Card>
+          )}
         </div>
       </div>
     </div>

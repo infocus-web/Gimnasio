@@ -3,17 +3,19 @@ import { Plus } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { createSeries, endSeries, updateSeries } from '@/features/admin/schedule-actions'
-import { SeriesForm, SeriesRowForm, WEEKDAYS } from '@/features/admin/ScheduleForms'
+import { SeriesForm, SeriesRowForm } from '@/features/admin/ScheduleForms'
+import { WEEKDAYS, fmtDate, todayYMD } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Grilla semanal' }
 
 export default async function GridPage({ params }: PageProps<'/[org]/admin/agenda/grilla'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('schedule.manage')) return <p className="text-sm text-zinc-400">No tenés permiso para editar la grilla.</p>
 
   const supabase = await createClient()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayYMD(ctx.org.timezone)
   const [{ data: series }, { data: types }, { data: rooms }, { data: staff }] = await Promise.all([
     supabase
       .from('class_series')
@@ -24,7 +26,8 @@ export default async function GridPage({ params }: PageProps<'/[org]/admin/agend
       .order('start_time'),
     supabase.from('class_types').select('id, name, default_duration_min, default_capacity').eq('org_id', ctx.org.id).eq('active', true).order('name'),
     supabase.from('rooms').select('id, name, capacity').eq('org_id', ctx.org.id).eq('active', true).order('name'),
-    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).order('display_name'),
+    // Profesores (y dueño/admin, que también pueden dar clase); recepción no
+    supabase.from('staff').select('id, display_name, role').eq('org_id', ctx.org.id).eq('active', true).neq('role', 'staff').order('display_name'),
   ])
 
   const instructors = (staff ?? []).map((s) => ({ id: s.id, name: s.display_name }))
@@ -76,7 +79,7 @@ export default async function GridPage({ params }: PageProps<'/[org]/admin/agend
                             {s.start_time.slice(0, 5)} · {t?.name}
                           </p>
                           <p className="text-xs text-zinc-500">
-                            {s.duration_min} min{s.valid_until ? ` · hasta ${s.valid_until}` : ''}
+                            {s.duration_min} min{s.valid_until ? ` · hasta ${fmtDate(s.valid_until, ctx.org.timezone)}` : ''}
                           </p>
                         </div>
                       </div>

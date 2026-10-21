@@ -9,6 +9,8 @@ import { markAttendance } from '@/features/admin/coach-actions'
 import { fmtTime } from '@/features/admin/format'
 import { BookForMemberForm, CancelSessionForm } from '@/features/admin/ScheduleForms'
 import { Card } from '@/features/admin/ui'
+import { ActionButton, ConfirmAction } from '@/features/admin/ConfirmAction'
+import { equipmentLabel } from '@/features/admin/equipment'
 
 export const metadata: Metadata = { title: 'Clase' }
 
@@ -23,7 +25,8 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default async function SessionPage({ params }: PageProps<'/[org]/admin/agenda/[sessionId]'>) {
   const { org: slug, sessionId } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const tz = ctx.org.timezone
   const supabase = await createClient()
 
@@ -46,9 +49,14 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
   ])
 
   const active = (roster ?? []).filter((r) => r.status === 'booked' || r.status === 'checked_in')
+  // "No vino" sigue ocupando su lugar (así lo cuentan los reportes): va en la lista principal, no en cancelaciones
+  const noShows = (roster ?? []).filter((r) => r.status === 'no_show')
   const waiting = (roster ?? []).filter((r) => r.status === 'waitlisted').sort((a, b) => (a.waitlist_position ?? 0) - (b.waitlist_position ?? 0))
-  const others = (roster ?? []).filter((r) => !['booked', 'checked_in', 'waitlisted'].includes(r.status!))
+  const others = (roster ?? []).filter((r) => !['booked', 'checked_in', 'no_show', 'waitlisted'].includes(r.status!))
+  const occupied = active.length + noShows.length
   const future = new Date(s.starts_at!).getTime() > Date.now()
+  const notEnded = new Date(s.ends_at!).getTime() > Date.now()
+  const kindLabel = equipmentLabel(s.equipment_kind) || 'Equipo'
   const scheduled = s.status === 'scheduled'
   const canAttend =
     (ctx.can('bookings.manage') || s.instructor_id === ctx.staff.id) &&
@@ -57,13 +65,17 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
   const dateLabel = new Intl.DateTimeFormat('es-AR', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(s.starts_at!))
 
   const Row = ({ r }: { r: NonNullable<typeof roster>[number] }) => (
-    <li className="flex items-center gap-3 py-2.5 text-sm">
+    <li className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
       <span className="min-w-0 flex-1">
         <Link href={(ctx.can('members.read') ? `/${slug}/admin/socios/${r.member_id}` : `/${slug}/admin/alumnos/${r.member_id}`) as Route} className="font-semibold text-white hover:text-[#edcc36]">
           {r.member_name}
         </Link>
         <span className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-          {r.equipment_label && <span>Bici {r.equipment_label}</span>}
+          {r.equipment_label && (
+            <span>
+              {kindLabel} {r.equipment_label}
+            </span>
+          )}
           {r.status === 'waitlisted' && <span>#{r.waitlist_position} en espera</span>}
           {r.source === 'front_desk' && <span>cargado en recepción</span>}
           {r.medical_notes && (
@@ -74,30 +86,38 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
         </span>
       </span>
       {canAttend && ['booked', 'checked_in', 'no_show'].includes(r.status!) ? (
-        <span className="flex gap-1">
-          <form action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'checked_in' ? 'booked' : 'checked_in')}>
-            <button type="submit" aria-pressed={r.status === 'checked_in'} aria-label={`${r.member_name} vino`}
-              className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'checked_in' ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200' : 'border-zinc-700 text-zinc-300 hover:border-emerald-500/50'}`}>
-              <Check className="h-3.5 w-3.5" aria-hidden="true" /> Vino
-            </button>
-          </form>
-          <form action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'no_show' ? 'booked' : 'no_show')}>
-            <button type="submit" aria-pressed={r.status === 'no_show'} aria-label={`${r.member_name} no vino`}
-              className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'no_show' ? 'border-red-500/50 bg-red-500/15 text-red-200' : 'border-zinc-700 text-zinc-300 hover:border-red-500/50'}`}>
-              <UserX className="h-3.5 w-3.5" aria-hidden="true" /> No vino
-            </button>
-          </form>
+        <span className="flex items-start gap-1">
+          <ActionButton
+            action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'checked_in' ? 'booked' : 'checked_in')}
+            ariaPressed={r.status === 'checked_in'}
+            ariaLabel={`${r.member_name} vino`}
+            className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'checked_in' ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200' : 'border-zinc-700 text-zinc-300 hover:border-emerald-500/50'}`}
+          >
+            <Check className="h-3.5 w-3.5" aria-hidden="true" /> Vino
+          </ActionButton>
+          <ActionButton
+            action={markAttendance.bind(null, slug, r.booking_id!, r.status === 'no_show' ? 'booked' : 'no_show')}
+            ariaPressed={r.status === 'no_show'}
+            ariaLabel={`${r.member_name} no vino`}
+            className={`inline-flex min-h-[40px] items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold ${r.status === 'no_show' ? 'border-red-500/50 bg-red-500/15 text-red-200' : 'border-zinc-700 text-zinc-300 hover:border-red-500/50'}`}
+          >
+            <UserX className="h-3.5 w-3.5" aria-hidden="true" /> No vino
+          </ActionButton>
         </span>
       ) : (
         <span className={`text-xs ${STATUS[r.status!]?.cls ?? ''}`}>{STATUS[r.status!]?.label ?? r.status}</span>
       )}
-      {ctx.can('bookings.manage') && future && !canAttend && (r.status === 'booked' || r.status === 'waitlisted') && (
-        <form action={cancelBookingDesk.bind(null, slug, r.booking_id!)}>
-          <button type="submit" aria-label={`Cancelar reserva de ${r.member_name}`}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-800 text-zinc-500 hover:border-red-500/50 hover:text-red-300">
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </form>
+      {ctx.can('bookings.manage') && scheduled && notEnded && (r.status === 'booked' || r.status === 'waitlisted') && (
+        <ConfirmAction
+          action={cancelBookingDesk.bind(null, slug, r.booking_id!)}
+          variant="icon"
+          ariaLabel={`Cancelar reserva de ${r.member_name}`}
+          confirmText={r.status === 'waitlisted' ? `Sale ${r.member_name} de la lista de espera.` : `Se cancela la reserva de ${r.member_name} y se libera el lugar.`}
+          yesLabel="Sí, cancelar"
+          className="flex flex-col items-end gap-1"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </ConfirmAction>
       )}
     </li>
   )
@@ -114,7 +134,8 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
           {fmtTime(s.starts_at!, tz)}–{fmtTime(s.ends_at!, tz)} · {s.instructor_name} · {s.room_name}
         </p>
         <p className="mt-2 text-sm text-zinc-300">
-          <strong className="text-white">{active.length}</strong> de {s.capacity} lugares · {waiting.length} en espera
+          <strong className="text-white">{occupied}</strong> de {s.capacity} lugares · {waiting.length} en espera
+          {noShows.length > 0 && <> · {noShows.length} no {noShows.length === 1 ? 'vino' : 'vinieron'}</>}
         </p>
         {!scheduled && (
           <p className="mt-2 text-sm text-red-300">
@@ -126,9 +147,15 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <Card title="Inscriptos">
-          {active.length || waiting.length || others.length ? (
+          {active.length || noShows.length || waiting.length || others.length ? (
             <div className="space-y-4">
               {active.length > 0 && <ul className="divide-y divide-zinc-900">{active.map((r) => <Row key={r.booking_id} r={r} />)}</ul>}
+              {noShows.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold uppercase text-red-300/80">No vino ({noShows.length})</h3>
+                  <ul className="divide-y divide-zinc-900">{noShows.map((r) => <Row key={r.booking_id} r={r} />)}</ul>
+                </div>
+              )}
               {waiting.length > 0 && (
                 <div>
                   <h3 className="text-xs font-semibold uppercase text-zinc-500">Lista de espera</h3>

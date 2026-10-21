@@ -72,7 +72,8 @@ export function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="block space-y-1" htmlFor={name}>
+    // El input va adentro del label: queda asociado sin depender de ids (con varios formularios en la misma página los ids se repiten)
+    <label className="block space-y-1">
       <span className="text-xs font-medium text-zinc-400">{label}</span>
       {children}
       {error ? (

@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: 'Alumnos' }
 
 export default async function StudentsPage({ params }: PageProps<'/[org]/admin/alumnos'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const manageAll = ctx.can('training.manage_all')
   if (ctx.staff.role !== 'trainer' && !manageAll) return <p className="text-sm text-zinc-400">Esta sección es para profesores.</p>
 

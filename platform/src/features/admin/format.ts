@@ -78,3 +78,20 @@ export const PLAN_STATE_UI: Record<PlanState, { label: string; className: string
 export function formatMoney(cents: number, currency = 'ARS') {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100)
 }
+
+/** Días de la semana (1 = lunes … 7 = domingo → índice 0…6). En un módulo común: lo usan páginas del servidor y formularios. */
+export const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+/** Motivo de una entrada rechazada (checkins.reason), para mostrar al staff. */
+export const CHECKIN_REASON: Record<string, string> = {
+  NO_ACTIVE_MEMBERSHIP: 'sin plan vigente',
+  IN_GRACE_PERIOD: 'en tolerancia',
+  MEMBER_FROZEN: 'congelado',
+  MEMBER_ARCHIVED: 'dado de baja',
+  PAYMENT_PAST_DUE: 'pago pendiente',
+  MEMBERSHIP_EXPIRED: 'plan vencido',
+  PLAN_WITHOUT_GYM: 'plan sin musculación',
+  RECENT_ENTRY: 'ya había entrado',
+  QR_INVALID: 'QR inválido',
+  QR_EXPIRED_OR_INVALID: 'QR vencido',
+}

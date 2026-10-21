@@ -181,10 +181,12 @@ export type Database = {
       access_devices: {
         Row: {
           active: boolean
+          agent_token_hash: string | null
           attlog_stamp: string | null
           created_at: string
           id: string
           info: Json
+          kiosk_token_hash: string | null
           last_ip: string | null
           last_seen_at: string | null
           location_id: string
@@ -198,10 +200,12 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          agent_token_hash?: string | null
           attlog_stamp?: string | null
           created_at?: string
           id?: string
           info?: Json
+          kiosk_token_hash?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
           location_id: string
@@ -215,10 +219,12 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          agent_token_hash?: string | null
           attlog_stamp?: string | null
           created_at?: string
           id?: string
           info?: Json
+          kiosk_token_hash?: string | null
           last_ip?: string | null
           last_seen_at?: string | null
           location_id?: string
@@ -1308,6 +1314,9 @@ export type Database = {
           last_checkin_at: string | null
           last_name: string
           medical_notes: string | null
+          medical_cert_expires_on: string | null
+          medical_cert_path: string | null
+          medical_cert_uploaded_at: string | null
           org_id: string
           phone: string | null
           photo_url: string | null
@@ -1331,6 +1340,9 @@ export type Database = {
           last_checkin_at?: string | null
           last_name?: string
           medical_notes?: string | null
+          medical_cert_expires_on?: string | null
+          medical_cert_path?: string | null
+          medical_cert_uploaded_at?: string | null
           org_id: string
           phone?: string | null
           photo_url?: string | null
@@ -1354,6 +1366,9 @@ export type Database = {
           last_checkin_at?: string | null
           last_name?: string
           medical_notes?: string | null
+          medical_cert_expires_on?: string | null
+          medical_cert_path?: string | null
+          medical_cert_uploaded_at?: string | null
           org_id?: string
           phone?: string | null
           photo_url?: string | null
@@ -2526,6 +2541,9 @@ export type Database = {
           birth_date: string | null
           created_at: string | null
           credits_remaining: number | null
+          has_medical_cert: boolean | null
+          medical_cert_expires_on: string | null
+          member_number: number | null
           current_period_end: string | null
           document_id: string | null
           email: string | null
@@ -2659,7 +2677,11 @@ export type Database = {
         Args: { p_device: string }
         Returns: undefined
       }
+      access_device_agent_token: { Args: { p_device: string }; Returns: string }
       access_device_delete: { Args: { p_device: string }; Returns: undefined }
+      access_device_kiosk_token: { Args: { p_device: string }; Returns: string }
+      access_device_open: { Args: { p_device: string }; Returns: number }
+      member_delete: { Args: { p_member: string }; Returns: Json }
       access_device_query_users: {
         Args: { p_device: string }
         Returns: undefined
@@ -2717,6 +2739,17 @@ export type Database = {
           p_start?: string
         }
         Returns: string
+      }
+      turnstile_scan: { Args: { p_kiosk_token: string; p_qr: string | null; p_unlock?: number }; Returns: Json }
+      agent_call: {
+        Args: {
+          p_action: string
+          p_ip: string
+          p_payload?: Json
+          p_sn: string
+          p_token: string
+        }
+        Returns: Json
       }
       adms_hello: {
         Args: { p_info?: Json; p_ip: string; p_sn: string }

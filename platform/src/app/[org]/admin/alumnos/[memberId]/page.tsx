@@ -13,7 +13,8 @@ export const metadata: Metadata = { title: 'Alumno' }
 
 export default async function StudentPage({ params }: PageProps<'/[org]/admin/alumnos/[memberId]'>) {
   const { org: slug, memberId } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
 
   const { data: s } = await supabase

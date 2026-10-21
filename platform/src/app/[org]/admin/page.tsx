@@ -3,13 +3,14 @@ import type { Metadata, Route } from 'next'
 import { Users, ScanLine, AlarmClock, UserX, UserPlus, ArrowRight } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { fmtDate, fmtTime, startOfToday } from '@/features/admin/format'
+import { CHECKIN_REASON, fmtDate, fmtTime, startOfToday } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Panel' }
 
 export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
   const orgId = ctx.org.id
   const canMembers = ctx.can('members.read')
@@ -26,7 +27,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
           .from('member_directory')
           .select('id, first_name, last_name, plan_name, current_period_end', { count: 'exact' })
           .eq('org_id', orgId)
-          .eq('is_payer', true)
+          .eq('status', 'active')
           .gte('current_period_end', now.toISOString())
           .lte('current_period_end', in7)
           .order('current_period_end')
@@ -114,9 +115,11 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
             <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-300">Últimas entradas</h2>
-                <Link href={`/${slug}/admin/recepcion` as Route} className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
-                  Recepción <ArrowRight className="h-3 w-3" aria-hidden="true" />
-                </Link>
+                {ctx.can('checkins.manage') && (
+                  <Link href={`/${slug}/admin/recepcion` as Route} className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
+                    Recepción <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                  </Link>
+                )}
               </div>
               {recent?.data?.length ? (
                 <ul className="divide-y divide-zinc-900">
@@ -126,7 +129,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
                       <li key={c.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                         <span className="truncate text-zinc-100">{m ? `${m.first_name} ${m.last_name}` : 'Socio'}</span>
                         <span className={`shrink-0 text-xs tabular-nums ${c.allowed ? 'text-emerald-300' : 'text-red-300'}`}>
-                          {c.allowed ? '' : 'Rechazado · '}
+                          {c.allowed ? '' : `Rechazado${c.reason && CHECKIN_REASON[c.reason] ? ` (${CHECKIN_REASON[c.reason]})` : ''} · `}
                           {fmtTime(c.created_at)}
                         </span>
                       </li>

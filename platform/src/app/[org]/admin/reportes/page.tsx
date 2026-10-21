@@ -3,6 +3,7 @@ import type { Metadata, Route } from 'next'
 import { MessageCircle } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeArPhone, whatsappLink } from '@/features/admin/whatsapp'
 import { fmtDate, formatMoney } from '@/features/admin/format'
 import { CheckinHeatmap, MonthlyBars } from '@/features/admin/ReportCharts'
 import { Card } from '@/features/admin/ui'
@@ -23,7 +24,8 @@ interface Report {
 
 export default async function ReportsPage({ params }: PageProps<'/[org]/admin/reportes'>) {
   const { org: slug } = await params
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   if (!ctx.can('reports.read')) return <p className="text-sm text-zinc-400">No tenés permiso para ver reportes.</p>
 
   const supabase = await createClient()
@@ -114,9 +116,9 @@ export default async function ReportsPage({ params }: PageProps<'/[org]/admin/re
         {r.at_risk.length ? (
           <ul className="divide-y divide-zinc-900">
             {r.at_risk.map((m) => {
-              const digits = (m.phone ?? '').replace(/\D/g, '')
-              const wa = digits.length >= 8
-                ? `https://wa.me/${digits.startsWith('54') ? digits : `549${digits.replace(/^0/, '')}`}?text=${encodeURIComponent(`Hola ${m.name.split(' ')[0]}! Te extrañamos en ${ctx.org.name} 💪 ¿Todo bien? Te esperamos esta semana.`)}`
+              const intl = normalizeArPhone(m.phone)
+              const wa = intl
+                ? whatsappLink(intl, `Hola ${m.name.split(' ')[0]}! Te extrañamos en ${ctx.org.name} 💪 ¿Todo bien? Te esperamos esta semana.`)
                 : null
               return (
                 <li key={m.id} className="flex items-center gap-3 py-2.5 text-sm">

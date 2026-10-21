@@ -5,7 +5,8 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { generateSessions } from '@/features/admin/schedule-actions'
 import { fmtTime, startOfToday, todayYMD } from '@/features/admin/format'
-import { GenerateButton, WEEKDAYS } from '@/features/admin/ScheduleForms'
+import { GenerateButton } from '@/features/admin/ScheduleForms'
+import { WEEKDAYS } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Agenda' }
 
@@ -22,7 +23,8 @@ function mondayOf(ymd: string) {
 export default async function AgendaWeek({ params, searchParams }: PageProps<'/[org]/admin/agenda'>) {
   const { org: slug } = await params
   const sp = await searchParams
-  const ctx = (await getAdminContext(slug))!
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const tz = ctx.org.timezone
   const today = todayYMD(tz)
   const monday = mondayOf(typeof sp.semana === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(sp.semana) ? sp.semana : today)

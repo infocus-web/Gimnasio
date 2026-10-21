@@ -119,7 +119,32 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
       <header className="sticky top-0 z-30 border-b border-zinc-900 bg-black/85 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <span className="truncate text-sm font-extrabold text-white">{ctx.org.name}</span>
-          <SignOutButton compact to="/equipo" />
+          {/* Menú de la cuenta en el celular (en la compu está en la barra lateral) */}
+          <details className="relative">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-zinc-800 px-3 text-xs text-zinc-300 [&::-webkit-details-marker]:hidden">
+              <span className="max-w-[9rem] truncate font-semibold text-white">{ctx.staff.display_name}</span>
+              <span className="text-zinc-500">▾</span>
+            </summary>
+            <div className="absolute right-0 top-full z-40 mt-2 w-60 space-y-1 rounded-2xl border border-zinc-800 bg-zinc-950 p-2 shadow-xl">
+              <p className="px-2 pb-1 pt-1 text-xs text-zinc-500">{ROLE_LABELS[ctx.staff.role] ?? ctx.staff.role}</p>
+              <Link
+                href={`/${slug}` as Route}
+                target="_blank"
+                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-300 hover:bg-zinc-900"
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" /> Ver la web pública
+              </Link>
+              <Link
+                href={`/equipo/clave?next=${encodeURIComponent(base)}` as Route}
+                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-300 hover:bg-zinc-900"
+              >
+                <KeyRound className="h-4 w-4" aria-hidden="true" /> Cambiar mi contraseña
+              </Link>
+              <div className="border-t border-zinc-900 pt-2">
+                <SignOutButton compact to="/equipo" />
+              </div>
+            </div>
+          </details>
         </div>
         <AdminNav items={items} variant="bar" />
       </header>
