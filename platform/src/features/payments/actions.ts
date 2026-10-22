@@ -12,6 +12,7 @@ import { getMemberContext } from '@/lib/member-context'
 import { createPreference, mpConfigured, publicSiteUrl } from './mercadopago'
 import { payMessage } from './errors'
 import { SALE_METHODS, toCents } from './money'
+import { PRODUCT_BUCKET } from './product-image'
 
 interface IntentInfo {
   intent_id: string
@@ -123,16 +124,72 @@ export async function saveProduct(slug: string, productId: string | null, _prev:
     if (!Number.isInteger(n) || n < 0 || n > 100000) fe.stock = 'Cantidad entera, 0 o más (vacío = sin control de stock)'
     else stock = n
   }
-  if (Object.keys(fe).length) return { fieldErrors: fe }
+  // Foto: JPEG cuadrado que arma el navegador (data URL), o pedido de quitarla
+  const imageData = String(form.get('image') ?? '')
+  let imageBytes: Buffer | null = null
+  if (imageData) {
+    const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(imageData)
+    if (!m?.[1]) fe.image = 'La foto no tiene un formato válido.'
+    else {
+      imageBytes = Buffer.from(m[1], 'base64')
+      if (imageBytes.length > 1_000_000) fe.image = 'La foto es demasiado pesada.'
+    }
+  }
+  // Costo: solo dueño/administrador (la base además lo bloquea para el resto)
+  const isAdmin = ctx.staff.role === 'owner' || ctx.staff.role === 'admin'
+  const costRaw = form.has('cost') && isAdmin ? String(form.get('cost') ?? '').trim() : null
+  let cost: number | null = null
+  if (costRaw) {
+    cost = toCents(costRaw)
+    if (cost === null) fe.cost = 'Costo inválido'
+  }
+  if (Object.keys(fe).length) return fe.image && Object.keys(fe).length === 1 ? { message: fe.image } : { fieldErrors: fe }
+  const removeImage = !imageBytes && form.get('removeImage') === '1'
 
   const row = { name, price_cents: price!, stock, active: raw.active === 'on', sort: Number(raw.sort) || 0 }
   const supabase = await createClient()
   const res = productId
-    ? await supabase.from('products').update(row).eq('id', productId).eq('org_id', ctx.org.id).select('id').single()
-    : await supabase.from('products').insert({ ...row, org_id: ctx.org.id }).select('id').single()
+    ? await supabase.from('products').update(row).eq('id', productId).eq('org_id', ctx.org.id).select('id, image_path').single()
+    : await supabase.from('products').insert({ ...row, org_id: ctx.org.id }).select('id, image_path').single()
   if (res.error) return { message: payMessage(res.error) }
+  const saved = res.data
+  const verb = productId ? 'Producto actualizado' : 'Producto agregado'
+
+  let note = ''
+  if (costRaw !== null) {
+    const r = cost === null
+      ? await supabase.from('product_costs').delete().eq('product_id', saved.id).eq('org_id', ctx.org.id)
+      : await supabase.from('product_costs').upsert({ product_id: saved.id, org_id: ctx.org.id, cost_cents: cost })
+    if (r.error) {
+      console.error('[saveProduct] cost', r.error.message)
+      note = ', pero no se pudo guardar el costo'
+    }
+  }
+
+  let photoNote = note
+  if (imageBytes) {
+    const path = `${ctx.org.id}/${saved.id}-${Date.now()}.jpg`
+    const up = await supabase.storage.from(PRODUCT_BUCKET).upload(path, imageBytes, { contentType: 'image/jpeg', cacheControl: '31536000' })
+    if (up.error) {
+      console.error('[saveProduct] upload', up.error.message)
+      photoNote = note || ', pero no se pudo guardar la foto. Probá de nuevo'
+    } else {
+      const { error } = await supabase.from('products').update({ image_path: path }).eq('id', saved.id).eq('org_id', ctx.org.id)
+      if (error) {
+        await supabase.storage.from(PRODUCT_BUCKET).remove([path])
+        photoNote = note || ', pero no se pudo guardar la foto. Probá de nuevo'
+      } else if (saved.image_path) {
+        await supabase.storage.from(PRODUCT_BUCKET).remove([saved.image_path])
+      }
+    }
+  } else if (removeImage && saved.image_path) {
+    const { error } = await supabase.from('products').update({ image_path: null }).eq('id', saved.id).eq('org_id', ctx.org.id)
+    if (!error) await supabase.storage.from(PRODUCT_BUCKET).remove([saved.image_path])
+  }
+
   revalidatePath(`/${slug}/admin/pagos`, 'layout')
-  return { ok: true, message: productId ? 'Producto actualizado.' : 'Producto agregado.' }
+  // ok aunque falle la foto: el producto ya se guardó (así no se carga dos veces)
+  return { ok: true, message: `${verb}${photoNote}.` }
 }
 
 // ---------------------------------------------------------------------

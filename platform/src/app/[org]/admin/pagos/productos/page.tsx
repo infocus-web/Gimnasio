@@ -5,6 +5,9 @@ import { formatMoney } from '@/features/admin/format'
 import { Card } from '@/features/admin/ui'
 import { saveProduct } from '@/features/payments/actions'
 import { ProductForm } from '@/features/payments/ProductForm'
+import { productImageUrl } from '@/features/payments/product-image'
+import { fmtPct, profitOf } from '@/features/payments/profit'
+import { Package } from 'lucide-react'
 
 export const metadata: Metadata = { title: 'Productos' }
 
@@ -16,21 +19,27 @@ export default async function ProductosPage({ params }: { params: Promise<{ org:
   if (!ctx) return null
   if (!ctx.can('billing.read')) return <p className="text-sm text-zinc-400">No tenés permiso.</p>
   const canEdit = ctx.can('billing.write')
+  const isAdmin = ctx.staff.role === 'owner' || ctx.staff.role === 'admin'
 
   const supabase = await createClient()
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, price_cents, stock, active, sort')
+    .select('id, name, price_cents, stock, active, sort, image_path')
     .eq('org_id', ctx.org.id)
     .order('active', { ascending: false })
     .order('sort')
     .order('name')
+  // Costos: solo dueño/administrador (la base no se los da a nadie más)
+  const { data: costs } = isAdmin
+    ? await supabase.from('product_costs').select('product_id, cost_cents').eq('org_id', ctx.org.id)
+    : { data: [] as { product_id: string; cost_cents: number }[] }
+  const costOf = new Map((costs ?? []).map((c) => [c.product_id, Number(c.cost_cents)]))
 
   return (
     <div className="space-y-5">
       {canEdit && (
         <Card title="Agregar producto">
-          <ProductForm action={saveProduct.bind(null, slug, null)} submitLabel="Agregar" />
+          <ProductForm action={saveProduct.bind(null, slug, null)} submitLabel="Agregar" showCost={isAdmin} />
         </Card>
       )}
       <section className="space-y-2">
@@ -39,10 +48,21 @@ export default async function ProductosPage({ params }: { params: Promise<{ org:
         </h2>
         {products?.length ? (
           <ul className="space-y-2">
-            {products.map((p) => (
+            {products.map((p) => {
+              const cost = costOf.get(p.id)
+              const calc = cost !== undefined ? profitOf(Number(p.price_cents), cost) : null
+              return (
               <li key={p.id} className={`rounded-2xl border border-zinc-800/80 bg-zinc-950 ${p.active ? '' : 'opacity-60'}`}>
                 <details className="group">
                   <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-zinc-800 bg-black text-zinc-600">
+                      {p.image_path ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={productImageUrl(p.image_path)!} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <Package className="h-5 w-5" aria-hidden="true" />
+                      )}
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold text-white">{p.name}</span>
                       <span className="block text-xs text-zinc-500">
@@ -50,6 +70,20 @@ export default async function ProductosPage({ params }: { params: Promise<{ org:
                         {!p.active && ' · desactivado'}
                       </span>
                     </span>
+                    {isAdmin && (
+                      <span className="hidden text-right text-xs sm:block">
+                        {calc ? (
+                          <>
+                            <span className={`block font-semibold tabular-nums ${calc.profit < 0 ? 'text-red-300' : 'text-emerald-300'}`}>
+                              {formatMoney(calc.profit)} c/u
+                            </span>
+                            <span className="block text-zinc-500">margen {fmtPct(calc.margin, 0)}</span>
+                          </>
+                        ) : (
+                          <span className="text-zinc-600">sin costo</span>
+                        )}
+                      </span>
+                    )}
                     <span className="font-bold tabular-nums text-white">{formatMoney(Number(p.price_cents))}</span>
                     {canEdit && <span className="text-xs text-[#edcc36] group-open:hidden">Editar</span>}
                   </summary>
@@ -57,13 +91,15 @@ export default async function ProductosPage({ params }: { params: Promise<{ org:
                     <div className="border-t border-zinc-900 p-4">
                       <ProductForm
                         action={saveProduct.bind(null, slug, p.id)}
-                        initial={{ name: p.name, price: asPrice(Number(p.price_cents)), stock: p.stock === null ? '' : String(p.stock), active: p.active, sort: p.sort }}
+                        initial={{ name: p.name, price: asPrice(Number(p.price_cents)), stock: p.stock === null ? '' : String(p.stock), active: p.active, sort: p.sort, imageUrl: productImageUrl(p.image_path), cost: cost !== undefined ? asPrice(cost) : '' }}
+                        showCost={isAdmin}
                       />
                     </div>
                   )}
                 </details>
               </li>
-            ))}
+              )
+            })}
           </ul>
         ) : (
           <p className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">

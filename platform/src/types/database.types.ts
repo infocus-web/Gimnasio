@@ -196,11 +196,24 @@ export type Database = {
         Update: { email_sent_at?: string | null }
         Relationships: []
       }
+      product_costs: {
+        Row: { cost_cents: number; org_id: string; product_id: string; updated_at: string; updated_by: string | null }
+        Insert: { cost_cents: number; org_id: string; product_id: string }
+        Update: { cost_cents?: number }
+        Relationships: []
+      }
+      sale_item_costs: {
+        Row: { org_id: string; sale_item_id: number; unit_cost_cents: number }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean
           created_at: string
           id: string
+          image_path: string | null
           name: string
           org_id: string
           price_cents: number
@@ -211,6 +224,7 @@ export type Database = {
         Insert: {
           active?: boolean
           id?: string
+          image_path?: string | null
           name: string
           org_id: string
           price_cents: number
@@ -219,6 +233,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          image_path?: string | null
           name?: string
           price_cents?: number
           sort?: number
@@ -3148,6 +3163,19 @@ export type Database = {
           p_status_detail: string
         }
         Returns: Json
+      }
+      product_profit_report: {
+        Args: { p_from: string; p_org: string; p_to: string }
+        Returns: {
+          cost_cents: number
+          name: string
+          product_id: string | null
+          profit_cents: number
+          revenue_cents: number
+          revenue_no_cost: number
+          units: number
+          units_no_cost: number
+        }[]
       }
       record_sale: {
         Args: {
