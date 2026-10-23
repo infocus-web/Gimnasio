@@ -3,9 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowRight, CalendarCheck, Clock, Dumbbell, AtSign, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users,
+  ArrowUpRight, AtSign, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users, X,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
+import { WEB_MEDIA, activityImage } from '@/features/public/media'
+import { display, text } from '@/features/public/fonts'
 
 export const revalidate = 300
 
@@ -16,26 +18,30 @@ export async function generateMetadata({ params }: PageProps<'/[org]'>): Promise
   return {
     title: { absolute: `${gym.name} · ${gym.profile.tagline ?? 'Gimnasio'}` },
     description: gym.profile.hero_text,
-    openGraph: { title: gym.name, description: gym.profile.hero_text, images: gym.profile.hero_image ? [gym.profile.hero_image] : [] },
+    openGraph: { title: gym.name, description: gym.profile.hero_text, images: [WEB_MEDIA.heroPoster] },
   }
 }
 
 const NAV = [
-  ['#nosotros', 'Nosotros'],
   ['#actividades', 'Actividades'],
+  ['#app', 'La app'],
   ['#horarios', 'Horarios'],
   ['#planes', 'Planes'],
   ['#contacto', 'Contacto'],
 ] as const
 
-const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] focus-visible:ring-offset-2 focus-visible:ring-offset-black'
+const focus =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-black'
 
-function Kicker({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#edcc36]">{children}</p>
-}
+const btnPrimary = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md bg-brand px-6 text-[15px] font-bold text-black transition-colors hover:bg-white ${focus}`
+const btnGhost = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md border border-white/25 bg-black/30 px-6 text-[15px] font-bold text-white backdrop-blur-sm transition-colors hover:border-brand hover:text-brand ${focus}`
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="mt-2 text-3xl font-extrabold uppercase leading-tight text-white sm:text-4xl">{children}</h2>
+function Heading({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <h2 id={id} className={`font-display text-[clamp(2.5rem,6vw,4.75rem)] font-black uppercase leading-[0.9] text-white ${className}`}>
+      {children}
+    </h2>
+  )
 }
 
 export default async function GymHome({ params }: PageProps<'/[org]'>) {
@@ -48,49 +54,47 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const loginHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/pase`)}` as Route
   const [first, ...rest] = gym.name.split(' ')
   const whatsapp = p.whatsapp ? `https://wa.me/${p.whatsapp.replace(/\D/g, '')}` : null
+  const tel = p.phone ? `tel:${p.phone.replace(/[^\d+]/g, '')}` : null
   const mapQuery = gym.address ? `${gym.name}, ${gym.address}` : p.geo ? `${p.geo.lat},${p.geo.lng}` : null
-  // Google Maps embebido sin API key (no requiere cuenta ni costo)
   const mapEmbed = mapQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&hl=es&output=embed` : null
   const mapsHref = p.maps_url ?? (mapQuery ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}` : null)
   const scheduleDays = [1, 2, 3, 4, 5, 6, 7].filter((d) => gym.schedule.some((s) => s.weekday === d))
+  const hoursText = p.hours_text ?? gym.opening_hours.map((h) => `${DAY_NAMES[h.weekday - 1]} ${h.open}–${h.close}`).join(', ')
+  const shortAddress = gym.address?.split(',').slice(0, 2).join(',')
+  const contactHref = whatsapp ?? tel ?? '#contacto'
+  const gallery = WEB_MEDIA.gallery
 
   return (
-    <div className="min-h-dvh bg-[#09090b] text-zinc-100">
+    <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
       {/* ---------- Header ---------- */}
-      <header className="sticky top-0 z-40 border-b border-white/5 bg-black/70 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <a href="#inicio" className={`flex min-w-0 items-center gap-2.5 rounded-lg ${focus}`}>
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#edcc36]/40 bg-[#edcc36]/10">
-              <Dumbbell className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
-            </span>
-            <span className="truncate text-sm font-extrabold uppercase tracking-tight sm:text-base">
-              {first} <span className="text-[#edcc36]">{rest.join(' ')}</span>
-            </span>
+      <header className="absolute inset-x-0 top-0 z-40">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
+          <a href="#inicio" className={`flex min-w-0 items-baseline gap-1.5 rounded ${focus}`} aria-label={`${gym.name}, inicio`}>
+            <span className="font-display text-2xl font-black uppercase leading-none tracking-tight text-white sm:text-3xl">{first}</span>
+            <span className="hidden truncate font-display text-lg font-bold uppercase leading-none text-brand min-[420px]:inline sm:text-xl">{rest.join(' ')}</span>
           </a>
-          <nav aria-label="Secciones" className="hidden items-center gap-6 md:flex">
+          <nav aria-label="Secciones" className="hidden items-center gap-7 lg:flex">
             {NAV.map(([href, label]) => (
-              <a key={href} href={href} className={`rounded text-sm font-semibold text-zinc-300 hover:text-[#edcc36] ${focus}`}>
+              <a key={href} href={href} className={`rounded text-[15px] font-semibold text-white/80 transition-colors hover:text-brand ${focus}`}>
                 {label}
               </a>
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Link
-              href={loginHref}
-              className={`inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black shadow-[0_0_20px_-4px_rgba(237,204,54,0.5)] hover:bg-white ${focus}`}
-            >
-              <QrCode className="h-4 w-4" aria-hidden="true" /> Ingresar
+            <Link href={loginHref} className={`${btnPrimary} min-h-[44px] whitespace-nowrap px-4 text-sm`}>
+              <QrCode className="h-4 w-4" aria-hidden="true" /> Soy socio
             </Link>
-            <details className="relative md:hidden">
+            <details className="group relative lg:hidden">
               <summary
                 aria-label="Abrir menú"
-                className={`grid h-11 w-11 cursor-pointer list-none place-items-center rounded-xl border border-zinc-800 ${focus}`}
+                className={`grid h-11 w-11 cursor-pointer list-none place-items-center rounded-md border border-white/20 bg-black/40 backdrop-blur-sm [&::-webkit-details-marker]:hidden ${focus}`}
               >
-                <Menu className="h-5 w-5" aria-hidden="true" />
+                <Menu className="h-5 w-5 group-open:hidden" aria-hidden="true" />
+                <X className="hidden h-5 w-5 group-open:block" aria-hidden="true" />
               </summary>
-              <nav aria-label="Secciones" className="absolute right-0 mt-2 w-48 rounded-2xl border border-zinc-800 bg-black p-2 shadow-xl">
+              <nav aria-label="Secciones" className="absolute right-0 mt-2 w-56 rounded-lg border border-white/10 bg-[#141414] p-2 shadow-2xl">
                 {NAV.map(([href, label]) => (
-                  <a key={href} href={href} className="block rounded-xl px-3 py-3 text-sm font-semibold text-zinc-200 hover:bg-zinc-900">
+                  <a key={href} href={href} className="block rounded-md px-3 py-3 text-[15px] font-semibold text-white hover:bg-white/5 hover:text-brand">
                     {label}
                   </a>
                 ))}
@@ -101,287 +105,340 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
       </header>
 
       <main>
-        {/* ---------- Hero ---------- */}
-        <section id="inicio" className="relative isolate overflow-hidden">
-          {p.hero_image && (
-            <Image src={p.hero_image} alt="" fill priority sizes="100vw" className="-z-20 object-cover object-[70%_30%] opacity-75" />
-          )}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/20" aria-hidden="true" />
-          <div className="cyber-grid absolute inset-0 -z-10" aria-hidden="true" />
-          <div className="mx-auto flex min-h-[78svh] max-w-6xl flex-col justify-center px-4 py-20 sm:px-6">
-            <div className="max-w-2xl space-y-6">
-              <span
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                  status.open ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300' : 'border-zinc-700 bg-black/60 text-zinc-300'
-                }`}
-              >
-                <span className={`h-2 w-2 rounded-full ${status.open ? 'animate-pulse-subtle bg-emerald-400' : 'bg-zinc-500'}`} aria-hidden="true" />
-                {status.label}
-              </span>
-              {p.hero_kicker && <Kicker>{p.hero_kicker}</Kicker>}
-              <h1 className="text-4xl font-black uppercase leading-[0.95] tracking-tight text-white [overflow-wrap:anywhere] sm:text-6xl lg:text-7xl">
-                {p.tagline ?? gym.name}
-              </h1>
-              {p.hero_text && <p className="max-w-xl text-lg leading-relaxed text-zinc-300">{p.hero_text}</p>}
+        {/* ---------- Hero con video ---------- */}
+        <section id="inicio" className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
+          <video
+            className="hero-video absolute inset-0 -z-20 h-full w-full object-cover object-[60%_center]"
+            src={WEB_MEDIA.heroVideo}
+            poster={WEB_MEDIA.heroPoster}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
+          <Image src={WEB_MEDIA.heroPoster} alt="" fill priority sizes="100vw" className="hero-poster -z-20 hidden object-cover object-[60%_center]" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.5)_40%,rgba(0,0,0,0.1)_100%)]" aria-hidden="true" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.6),transparent_65%)]" aria-hidden="true" />
+
+          <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end px-4 pb-10 pt-32 sm:px-8 sm:pb-14">
+            <p className="flex items-center gap-2 text-sm font-semibold text-white/85">
+              <span className={`h-2 w-2 rounded-full ${status.open ? 'animate-pulse-subtle bg-emerald-400' : 'bg-white/40'}`} aria-hidden="true" />
+              {status.label}
+            </p>
+            <h1 className="hero-title mt-4 max-w-5xl font-display text-[clamp(2.6rem,10.4vw,10.5rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.01em] text-white">
+              {p.tagline ?? gym.name}
+            </h1>
+            <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              {p.hero_text && <p className="max-w-md text-lg leading-relaxed text-white/80">{p.hero_text}</p>}
               <div className="flex flex-col gap-3 sm:flex-row">
-                <a
-                  href="#planes"
-                  className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-6 font-bold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.45)] hover:bg-white ${focus}`}
-                >
-                  Ver planes y precios <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                <a href="#planes" className={btnPrimary}>
+                  Ver planes y precios
                 </a>
-                <Link
-                  href={loginHref}
-                  className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl border border-[#edcc36]/50 bg-black/50 px-6 font-bold text-[#edcc36] hover:bg-[#edcc36]/10 ${focus}`}
-                >
-                  <QrCode className="h-4 w-4" aria-hidden="true" /> Ya soy socio
-                </Link>
+                <a href={contactHref} target={whatsapp ? '_blank' : undefined} rel={whatsapp ? 'noreferrer' : undefined} className={btnGhost}>
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" /> Consultar
+                </a>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* ---------- App ---------- */}
-        <section aria-labelledby="app-title" className="border-y border-white/5 bg-black">
-          <h2 id="app-title" className="sr-only">Tu gimnasio en el celular</h2>
-          <div className="mx-auto grid max-w-6xl gap-4 px-4 py-10 sm:grid-cols-3 sm:px-6">
-            {[
-              { Icon: QrCode, title: 'Entrás con tu celular', text: 'Mostrás tu pase QR en recepción. El código cambia cada 30 segundos.' },
-              { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario y, en spinning, también tu bici.' },
-              { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones.' },
-            ].map(({ Icon, title, text }) => (
-              <div key={title} className="glass-panel rounded-2xl p-5">
-                <Icon className="h-6 w-6 text-[#edcc36]" aria-hidden="true" />
-                <h3 className="mt-3 font-bold text-white">{title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-zinc-400">{text}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ---------- Nosotros ---------- */}
-        <section id="nosotros" className="mx-auto grid max-w-6xl scroll-mt-20 items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <div className="grid grid-cols-5 gap-3">
-            {(p.about_images ?? []).slice(0, 2).map((src, i) => (
-              <div
-                key={src}
-                className={`relative overflow-hidden rounded-2xl border border-[#edcc36]/20 ${i === 0 ? 'col-span-3 aspect-[3/4]' : 'col-span-2 mt-12 aspect-[3/5]'}`}
-              >
-                <Image src={src} alt="" fill sizes="(min-width: 1024px) 30vw, 60vw" className="object-cover" />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-5">
-            <Kicker>Nosotros</Kicker>
-            <SectionTitle>{p.about_title ?? gym.name}</SectionTitle>
-            {p.about_text && <p className="leading-relaxed text-zinc-300">{p.about_text}</p>}
-            <ul className="space-y-2 text-sm text-zinc-300">
-              {['Sala de musculación completa', 'Clases grupales toda la semana', 'Rutina personalizada con videos'].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#edcc36]" aria-hidden="true" /> {t}
-                </li>
+          {/* Datos rápidos */}
+          <div className="border-t border-white/10 bg-black/60 backdrop-blur-md">
+            <dl className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/10 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8">
+              {[
+                { Icon: MapPin, label: 'Dónde', value: shortAddress ?? 'Pilar' },
+                { Icon: Clock, label: 'Horario', value: hoursText },
+                { Icon: CalendarCheck, label: 'Ingreso', value: 'Sin matrícula: pagás el mes y entrenás' },
+              ].map(({ Icon, label, value }) => (
+                <div key={label} className="flex items-start gap-3 py-4 sm:px-6 sm:first:pl-0">
+                  <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                  <div>
+                    <dt className="text-xs font-semibold text-white/50">{label}</dt>
+                    <dd className="text-[15px] font-semibold text-white">{value}</dd>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </dl>
           </div>
         </section>
 
         {/* ---------- Actividades ---------- */}
         {gym.activities.length > 0 && (
-          <section id="actividades" className="scroll-mt-20 bg-black py-20">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
-              <Kicker>Actividades</Kicker>
-              <SectionTitle>Elegí cómo entrenar</SectionTitle>
-              <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {gym.activities.map((a) => (
-                  <article key={a.name} className="group relative isolate flex aspect-[4/3] flex-col justify-end overflow-hidden rounded-3xl border border-white/10 p-6">
-                    {a.image_url && (
-                      <Image src={a.image_url} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="-z-20 object-cover transition-transform duration-500 group-hover:scale-105" />
-                    )}
-                    <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/60 to-transparent" aria-hidden="true" />
-                    <h3 className="text-2xl font-extrabold uppercase text-white">{a.name}</h3>
-                    {a.description && <p className="mt-1 text-sm text-zinc-300">{a.description}</p>}
-                  </article>
-                ))}
+          <section id="actividades" aria-labelledby="act-title" className="scroll-mt-4 py-24 sm:py-32">
+            <div className="mx-auto max-w-7xl px-4 sm:px-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <Heading id="act-title">Elegí cómo<br />entrenar</Heading>
+                <p className="max-w-sm text-white/65">Sala completa, clases grupales todos los días y profes que corrigen tu técnica.</p>
+              </div>
+              <div className="mt-12 flex flex-col gap-3 md:h-[560px] md:flex-row">
+                {gym.activities.map((a) => {
+                  const img = activityImage(a.name, a.image_url)
+                  return (
+                    <article
+                      key={a.name}
+                      className="activity-panel group relative isolate flex min-h-[380px] flex-1 flex-col justify-end overflow-hidden rounded-lg p-6 sm:p-8 md:min-h-0"
+                    >
+                      {img && (
+                        <Image
+                          src={img}
+                          alt=""
+                          fill
+                          sizes="(min-width: 768px) 50vw, 100vw"
+                          className="-z-20 object-cover grayscale-[35%] transition-[filter,transform] duration-700 group-hover:scale-[1.03] group-hover:grayscale-0"
+                        />
+                      )}
+                      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/40 to-transparent" aria-hidden="true" />
+                      <span className="mb-4 h-1 w-10 bg-brand" style={{ backgroundColor: a.color || undefined }} aria-hidden="true" />
+                      <h3 className="font-display text-5xl font-black uppercase leading-none text-white sm:text-6xl">{a.name}</h3>
+                      {a.description && <p className="mt-3 max-w-xs text-[15px] text-white/75">{a.description}</p>}
+                    </article>
+                  )
+                })}
               </div>
             </div>
           </section>
         )}
 
-        {/* ---------- Horarios ---------- */}
-        <section id="horarios" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
-          <Kicker>Horarios</Kicker>
-          <SectionTitle>Grilla de clases</SectionTitle>
-          <p className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
-            <Clock className="h-4 w-4 text-[#edcc36]" aria-hidden="true" />
-            Gimnasio abierto: {p.hours_text ?? gym.opening_hours.map((h) => `${DAY_NAMES[h.weekday - 1]} ${h.open}–${h.close}`).join(' · ')}
-          </p>
-          {scheduleDays.length === 0 ? (
-            <p className="mt-8 text-zinc-400">Pronto publicamos la grilla de clases.</p>
-          ) : (
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              {scheduleDays.map((d) => (
-                <div key={d} className="glass-panel rounded-2xl p-4">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#edcc36]">{DAY_NAMES[d - 1]}</h3>
-                  <ul className="mt-3 space-y-2">
-                    {gym.schedule
-                      .filter((s) => s.weekday === d)
-                      .map((s) => (
-                        <li key={`${s.start}-${s.activity}`} className="rounded-xl border border-zinc-800 bg-black/60 p-3">
-                          <p className="text-xs font-semibold tabular-nums text-zinc-400">
-                            {s.start} – {s.end}
-                          </p>
-                          <p className="mt-0.5 flex items-center gap-2 font-bold text-white">
-                            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: s.color }} aria-hidden="true" />
-                            {s.activity}
-                          </p>
-                          <p className="text-xs text-zinc-500">{s.room}</p>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ))}
+        {/* ---------- La app ---------- */}
+        <section id="app" aria-labelledby="app-title" className="scroll-mt-4 bg-[#141414] py-24 sm:py-32">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-8 lg:grid-cols-2 lg:gap-20">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-lg lg:order-2">
+              <Image src={WEB_MEDIA.app} alt="Socia mirando su rutina en el celular en la sala" fill sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
             </div>
-          )}
+            <div>
+              <Heading id="app-title">Tu gimnasio<br />en el celular</Heading>
+              <p className="mt-5 max-w-md text-lg text-white/70">Cada socio tiene su cuenta: rutina, clases y pagos en un solo lugar.</p>
+              <ul className="mt-10 space-y-7">
+                {[
+                  { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones serie por serie.' },
+                  { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario y, en spinning, también tu bici.' },
+                  { Icon: QrCode, title: 'Pagás y ves tu plan', text: 'Cuándo vence, qué incluye y tus pagos, sin preguntar en recepción.' },
+                ].map(({ Icon, title, text: t }) => (
+                  <li key={title} className="flex gap-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-brand text-black">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{title}</h3>
+                      <p className="mt-1 text-white/65">{t}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <Link href={loginHref} className={`${btnPrimary} mt-10`}>
+                Entrar a la app <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- Nosotros ---------- */}
+        <section id="nosotros" aria-labelledby="about-title" className="scroll-mt-4 py-24 sm:py-32">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-8 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <Heading id="about-title" className="text-[clamp(2.25rem,4.6vw,3.75rem)]">
+                {p.about_title ?? gym.name}
+              </Heading>
+              {p.about_text && <p className="mt-6 text-lg leading-relaxed text-white/70">{p.about_text}</p>}
+              <ul className="mt-8 grid gap-3 text-[15px] font-semibold text-white">
+                {['Sala de musculación completa', 'Clases grupales toda la semana', 'Rutina personalizada con seguimiento'].map((t) => (
+                  <li key={t} className="flex items-center gap-3 border-b border-white/10 pb-3">
+                    <span className="h-2 w-2 rotate-45 bg-brand" aria-hidden="true" /> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="grid grid-cols-12 gap-3 lg:col-span-7">
+              <div className="relative col-span-7 aspect-[3/4] overflow-hidden rounded-lg">
+                <Image src={WEB_MEDIA.about[0]} alt="Profe preparando a una alumna antes de entrenar" fill sizes="(min-width: 1024px) 32vw, 58vw" className="object-cover" />
+              </div>
+              <div className="relative col-span-5 mt-16 aspect-[3/5] overflow-hidden rounded-lg">
+                <Image src={WEB_MEDIA.about[1]} alt="Banco y barra en la sala de musculación" fill sizes="(min-width: 1024px) 24vw, 42vw" className="object-cover" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- Horarios ---------- */}
+        <section id="horarios" aria-labelledby="sched-title" className="scroll-mt-4 border-y border-white/10 bg-[#0e0e0e] py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <Heading id="sched-title">Grilla<br />de clases</Heading>
+              <p className="flex items-center gap-2 text-white/65">
+                <Clock className="h-4 w-4 text-brand" aria-hidden="true" /> Gimnasio abierto: {hoursText}
+              </p>
+            </div>
+            {scheduleDays.length === 0 ? (
+              <p className="mt-10 text-white/60">Pronto publicamos la grilla de clases. Consultanos por los horarios.</p>
+            ) : (
+              <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                {scheduleDays.map((d) => (
+                  <div key={d} className="bg-[#0e0e0e] p-4">
+                    <h3 className="font-display text-2xl font-extrabold uppercase text-white">{DAY_NAMES[d - 1]}</h3>
+                    <ul className="mt-4 space-y-2">
+                      {gym.schedule
+                        .filter((s) => s.weekday === d)
+                        .map((s) => (
+                          <li key={`${s.start}-${s.activity}`} className="border-l-2 py-1 pl-3" style={{ borderColor: s.color }}>
+                            <p className="text-sm font-semibold tabular-nums text-white/55">
+                              {s.start}–{s.end}
+                            </p>
+                            <p className="font-bold text-white">{s.activity}</p>
+                            <p className="text-xs text-white/45">{s.room}</p>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* ---------- Planes ---------- */}
-        <section id="planes" className="scroll-mt-20 bg-black py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <Kicker>Planes</Kicker>
-            <SectionTitle>Sin matrícula, pagás y entrenás</SectionTitle>
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {gym.plans.map((plan, i) => {
-                const price = formatPrice(plan)
-                const featured = gym.plans.length >= 3 && i === 0
-                return (
-                  <article
-                    key={plan.name}
-                    className={`flex flex-col rounded-3xl p-6 ${featured ? 'glass-panel-yellow' : 'glass-panel'}`}
-                  >
-                    <h3 className="text-lg font-extrabold uppercase text-white">{plan.name}</h3>
-                    {plan.description && <p className="mt-1 text-sm text-zinc-400">{plan.description}</p>}
-                    <p className="mt-6">
-                      <span className="text-4xl font-black tabular-nums text-white">{price.amount}</span>
-                      <span className="ml-2 text-sm text-zinc-400">{price.period}</span>
-                    </p>
-                    {plan.max_members > 1 && (
-                      <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-300">
-                        <Users className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Hasta {plan.max_members} personas
-                      </p>
-                    )}
-                    <a
-                      href="#contacto"
-                      className={`mt-6 inline-flex min-h-[48px] items-center justify-center rounded-xl font-bold ${
-                        featured ? 'bg-[#edcc36] text-black hover:bg-white' : 'border border-zinc-700 text-white hover:border-[#edcc36] hover:text-[#edcc36]'
-                      } ${focus}`}
-                    >
-                      Quiero este plan
-                    </a>
-                  </article>
-                )
-              })}
+        <section id="planes" aria-labelledby="plans-title" className="scroll-mt-4 py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <Heading id="plans-title">Planes</Heading>
+              <p className="max-w-sm text-white/65">Sin matrícula. Te asociás en recepción con efectivo, transferencia o tarjeta, o pagás desde la app.</p>
             </div>
-            <p className="mt-4 text-sm text-zinc-500">Te asociás en recepción: efectivo, transferencia o tarjeta.</p>
+            {gym.plans.length === 0 ? (
+              <p className="mt-10 text-white/60">Consultá los planes vigentes en recepción.</p>
+            ) : (
+              <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {gym.plans.map((plan, i) => {
+                  const price = formatPrice(plan)
+                  const featured = gym.plans.length >= 3 && i === 0
+                  return (
+                    <article
+                      key={plan.name}
+                      className={`relative flex flex-col rounded-lg border p-7 ${
+                        featured ? 'border-brand bg-brand text-black' : 'border-white/12 bg-[#141414] text-white'
+                      }`}
+                    >
+                      <h3 className="font-display text-3xl font-extrabold uppercase leading-none">{plan.name}</h3>
+                      {plan.description && <p className={`mt-2 text-[15px] ${featured ? 'text-black/70' : 'text-white/60'}`}>{plan.description}</p>}
+                      <p className="mb-8 mt-8 flex items-baseline gap-2">
+                        <span className="font-display text-6xl font-black tabular-nums leading-none">{price.amount}</span>
+                        <span className={`text-sm font-semibold ${featured ? 'text-black/70' : 'text-white/55'}`}>{price.period}</span>
+                      </p>
+                      {plan.max_members > 1 && (
+                        <p className={`-mt-5 mb-8 flex items-center gap-1.5 text-sm font-semibold ${featured ? 'text-black/80' : 'text-white/75'}`}>
+                          <Users className="h-4 w-4" aria-hidden="true" /> Hasta {plan.max_members} personas
+                        </p>
+                      )}
+                      <a
+                        href={contactHref}
+                        target={whatsapp ? '_blank' : undefined}
+                        rel={whatsapp ? 'noreferrer' : undefined}
+                        className={`mt-auto inline-flex min-h-[50px] items-center justify-center rounded-md font-bold transition-colors ${
+                          featured ? 'bg-black text-white hover:bg-[#222]' : 'border border-white/20 hover:border-brand hover:text-brand'
+                        } ${focus}`}
+                      >
+                        Quiero este plan
+                      </a>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </section>
 
         {/* ---------- Galería ---------- */}
-        {(p.gallery ?? []).length > 0 && (
-          <section aria-labelledby="galeria-title" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <Kicker>Galería</Kicker>
-            <h2 id="galeria-title" className="mt-2 text-3xl font-extrabold uppercase text-white sm:text-4xl">El gimnasio</h2>
-            <div className="mt-10 columns-2 gap-3 md:columns-3 [&>*]:mb-3">
-              {(p.gallery ?? []).map((src) => (
-                <div key={src} className="relative overflow-hidden rounded-2xl border border-white/10">
-                  <Image src={src} alt="" width={1200} height={900} sizes="(min-width: 768px) 33vw, 50vw" className="h-auto w-full object-cover" />
+        <section aria-labelledby="gal-title" className="pb-24 sm:pb-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8">
+            <Heading id="gal-title" className="sr-only">Galería</Heading>
+            <div className="grid auto-rows-[160px] grid-cols-2 gap-3 sm:auto-rows-[220px] md:grid-cols-4">
+              {gallery.map((src, i) => (
+                <div
+                  key={src}
+                  className={`relative overflow-hidden rounded-lg ${i === 0 ? 'col-span-2 row-span-2' : ''} ${i === 3 ? 'col-span-2' : ''}`}
+                >
+                  <Image src={src} alt="" fill sizes={i === 0 ? '(min-width: 768px) 50vw, 100vw' : '(min-width: 768px) 25vw, 50vw'} className="object-cover" />
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+
+        {/* ---------- Llamado ---------- */}
+        <section aria-labelledby="cta-title" className="relative isolate overflow-hidden">
+          <Image src={WEB_MEDIA.cta} alt="" fill sizes="100vw" className="-z-20 object-cover" />
+          <div className="absolute inset-0 -z-10 bg-black/65" aria-hidden="true" />
+          <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-4 py-24 sm:px-8 sm:py-32 lg:flex-row lg:items-end lg:justify-between">
+            <h2 id="cta-title" className="max-w-3xl font-display text-[clamp(3rem,8vw,7rem)] font-black uppercase leading-[0.85] text-white">
+              Vení a entrenar con nosotros
+            </h2>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              {whatsapp && (
+                <a href={whatsapp} target="_blank" rel="noreferrer" className={btnPrimary}>
+                  <MessageCircle className="h-5 w-5" aria-hidden="true" /> Escribinos
+                </a>
+              )}
+              {!whatsapp && tel && (
+                <a href={tel} className={btnPrimary}>
+                  <Phone className="h-5 w-5" aria-hidden="true" /> Llamanos
+                </a>
+              )}
+              {mapsHref && (
+                <a href={mapsHref} target="_blank" rel="noreferrer" className={btnGhost}>
+                  <Navigation className="h-5 w-5" aria-hidden="true" /> Cómo llegar
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* ---------- Contacto + mapa ---------- */}
-        <section id="contacto" className="scroll-mt-20 border-t border-white/5 bg-black py-20">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-5">
-            <div className="space-y-6 lg:col-span-2">
-              <div className="space-y-3">
-                <Kicker>Contacto</Kicker>
-                <SectionTitle>Vení a conocernos</SectionTitle>
-                <p className="text-zinc-300">Acercate a recepción y te armamos tu plan y tu rutina.</p>
-              </div>
-              <ul className="glass-panel space-y-4 rounded-3xl p-6 text-sm">
+        <section id="contacto" aria-labelledby="contact-title" className="scroll-mt-4 py-24 sm:py-32">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-8 lg:grid-cols-5">
+            <div className="lg:col-span-2">
+              <Heading id="contact-title">Contacto</Heading>
+              <ul className="mt-10 divide-y divide-white/10 border-y border-white/10 text-[15px]">
                 {gym.address && (
-                  <li className="flex gap-3">
-                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+                  <li className="flex gap-4 py-4">
+                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
                     <span>{gym.address}</span>
                   </li>
                 )}
-                <li className="flex gap-3">
-                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                  <span>{p.hours_text ?? 'Consultá horarios en recepción'}</span>
+                <li className="flex gap-4 py-4">
+                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                  <span>{hoursText}</span>
                 </li>
-                {p.phone && (
-                  <li className="flex gap-3">
-                    <Phone className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                    <a href={`tel:${p.phone.replace(/[^\d+]/g, '')}`} className="underline-offset-4 hover:underline">{p.phone}</a>
+                {p.phone && tel && (
+                  <li className="flex gap-4 py-4">
+                    <Phone className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                    <a href={tel} className="underline-offset-4 hover:text-brand hover:underline">{p.phone}</a>
                   </li>
                 )}
                 {p.email && (
-                  <li className="flex gap-3">
-                    <Mail className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                    <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">{p.email}</a>
+                  <li className="flex gap-4 py-4">
+                    <Mail className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                    <a href={`mailto:${p.email}`} className="underline-offset-4 hover:text-brand hover:underline">{p.email}</a>
                   </li>
                 )}
                 {p.instagram && (
-                  <li className="flex gap-3">
-                    <AtSign className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                    <a href={`https://instagram.com/${p.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                  <li className="flex gap-4 py-4">
+                    <AtSign className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                    <a href={`https://instagram.com/${p.instagram.replace('@', '')}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:text-brand hover:underline">
                       Instagram {p.instagram}
                     </a>
                   </li>
                 )}
                 {p.facebook && (
-                  <li className="flex gap-3">
-                    <Users className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
-                    <a href={`https://www.facebook.com/${p.facebook}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:underline">
+                  <li className="flex gap-4 py-4">
+                    <Users className="mt-0.5 h-5 w-5 shrink-0 text-brand" aria-hidden="true" />
+                    <a href={`https://www.facebook.com/${p.facebook}`} target="_blank" rel="noreferrer" className="underline-offset-4 hover:text-brand hover:underline">
                       Facebook
                     </a>
                   </li>
                 )}
               </ul>
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-                {mapsHref && (
-                  <a
-                    href={mapsHref}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-6 font-bold text-black hover:bg-white ${focus}`}
-                  >
-                    <Navigation className="h-5 w-5" aria-hidden="true" /> Cómo llegar
-                  </a>
-                )}
-                {whatsapp ? (
-                  <a
-                    href={whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#edcc36]/50 px-6 font-bold text-[#edcc36] hover:bg-[#edcc36]/10 ${focus}`}
-                  >
-                    <MessageCircle className="h-5 w-5" aria-hidden="true" /> WhatsApp
-                  </a>
-                ) : p.phone ? (
-                  <a
-                    href={`tel:${p.phone.replace(/[^\d+]/g, '')}`}
-                    className={`inline-flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#edcc36]/50 px-6 font-bold text-[#edcc36] hover:bg-[#edcc36]/10 ${focus}`}
-                  >
-                    <Phone className="h-5 w-5" aria-hidden="true" /> Llamar
-                  </a>
-                ) : null}
-              </div>
             </div>
-
             {mapEmbed && (
-              <div className="relative min-h-[320px] overflow-hidden rounded-3xl border border-[#edcc36]/25 shadow-[0_0_25px_-5px_rgba(237,204,54,0.2)] lg:col-span-3">
+              <div className="relative min-h-[360px] overflow-hidden rounded-lg border border-white/10 lg:col-span-3">
                 <iframe
                   title={`Mapa: ${gym.name}${gym.address ? `, ${gym.address}` : ''}`}
                   src={mapEmbed}
@@ -395,13 +452,18 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
         </section>
       </main>
 
-      <footer className="border-t border-white/5 px-4 py-8 text-xs text-zinc-500">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 sm:flex-row">
-          <span>© {new Date().getFullYear()} {gym.name}</span>
+      <footer className="border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <div>
+            <p className="font-display text-2xl font-black uppercase leading-none text-white">
+              {first} <span className="text-brand">{rest.join(' ')}</span>
+            </p>
+            <p className="mt-2 text-sm text-white/45">© {new Date().getFullYear()} {gym.name}{shortAddress ? `, ${shortAddress}` : ''}</p>
+          </div>
           <Link
             href={`/equipo?next=${encodeURIComponent(`/${gym.slug}/admin`)}` as Route}
             rel="nofollow"
-            className="rounded-md px-2 py-1 text-zinc-600 transition-colors hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+            className={`self-start rounded-md px-2 py-1 text-sm text-white/35 transition-colors hover:text-white/80 sm:self-auto ${focus}`}
           >
             Acceso equipo
           </Link>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
-import { Dumbbell, Mail, KeyRound } from 'lucide-react'
+import { Mail, KeyRound } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { safeInternalPath } from '@/lib/safe-path'
 
@@ -66,15 +66,12 @@ export function LoginForm() {
 
   return (
     <main className="grid min-h-dvh place-items-center p-4">
-      <div className="w-full max-w-sm space-y-6 rounded-3xl border border-[#edcc36]/20 bg-zinc-950 p-6 shadow-[0_0_25px_-5px_rgba(237,204,54,0.15)]">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl border border-[#edcc36]/40 bg-[#edcc36]/10">
-            <Dumbbell className="h-6 w-6 text-[#edcc36]" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="text-lg font-extrabold text-white">Evolution Fitness</h1>
-            <p className="text-xs text-zinc-400">Ingresá a tu cuenta</p>
-          </div>
+      <div className="w-full max-w-sm space-y-6 rounded-lg border border-white/10 bg-[#141414] p-6 sm:p-8">
+        <div>
+          <h1 className="font-display text-4xl font-black uppercase leading-none text-white">
+            Evolution <span className="text-brand">Fitness</span>
+          </h1>
+          <p className="mt-2 text-sm text-zinc-400">Ingresá a tu cuenta de socio</p>
         </div>
 
         {status === 'sent' ? (
@@ -129,7 +126,7 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={status === 'sending'}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-md bg-[#edcc36] font-bold text-black transition-colors hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               {mode === 'link' ? <Mail className="h-5 w-5" aria-hidden="true" /> : <KeyRound className="h-5 w-5" aria-hidden="true" />}
               {status === 'sending' ? 'Enviando…' : mode === 'link' ? 'Enviarme un link para entrar' : 'Entrar'}

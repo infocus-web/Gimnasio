@@ -6,6 +6,12 @@
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Fuentes de la web pública: las variables las define next/font en .public-site */
+@theme inline {
+  --font-display: var(--ff-display), 'Arial Narrow', sans-serif;
+  --font-text: var(--ff-text), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 @layer base {
   body {
     background-color: #09090b;
@@ -70,4 +76,21 @@
     scroll-behavior: auto !important;
   }
   .animate-scan, .animate-pulse-subtle, .animate-pulse, .animate-spin { animation: none !important; }
+}
+
+/* ---------- Web pública ---------- */
+.public-site { letter-spacing: 0; }
+.public-site h1, .public-site h2, .public-site h3 { letter-spacing: 0; }
+/* El panel de actividad que señalás se agranda (solo escritorio con mouse) */
+@media (min-width: 768px) and (hover: hover) {
+  .activity-panel { transition: flex-grow 600ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .activity-panel:hover { flex-grow: 1.8; }
+}
+/* Entrada única del titular */
+@keyframes hero-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.hero-title { animation: hero-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; }
+  .hero-poster { display: block !important; }
+  .activity-panel { transition: none; }
 }

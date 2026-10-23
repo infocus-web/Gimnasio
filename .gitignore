@@ -5,3 +5,4 @@ dist
 .vercel
 *.log
 vite.local.config.ts
+envato_raw/
