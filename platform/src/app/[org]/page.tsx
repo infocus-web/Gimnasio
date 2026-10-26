@@ -8,6 +8,7 @@ import {
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
 import { WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
+import { TacticalButton } from '@/components/TacticalButton'
 
 export const revalidate = 300
 
@@ -33,8 +34,6 @@ const NAV = [
 const focus =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-black'
 
-const btnPrimary = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md bg-brand px-6 text-[15px] font-bold text-black transition-colors hover:bg-white ${focus}`
-const btnGhost = `inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md border border-white/25 bg-black/30 px-6 text-[15px] font-bold text-white backdrop-blur-sm transition-colors hover:border-brand hover:text-brand ${focus}`
 
 function Heading({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -81,9 +80,9 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <Link href={loginHref} className={`${btnPrimary} min-h-[44px] whitespace-nowrap px-4 text-sm`}>
-              <QrCode className="h-4 w-4" aria-hidden="true" /> Soy socio
-            </Link>
+            <TacticalButton href={loginHref} variant="solid" size="sm" icon={QrCode}>
+              Soy socio
+            </TacticalButton>
             <details className="group relative lg:hidden">
               <summary
                 aria-label="Abrir menú"
@@ -133,12 +132,12 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               {p.hero_text && <p className="max-w-md text-lg leading-relaxed text-white/80">{p.hero_text}</p>}
               <div className="flex flex-col gap-3 sm:flex-row">
-                <a href="#planes" className={btnPrimary}>
+                <TacticalButton href="#planes" variant="solid">
                   Ver planes y precios
-                </a>
-                <a href={contactHref} target={whatsapp ? '_blank' : undefined} rel={whatsapp ? 'noreferrer' : undefined} className={btnGhost}>
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" /> Consultar
-                </a>
+                </TacticalButton>
+                <TacticalButton href={contactHref} newTab={!!whatsapp} icon={MessageCircle}>
+                  Consultar
+                </TacticalButton>
               </div>
             </div>
           </div>
@@ -226,9 +225,9 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                   </li>
                 ))}
               </ul>
-              <Link href={loginHref} className={`${btnPrimary} mt-10`}>
-                Entrar a la app <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight} className="mt-10">
+                Entrar a la app
+              </TacticalButton>
             </div>
           </div>
         </section>
@@ -328,16 +327,9 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                           <Users className="h-4 w-4" aria-hidden="true" /> Hasta {plan.max_members} personas
                         </p>
                       )}
-                      <a
-                        href={contactHref}
-                        target={whatsapp ? '_blank' : undefined}
-                        rel={whatsapp ? 'noreferrer' : undefined}
-                        className={`mt-auto inline-flex min-h-[50px] items-center justify-center rounded-md font-bold transition-colors ${
-                          featured ? 'bg-black text-white hover:bg-[#222]' : 'border border-white/20 hover:border-brand hover:text-brand'
-                        } ${focus}`}
-                      >
+                      <TacticalButton href={contactHref} newTab={!!whatsapp} variant={featured ? 'onBrand' : 'dark'} className="mt-auto w-full">
                         Quiero este plan
-                      </a>
+                      </TacticalButton>
                     </article>
                   )
                 })}
@@ -373,19 +365,19 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </h2>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
               {whatsapp && (
-                <a href={whatsapp} target="_blank" rel="noreferrer" className={btnPrimary}>
-                  <MessageCircle className="h-5 w-5" aria-hidden="true" /> Escribinos
-                </a>
+                <TacticalButton href={whatsapp} newTab variant="solid" icon={MessageCircle}>
+                  Escribinos
+                </TacticalButton>
               )}
               {!whatsapp && tel && (
-                <a href={tel} className={btnPrimary}>
-                  <Phone className="h-5 w-5" aria-hidden="true" /> Llamanos
-                </a>
+                <TacticalButton href={tel} variant="solid" icon={Phone}>
+                  Llamanos
+                </TacticalButton>
               )}
               {mapsHref && (
-                <a href={mapsHref} target="_blank" rel="noreferrer" className={btnGhost}>
-                  <Navigation className="h-5 w-5" aria-hidden="true" /> Cómo llegar
-                </a>
+                <TacticalButton href={mapsHref} newTab icon={Navigation}>
+                  Cómo llegar
+                </TacticalButton>
               )}
             </div>
           </div>

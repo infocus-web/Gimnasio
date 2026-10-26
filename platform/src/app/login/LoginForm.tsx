@@ -126,8 +126,10 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={status === 'sending'}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-md bg-[#edcc36] font-bold text-black transition-colors hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="relative flex min-h-[54px] w-full items-center justify-center gap-2 border border-brand bg-brand text-xs font-bold uppercase tracking-[0.18em] text-black transition-colors hover:border-white hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
+              <span className="pointer-events-none absolute left-0 top-0 h-1.5 w-1.5 border-l-2 border-t-2 border-black" aria-hidden="true" />
+              <span className="pointer-events-none absolute bottom-0 right-0 h-1.5 w-1.5 border-b-2 border-r-2 border-black" aria-hidden="true" />
               {mode === 'link' ? <Mail className="h-5 w-5" aria-hidden="true" /> : <KeyRound className="h-5 w-5" aria-hidden="true" />}
               {status === 'sending' ? 'Enviando…' : mode === 'link' ? 'Enviarme un link para entrar' : 'Entrar'}
             </button>
