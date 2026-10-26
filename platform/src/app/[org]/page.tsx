@@ -62,7 +62,8 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const hoursText = p.hours_text ?? gym.opening_hours.map((h) => `${DAY_NAMES[h.weekday - 1]} ${h.open}–${h.close}`).join(', ')
   const shortAddress = gym.address?.split(',').slice(0, 2).join(',')
   const contactHref = whatsapp ?? tel ?? '#contacto'
-  const gallery = WEB_MEDIA.gallery
+  const gallery: readonly string[] = p.gallery?.length ? p.gallery : WEB_MEDIA.gallery
+  const about: readonly string[] = p.about_images?.length === 2 ? p.about_images : WEB_MEDIA.about
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -110,7 +111,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           <video
             className="hero-video absolute inset-0 -z-20 h-full w-full object-cover object-[60%_center]"
             src={WEB_MEDIA.heroVideo}
-            poster={WEB_MEDIA.heroPoster}
+            poster={p.hero_image ?? WEB_MEDIA.heroPoster}
             autoPlay
             muted
             loop
@@ -118,7 +119,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             preload="metadata"
             aria-hidden="true"
           />
-          <Image src={WEB_MEDIA.heroPoster} alt="" fill priority sizes="100vw" className="hero-poster -z-20 hidden object-cover object-[60%_center]" />
+          <Image src={p.hero_image ?? WEB_MEDIA.heroPoster} alt="" fill priority sizes="100vw" className="hero-poster -z-20 hidden object-cover object-[60%_center]" />
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_top,#000_0%,rgba(0,0,0,0.5)_40%,rgba(0,0,0,0.1)_100%)]" aria-hidden="true" />
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.6),transparent_65%)]" aria-hidden="true" />
 
@@ -173,7 +174,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               </div>
               <div className="mt-12 flex flex-col gap-3 md:h-[560px] md:flex-row">
                 {gym.activities.map((a) => {
-                  const img = activityImage(a.name, a.image_url)
+                  const img = a.image_url ?? activityImage(a.name, null)
                   return (
                     <article
                       key={a.name}
@@ -278,10 +279,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </div>
             <div className="grid grid-cols-12 gap-3 lg:col-span-7">
               <div className="relative col-span-7 aspect-[3/4] overflow-hidden rounded-lg">
-                <Image src={WEB_MEDIA.about[0]} alt="Profe preparando a una alumna antes de entrenar" fill sizes="(min-width: 1024px) 32vw, 58vw" className="object-cover" />
+                <Image src={about[0]!} alt="Profe preparando a una alumna antes de entrenar" fill sizes="(min-width: 1024px) 32vw, 58vw" className="object-cover" />
               </div>
               <div className="relative col-span-5 mt-16 aspect-[3/5] overflow-hidden rounded-lg">
-                <Image src={WEB_MEDIA.about[1]} alt="Banco y barra en la sala de musculación" fill sizes="(min-width: 1024px) 24vw, 42vw" className="object-cover" />
+                <Image src={about[1]!} alt="Banco y barra en la sala de musculación" fill sizes="(min-width: 1024px) 24vw, 42vw" className="object-cover" />
               </div>
             </div>
           </div>
