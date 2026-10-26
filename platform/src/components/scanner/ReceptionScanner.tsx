@@ -455,7 +455,7 @@ export const ReceptionScanner: React.FC<ReceptionScannerProps> = ({
             </div>
             <button
               type="submit"
-              className="px-4 py-2 bg-zinc-900 text-[#edcc36] border border-[#edcc36]/40 hover:bg-[#edcc36] hover:text-black font-mono font-bold text-xs rounded-xl transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+              className="btn-tac btn-tac-ghost px-4 py-2 bg-zinc-900 text-[#edcc36] border border-[#edcc36]/40 hover:bg-[#edcc36] hover:text-black font-mono font-bold text-xs rounded-xl transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
             >
               Buscar
             </button>

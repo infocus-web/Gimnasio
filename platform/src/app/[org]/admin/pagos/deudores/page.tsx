@@ -83,7 +83,7 @@ export default async function DebtorsPage({ params }: PageProps<'/[org]/admin/pa
                 )}
                 {canLink && <PaymentLinkButton compact action={createPaymentLink.bind(null, slug, m.id!)} />}
                 <Link href={`/${slug}/admin/socios/${m.id}#cobrar` as Route}
-                  className="min-h-[40px] rounded-xl bg-[#edcc36] px-3 py-2 text-xs font-bold text-black">
+                  className="btn-tac min-h-[40px] rounded-xl bg-[#edcc36] px-3 py-2 text-xs font-bold text-black">
                   Cobrar
                 </Link>
               </li>

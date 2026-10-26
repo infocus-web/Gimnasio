@@ -18,7 +18,7 @@ export function DraftBanner({ canEdit, action }: { canEdit: boolean; action: (pr
         <div className="flex items-center gap-1.5">
         <ActionButton
           action={action}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Aprobar rutina
         </ActionButton>

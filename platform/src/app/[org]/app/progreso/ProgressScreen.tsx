@@ -74,7 +74,7 @@ export function ProgressScreen() {
         <button
           type="button"
           onClick={retry}
-          className="min-h-[44px] w-full rounded-xl border border-[#edcc36]/40 bg-zinc-900 px-4 text-sm font-semibold text-[#edcc36] hover:bg-[#edcc36] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          className="btn-tac btn-tac-ghost min-h-[44px] w-full rounded-xl border border-[#edcc36]/40 bg-zinc-900 px-4 text-sm font-semibold text-[#edcc36] hover:bg-[#edcc36] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
         >
           Reintentar
         </button>

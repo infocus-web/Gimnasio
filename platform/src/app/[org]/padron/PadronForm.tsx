@@ -13,7 +13,7 @@ function Submit() {
   const { pending } = useFormStatus()
   return (
     <button type="submit" disabled={pending}
-      className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60">
+      className="btn-tac flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60">
       {pending && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
       Enviar mis datos
     </button>

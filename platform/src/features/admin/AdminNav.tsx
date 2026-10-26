@@ -35,7 +35,7 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
                 href={item.href as Route}
                 aria-current={active ? 'page' : undefined}
                 className={`flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium ${
-                  active ? 'bg-[#edcc36] text-black' : 'text-zinc-300 hover:bg-zinc-900'
+                  active ? 'bg-[#edcc36] font-semibold text-black' : 'text-zinc-300 hover:bg-zinc-900'
                 }`}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -68,8 +68,10 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
             key={item.href}
             href={item.href as Route}
             aria-current={active ? 'page' : undefined}
-            className={`flex min-h-[42px] items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
-              active ? 'bg-[#edcc36]/10 text-[#edcc36]' : 'text-zinc-300 hover:bg-zinc-900 hover:text-white'
+            className={`relative flex min-h-[42px] items-center gap-3 px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
+              active
+                ? 'bg-white/[0.06] text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:bg-[#edcc36] [&>svg]:text-[#edcc36]'
+                : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
             }`}
           >
             <Icon className="h-4 w-4" aria-hidden="true" />

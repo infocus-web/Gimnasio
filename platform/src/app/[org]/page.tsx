@@ -9,6 +9,7 @@ import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/pub
 import { WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
+import { EXTRAS } from '@/features/public/content'
 
 export const revalidate = 300
 
@@ -195,6 +196,33 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                   )
                 })}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* ---------- Más propuestas ---------- */}
+        {(EXTRAS[gym.slug] ?? []).length > 0 && (
+          <section aria-labelledby="extras-title" className="pb-24 sm:pb-32">
+            <div className="mx-auto max-w-7xl px-4 sm:px-8">
+              <Heading id="extras-title" className="text-[clamp(2.25rem,5vw,3.75rem)]">Mucho más que un gimnasio</Heading>
+              <ul className="mt-10 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+                {(EXTRAS[gym.slug] ?? []).map((x, i) => (
+                  <li key={x.name} className={`bg-black p-6 sm:p-8 ${i === 0 ? 'sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:bg-[#141414]' : ''}`}>
+                    <h3 className="font-display text-3xl font-extrabold uppercase leading-none text-white">{x.name}</h3>
+                    <p className="mt-3 text-[15px] text-white/65">{x.text}</p>
+                    {x.detail && (
+                      <div className="mt-5 flex items-start gap-2 text-sm font-semibold text-brand">
+                        <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                        <div>
+                          {x.detail.split(' · ').map((line) => (
+                            <p key={line}>{line}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
         )}

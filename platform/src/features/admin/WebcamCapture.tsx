@@ -128,7 +128,7 @@ export function WebcamCapture({
           <button
             type="button"
             onClick={shoot}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black"
+            className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black"
           >
             <Camera className="h-4 w-4" aria-hidden="true" /> Tomar foto
           </button>

@@ -140,7 +140,7 @@ export function MfaScreen({ next, mode, factorId: initialFactor, email }: Props)
           <button
             type="submit"
             disabled={busy || code.length !== 6 || !factorId}
-            className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60"
+            className="btn-tac flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60"
           >
             {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
             {mode === 'enroll' ? 'Activar y entrar' : 'Verificar'}

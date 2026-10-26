@@ -143,7 +143,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
             sound.playClick();
             onRefresh();
           }}
-          className="w-full py-2.5 px-4 rounded-xl bg-zinc-900 text-[#edcc36] border border-[#edcc36]/40 text-sm font-semibold hover:bg-[#edcc36] hover:text-black transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          className="btn-tac btn-tac-ghost w-full py-2.5 px-4 rounded-xl bg-zinc-900 text-[#edcc36] border border-[#edcc36]/40 text-sm font-semibold hover:bg-[#edcc36] hover:text-black transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
         >
           Reintentar
         </button>

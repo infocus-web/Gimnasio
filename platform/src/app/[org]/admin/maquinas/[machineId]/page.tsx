@@ -57,7 +57,7 @@ export default async function MachinePage({
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href={`/${slug}/maquina/carteles?id=${machine.id}` as Route}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <Printer className="h-4 w-4" aria-hidden="true" /> Imprimir QR
           </Link>

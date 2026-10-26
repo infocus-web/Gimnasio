@@ -63,7 +63,7 @@ export function WorkoutScreen() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="min-h-[44px] w-full rounded-xl border border-[#edcc36]/40 bg-zinc-900 px-4 text-sm font-semibold text-[#edcc36] hover:bg-[#edcc36] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          className="btn-tac btn-tac-ghost min-h-[44px] w-full rounded-xl border border-[#edcc36]/40 bg-zinc-900 px-4 text-sm font-semibold text-[#edcc36] hover:bg-[#edcc36] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
         >
           Reintentar
         </button>
@@ -316,7 +316,7 @@ export function WorkoutScreen() {
           <button
             type="button"
             onClick={() => setRunning(true)}
-            className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="btn-tac flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <Play className="h-5 w-5" aria-hidden="true" />
             Continuar entrenamiento
@@ -344,7 +344,7 @@ export function WorkoutScreen() {
           startedAt.current = Date.now()
           setRunning(true)
         }}
-        className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="btn-tac flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black shadow-[0_0_25px_-3px_rgba(237,204,54,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
       >
         <Play className="h-5 w-5" aria-hidden="true" />
         Empezar entrenamiento

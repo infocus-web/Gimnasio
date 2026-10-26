@@ -98,7 +98,7 @@ export function StaffLoginForm() {
               </p>
             )}
             <button type="submit" disabled={status === 'sending'}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              className="btn-tac flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               {status === 'sending' ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : mode === 'password' ? <KeyRound className="h-5 w-5" aria-hidden="true" /> : <Mail className="h-5 w-5" aria-hidden="true" />}
               {mode === 'password' ? 'Entrar' : 'Enviarme un link'}
             </button>

@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
-import { Dumbbell, ExternalLink, KeyRound } from 'lucide-react'
+import { ExternalLink, KeyRound } from 'lucide-react'
+import { Wordmark } from '@/components/Wordmark'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
 import { SignOutButton } from '@/features/member/SignOutButton'
@@ -87,15 +88,9 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="hidden border-r border-zinc-900 bg-black/60 lg:flex lg:min-h-dvh lg:flex-col lg:gap-6 lg:p-4">
-        <Link href={base as Route} className="flex items-center gap-2 px-2 pt-1">
-          <span className="grid h-9 w-9 place-items-center rounded-xl border border-[#edcc36]/40 bg-[#edcc36]/10">
-            <Dumbbell className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-extrabold text-white">{ctx.org.name}</span>
-            <span className="block text-xs text-zinc-500">Panel de gestión</span>
-          </span>
+      <aside className="hidden border-r border-white/[0.08] bg-[#0a0a0a] lg:sticky lg:top-0 lg:flex lg:max-h-dvh lg:overflow-y-auto lg:min-h-dvh lg:flex-col lg:gap-6 lg:p-4">
+        <Link href={base as Route} className="block px-2 pt-2">
+          <Wordmark name={ctx.org.name} sub="Panel de gestión" />
         </Link>
         <AdminNav items={items} variant="side" />
         <div className="mt-auto space-y-3 border-t border-zinc-900 pt-4">
@@ -122,7 +117,9 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
 
       <header className="sticky top-0 z-30 border-b border-zinc-900 bg-black/85 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <span className="truncate text-sm font-extrabold text-white">{ctx.org.name}</span>
+          <Link href={base as Route} className="min-w-0">
+            <Wordmark name={ctx.org.name} size="sm" />
+          </Link>
           {/* Menú de la cuenta en el celular (en la compu está en la barra lateral) */}
           <details className="relative">
             <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-zinc-800 px-3 text-xs text-zinc-300 [&::-webkit-details-marker]:hidden">

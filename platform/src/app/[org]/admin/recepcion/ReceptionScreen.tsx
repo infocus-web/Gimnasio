@@ -409,7 +409,7 @@ export function ReceptionScreen({
                         type="button"
                         onClick={() => void checkinMember(quick.id)}
                         disabled={loading}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60"
+                        className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60"
                       >
                         {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <DoorOpen className="h-4 w-4" aria-hidden="true" />}
                         Dar entrada

@@ -95,8 +95,8 @@ export function SubmitButton({ children, variant = 'primary' }: { children: Reac
       disabled={pending}
       className={
         variant === 'primary'
-          ? 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white'
-          : 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
+          ? 'btn-tac inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white'
+          : 'btn-tac btn-tac-ghost inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
       }
     >
       {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
@@ -124,9 +124,12 @@ export function Notice({ state }: { state: ActionState | undefined }) {
 
 export function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4 sm:p-5">
+    <section className="rounded-2xl border border-white/[0.08] bg-[#111] p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-300">{title}</h2>
+        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-zinc-200">
+          <span className="h-2 w-2 shrink-0 bg-brand" aria-hidden="true" />
+          {title}
+        </h2>
         {action}
       </div>
       {children}

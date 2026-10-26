@@ -64,7 +64,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
         {ctx.can('members.write') && (
           <Link
             href={`/${slug}/admin/socios/nuevo` as Route}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black"
+            className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black"
           >
             <UserPlus className="h-4 w-4" aria-hidden="true" /> Nuevo socio
           </Link>

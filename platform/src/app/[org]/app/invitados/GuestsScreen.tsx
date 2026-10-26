@@ -208,7 +208,7 @@ export function GuestsScreen({ timezone }: { timezone: string }) {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-base font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="btn-tac inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-base font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             {saving ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <UserPlus className="h-5 w-5" aria-hidden="true" />}
             Crear pase de invitado

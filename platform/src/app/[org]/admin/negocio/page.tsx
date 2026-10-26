@@ -79,7 +79,7 @@ export default async function BusinessPage({
           </label>
           <button
             type="submit"
-            className="inline-flex min-h-[44px] items-center rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="btn-tac inline-flex min-h-[44px] items-center rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             Ver
           </button>

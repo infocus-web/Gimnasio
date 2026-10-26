@@ -25,7 +25,7 @@ export function PayPlanButton({ label = 'Pagar mi plan' }: { label?: string }) {
   return (
     <Link
       href={`/${org.slug}/app/pagar` as Route}
-      className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+      className="btn-tac mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
     >
       <CreditCard className="h-4 w-4" aria-hidden="true" /> {label}
     </Link>

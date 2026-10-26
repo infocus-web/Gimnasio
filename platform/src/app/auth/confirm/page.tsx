@@ -65,7 +65,7 @@ export default async function ConfirmPage({ searchParams }: PageProps<'/auth/con
             <form action={confirm}>
               <button
                 type="submit"
-                className="min-h-[52px] w-full rounded-xl bg-[#edcc36] font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="btn-tac min-h-[52px] w-full rounded-xl bg-[#edcc36] font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 Entrar
               </button>

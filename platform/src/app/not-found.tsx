@@ -12,7 +12,7 @@ export default function NotFound() {
         <p className="text-sm text-zinc-400">Puede que el link esté mal escrito o que la página ya no exista.</p>
         <Link
           href="/"
-          className="inline-flex min-h-[44px] items-center rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black"
+          className="btn-tac inline-flex min-h-[44px] items-center rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black"
         >
           Ir al inicio
         </Link>

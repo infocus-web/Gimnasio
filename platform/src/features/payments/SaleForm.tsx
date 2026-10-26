@@ -76,7 +76,7 @@ function SaleFormInner({
       <div className="space-y-3">
         <Notice state={state} />
         <button type="button" onClick={onDone}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
           <ShoppingCart className="h-4 w-4" aria-hidden="true" /> Nueva venta
         </button>
       </div>

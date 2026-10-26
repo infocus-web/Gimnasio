@@ -69,7 +69,7 @@ export default async function PagarPage({
               : 'Tu plan quedó renovado.'}{' '}
             Ya podés entrar con tu QR.
           </p>
-          <Link href={`/${slug}/app/pase` as Route} className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black">
+          <Link href={`/${slug}/app/pase` as Route} className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" /> Ver mi pase
           </Link>
         </div>

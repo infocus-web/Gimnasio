@@ -436,7 +436,7 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
                             disabled={pending}
                             aria-busy={pending || undefined}
                             onClick={() => void handleStartBooking(session)}
-                            className="py-2.5 px-5 rounded-2xl bg-[#edcc36] text-black font-bold text-sm hover:bg-[#ffe156] transition-all shadow-[0_0_15px_rgba(237,204,54,0.3)] min-h-[44px] min-w-[120px] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+                            className="btn-tac py-2.5 px-5 rounded-2xl bg-[#edcc36] text-black font-bold text-sm hover:bg-[#ffe156] transition-all shadow-[0_0_15px_rgba(237,204,54,0.3)] min-h-[44px] min-w-[120px] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait focus-visible:ring-2 focus-visible:ring-[#edcc36]"
                           >
                             {pending && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
                             {pending ? 'Reservando…' : 'Reservar'}
@@ -590,7 +590,7 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
                 type="button"
                 onClick={handleConfirmEquipmentBooking}
                 disabled={!selectedSpotId}
-                className="w-full py-3 px-4 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+                className="btn-tac w-full py-3 px-4 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] disabled:opacity-40 disabled:cursor-not-allowed transition-all min-h-[44px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
               >
                 {selectedSpotId ? 'Confirmar reserva' : `Elegí un${noun === 'bici' || noun.endsWith('a') ? 'a' : ''} ${noun} para confirmar`}
               </button>

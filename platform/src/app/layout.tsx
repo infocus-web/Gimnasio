@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+import { display, text } from '@/features/public/fonts'
 
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://evolutiongym.fitness').replace(/\/$/, '')
 
@@ -21,11 +19,11 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Evolution', statusBarStyle: 'black-translucent' },
   icons: { icon: '/icon-192.png', apple: '/apple-touch-icon.png' },
 }
-export const viewport: Viewport = { themeColor: '#09090b', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
+export const viewport: Viewport = { themeColor: '#000000', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="es-AR" className={inter.variable}>
+    <html lang="es-AR" className={`${display.variable} ${text.variable}`}>
       <body className="min-h-dvh bg-ink font-sans text-zinc-100 antialiased selection:bg-brand/30 selection:text-brand">
         {children}
       </body>

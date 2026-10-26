@@ -340,7 +340,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
               <button
                 type="button"
                 onClick={handleNextExercise}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] transition-all min-h-[44px] flex items-center justify-center gap-1.5"
+                className="btn-tac w-full sm:w-auto px-4 py-2 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] transition-all min-h-[44px] flex items-center justify-center gap-1.5"
               >
                 <span>Siguiente ejercicio</span>
                 <ChevronRight className="w-4 h-4" />
@@ -349,7 +349,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
               <button
                 type="button"
                 onClick={onFinishWorkout}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] transition-all min-h-[44px] flex items-center justify-center gap-1.5"
+                className="btn-tac w-full sm:w-auto px-4 py-2 rounded-xl bg-[#edcc36] text-black font-bold hover:bg-[#ffe156] transition-all min-h-[44px] flex items-center justify-center gap-1.5"
               >
                 <span>Finalizar sesión</span>
                 <Check className="w-4 h-4 stroke-[3]" />
@@ -530,7 +530,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
         <button
           type="button"
           onClick={handleCompleteSet}
-          className="w-full py-5 px-6 rounded-2xl bg-[#edcc36] hover:bg-[#ffe156] text-black font-black text-lg sm:text-xl transition-all shadow-[0_0_25px_rgba(237,204,54,0.45)] flex items-center justify-center gap-3 min-h-[64px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+          className="btn-tac w-full py-5 px-6 rounded-2xl bg-[#edcc36] hover:bg-[#ffe156] text-black font-black text-lg sm:text-xl transition-all shadow-[0_0_25px_rgba(237,204,54,0.45)] flex items-center justify-center gap-3 min-h-[64px] focus-visible:ring-2 focus-visible:ring-[#edcc36]"
         >
           <Check className="w-7 h-7 stroke-[3]" />
           <span>

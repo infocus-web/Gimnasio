@@ -18,7 +18,7 @@ function ActionButton({ formAction, children, icon, primary }: { formAction: (f:
       disabled={pending}
       className={
         primary
-          ? 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white'
+          ? 'btn-tac inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white'
           : 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
       }
     >
@@ -121,7 +121,7 @@ export function NoticeEditor({
           </button>
           {showPreview && (
             <div className="mt-2 overflow-hidden rounded-xl border border-zinc-800">
-              <p className="bg-[#edcc36] px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider text-black">{orgName}</p>
+              <p className="btn-tac bg-[#edcc36] px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider text-black">{orgName}</p>
               <div className="space-y-2 bg-black p-4">
                 <p className="text-base font-bold text-white">{renderTemplate(subject, vars)}</p>
                 {renderTemplate(body, vars)
@@ -130,7 +130,7 @@ export function NoticeEditor({
                   .map((l, i) => (
                     <p key={i} className="text-sm leading-relaxed text-zinc-300">{l}</p>
                   ))}
-                <span className="mt-2 inline-block rounded-lg bg-[#edcc36] px-4 py-2 text-sm font-bold text-black">Abrir la app</span>
+                <span className="btn-tac mt-2 inline-block rounded-lg bg-[#edcc36] px-4 py-2 text-sm font-bold text-black">Abrir la app</span>
                 <p className="pt-1 text-[11px] text-zinc-600">Ejemplo con datos de muestra (socia &quot;Martina&quot;).</p>
               </div>
             </div>

@@ -34,8 +34,8 @@ export function MemberNav({ orgSlug }: { orgSlug: string }) {
               <Link
                 href={url as Route}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
-                  active ? 'text-[#edcc36]' : 'text-zinc-400 hover:text-white'
+                className={`relative flex min-h-[56px] flex-col items-center justify-center gap-1 text-[11px] font-semibold uppercase tracking-wide focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
+                  active ? 'text-[#edcc36] before:absolute before:inset-x-4 before:top-0 before:h-[3px] before:bg-[#edcc36]' : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden="true" />

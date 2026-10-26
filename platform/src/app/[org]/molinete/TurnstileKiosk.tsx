@@ -323,7 +323,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
             save(`${storageKey}:started`, '1')
             setStarted(true)
           }}
-          className="min-h-[64px] rounded-2xl bg-[#edcc36] px-10 text-xl font-extrabold text-black"
+          className="btn-tac min-h-[64px] rounded-2xl bg-[#edcc36] px-10 text-xl font-extrabold text-black"
         >
           Iniciar
         </button>

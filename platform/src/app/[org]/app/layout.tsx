@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
-import { Dumbbell } from 'lucide-react'
+import { Wordmark } from '@/components/Wordmark'
 import { getMemberContext, getStaffContext } from '@/lib/member-context'
 import { MemberProvider } from '@/features/member/MemberProvider'
 import { MemberNav } from '@/features/member/MemberNav'
@@ -43,12 +43,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
       <header className="sticky top-0 z-30 border-b border-zinc-900 bg-black/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
           <Link href="/" className="flex min-w-0 items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#edcc36]/40 bg-[#edcc36]/10">
-              <Dumbbell className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
-            </span>
-            <span className="truncate text-sm font-extrabold tracking-tight text-white">
-              {org.name}
-            </span>
+            <Wordmark name={org.name} size="sm" />
           </Link>
           <SignOutButton compact />
         </div>

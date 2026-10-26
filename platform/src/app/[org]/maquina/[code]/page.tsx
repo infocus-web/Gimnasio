@@ -87,14 +87,14 @@ export default async function MachineQrPage({ params }: { params: Promise<{ org:
           {member ? (
             <Link
               href={`/${slug}/app/entrenar` as Route}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="btn-tac flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               Empezar a entrenar <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
           ) : !view.signed_in ? (
             <Link
               href={`/login?next=${encodeURIComponent(here)}` as Route}
-              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="btn-tac flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#edcc36] text-base font-extrabold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <LogIn className="h-5 w-5" aria-hidden="true" /> Ingresá para ver tu último peso
             </Link>
