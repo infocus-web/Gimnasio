@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "fitness.evolutiongym.app",
+      "sha256_cert_fingerprints": [
+        "DA:C7:8A:E9:57:01:41:34:F0:7E:ED:85:C3:D9:09:B9:AF:7C:DC:4E:99:18:86:87:32:2B:87:0A:AC:7F:A4:24"
+      ]
+    }
+  }
+]

@@ -6,3 +6,7 @@ dist
 *.log
 vite.local.config.ts
 envato_raw/
+
+# Claves y proyecto de la app Android (nunca al repo)
+app-android/
+*.keystore

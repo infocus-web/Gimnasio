@@ -66,10 +66,11 @@ export function TacticalButton({ href, children, variant = 'dark', icon: Icon = 
     </>
   )
 
-  const isPlain = /^(https?:|tel:|mailto:|#)/.test(href)
+  const isFile = /\.[a-z0-9]{2,4}$/i.test(href)
+  const isPlain = isFile || /^(https?:|tel:|mailto:|#)/.test(href)
   if (isPlain) {
     return (
-      <a href={href} className={cls} target={newTab ? '_blank' : undefined} rel={newTab ? 'noreferrer' : undefined}>
+      <a href={href} className={cls} download={isFile || undefined} target={newTab ? '_blank' : undefined} rel={newTab ? 'noreferrer' : undefined}>
         {content}
       </a>
     )

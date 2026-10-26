@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowUpRight, AtSign, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users, X,
+  ArrowUpRight, AtSign, Download, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users, X,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
 import { WEB_MEDIA, activityImage } from '@/features/public/media'
@@ -254,9 +254,14 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                   </li>
                 ))}
               </ul>
-              <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight} className="mt-10">
-                Entrar a la app
-              </TacticalButton>
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight}>
+                  Entrar a la app
+                </TacticalButton>
+                <TacticalButton href="/descargas/evolution-fitness.apk" icon={Download}>
+                  Descargar para Android
+                </TacticalButton>
+              </div>
             </div>
           </div>
         </section>
