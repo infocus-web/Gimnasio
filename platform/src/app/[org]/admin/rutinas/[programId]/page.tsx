@@ -9,6 +9,7 @@ import {
   addWorkoutDay,
   assignProgramToMany,
   deleteProgram,
+  discardPendingAssign,
   deleteProgramExercise,
   deleteWorkoutDay,
   moveProgramExercise,
@@ -24,15 +25,14 @@ import { DraftBanner } from '@/features/floor/DraftBanner'
 
 export const metadata: Metadata = { title: 'Armar rutina' }
 
-export default async function ProgramBuilder({ params, searchParams }: PageProps<'/[org]/admin/rutinas/[programId]'>) {
+export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin/rutinas/[programId]'>) {
   const { org: slug, programId } = await params
-  const { para } = await searchParams
   const ctx = await getAdminContext(slug)
   if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
   const { data: program } = await supabase
     .from('workout_programs')
-    .select('id, name, goal, level, description, author_id, is_draft')
+    .select('id, name, goal, level, description, author_id, is_draft, pending_member_ids, pending_for_all')
     .eq('id', programId)
     .eq('org_id', ctx.org.id)
     .maybeSingle()
@@ -70,10 +70,10 @@ export default async function ProgramBuilder({ params, searchParams }: PageProps
     programName: r.program_name ?? null,
     hasThis: withThis.has(r.member_id as string),
   }))
-  // Alumnos elegidos al crear la rutina (?para=todos | ?para=id1,id2)
-  const paraRaw = typeof para === 'string' ? para : ''
-  const preselected =
-    paraRaw === 'todos' ? students.filter((s) => !s.hasThis).map((s) => s.id) : paraRaw.split(',').filter((id) => students.some((s) => s.id === id))
+  // Alumnos elegidos al crear la rutina y todavía no asignados
+  const pendingIds = new Set(program.pending_member_ids ?? [])
+  const preselected = students.filter((s) => !s.hasThis && (program.pending_for_all || pendingIds.has(s.id))).map((s) => s.id)
+  const hasPending = program.pending_for_all || pendingIds.size > 0
   const exerciseCount = (days ?? []).reduce((n, d) => n + ((d.program_exercises as unknown[] | null)?.length ?? 0), 0)
 
   return (
@@ -110,13 +110,24 @@ export default async function ProgramBuilder({ params, searchParams }: PageProps
 
       {canAssign && (
         <Card title={`Asignar a alumnos${withThis.size ? ` · la usan ${withThis.size}` : ''}`}>
-          {preselected.length > 0 && !program.is_draft && (
-            <p className="mb-3 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-zinc-100">
-              Ya marcamos {preselected.length === 1 ? 'el alumno que elegiste' : `los ${preselected.length} alumnos que elegiste`}.{' '}
-              {exerciseCount === 0
-                ? 'Primero cargá los ejercicios de cada día (más abajo) y después volvé acá y tocá "Asignar".'
-                : 'Cuando la rutina esté lista, tocá "Asignar".'}
-            </p>
+          {hasPending && !program.is_draft && (
+            <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-zinc-100">
+              <p className="min-w-0 flex-1">
+                <strong className="text-[#edcc36]">Falta asignar.</strong>{' '}
+                {preselected.length
+                  ? `Ya marcamos ${preselected.length === 1 ? 'el alumno que elegiste' : `los ${preselected.length} alumnos que elegiste`}. `
+                  : ''}
+                {exerciseCount === 0
+                  ? 'Primero cargá los ejercicios de cada día (más abajo) y después tocá "Asignar".'
+                  : 'Cuando la rutina esté lista, tocá "Asignar".'}
+              </p>
+              <ActionButton
+                action={discardPendingAssign.bind(null, slug, programId)}
+                className="min-h-[36px] text-xs text-zinc-400 underline-offset-2 hover:text-white hover:underline"
+              >
+                No asignar por ahora
+              </ActionButton>
+            </div>
           )}
           {program.is_draft ? (
             <p className="text-sm text-zinc-500">Es un borrador de la IA: revisalo y tocá "Aprobar" para poder asignarlo.</p>

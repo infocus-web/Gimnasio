@@ -27,7 +27,7 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
   const [{ data: programs }, { data: assignments }, { data: exercises }, { data: aiMachines }, { data: aiUsage }, { data: studentRows }] = await Promise.all([
     supabase
       .from('workout_programs')
-      .select('id, name, goal, level, author_id, created_at, is_draft, staff(display_name), program_workouts(id)')
+      .select('id, name, goal, level, author_id, created_at, is_draft, pending_member_ids, pending_for_all, staff(display_name), program_workouts(id)')
       .eq('org_id', ctx.org.id)
       .order('created_at', { ascending: false }),
     supabase.from('program_assignments').select('program_id').eq('org_id', ctx.org.id).eq('status', 'active'),
@@ -80,6 +80,11 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
                     {p.is_draft && (
                       <span className="ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 align-middle text-[11px] font-semibold text-amber-200">
                         Borrador IA
+                      </span>
+                    )}
+                    {!p.is_draft && (p.pending_for_all || (p.pending_member_ids?.length ?? 0) > 0) && (
+                      <span className="ml-2 rounded-full border border-[#edcc36]/50 bg-[#edcc36]/10 px-2 py-0.5 align-middle text-[11px] font-semibold text-[#edcc36]">
+                        Falta asignar
                       </span>
                     )}
                   </p>

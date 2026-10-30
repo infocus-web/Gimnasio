@@ -2838,6 +2838,8 @@ export type Database = {
           is_draft: boolean
           level: string | null
           name: string
+          pending_for_all: boolean
+          pending_member_ids: string[]
           org_id: string
         }
         Insert: {
@@ -2851,6 +2853,8 @@ export type Database = {
           is_draft?: boolean
           level?: string | null
           name: string
+          pending_for_all?: boolean
+          pending_member_ids?: string[]
           org_id: string
         }
         Update: {
@@ -2864,6 +2868,8 @@ export type Database = {
           is_draft?: boolean
           level?: string | null
           name?: string
+          pending_for_all?: boolean
+          pending_member_ids?: string[]
           org_id?: string
         }
         Relationships: [

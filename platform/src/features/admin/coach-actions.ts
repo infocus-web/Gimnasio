@@ -56,22 +56,32 @@ export async function createProgram(slug: string, _prev: ActionState, form: Form
   const parsed = programSchema.safeParse(formObject(form))
   if (!parsed.success) return { fieldErrors: { name: parsed.error.issues[0]?.message ?? 'Revisá los datos' } }
   const p = parsed.data
+  // Para quién es (opcional): se guarda como pendiente, se asigna al final con la rutina ya cargada
+  const uuid = z.uuid()
+  const pendingForAll = form.get('forAll') === '1'
+  const pendingIds = pendingForAll
+    ? []
+    : [...new Set(form.getAll('memberId').map(String))].filter((v) => uuid.safeParse(v).success).slice(0, 500)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('workout_programs')
-    .insert({ org_id: ctx.org.id, author_id: ctx.staff.id, name: p.name, goal: p.goal || null, level: p.level ?? null, description: p.description || null, is_template: true })
+    .insert({
+      org_id: ctx.org.id,
+      author_id: ctx.staff.id,
+      name: p.name,
+      goal: p.goal || null,
+      level: p.level ?? null,
+      description: p.description || null,
+      is_template: true,
+      pending_for_all: pendingForAll,
+      pending_member_ids: pendingIds,
+    })
     .select('id')
     .single()
   if (error) return { message: dbMessage(error) }
   // Arranca con un Día 1 vacío
   await supabase.from('program_workouts').insert({ org_id: ctx.org.id, program_id: data.id, day_index: 1, name: 'Día 1' })
-  // Alumnos elegidos al crear: se preseleccionan en el armador (se asigna al final, con la rutina ya cargada)
-  const uuid = z.uuid()
-  const para =
-    form.get('forAll') === '1'
-      ? 'todos'
-      : [...new Set(form.getAll('memberId').map(String))].filter((v) => uuid.safeParse(v).success).slice(0, 200).join(',')
-  redirect(`/${slug}/admin/rutinas/${data.id}${para ? `?para=${para}` : ''}` as Route)
+  redirect(`/${slug}/admin/rutinas/${data.id}` as Route)
 }
 
 export async function updateProgram(slug: string, programId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
@@ -260,6 +270,21 @@ export async function createExercise(slug: string, _prev: ActionState, form: For
 // ---------------------------------------------------------------------
 // Asignar rutina a un alumno
 // ---------------------------------------------------------------------
+/** El profe decide no asignar (por ahora) a los alumnos que había elegido al crear la rutina. */
+export async function discardPendingAssign(slug: string, programId: string, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await coach(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('workout_programs')
+    .update({ pending_member_ids: [], pending_for_all: false })
+    .eq('id', programId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin/rutinas`, 'layout')
+  return { ok: true }
+}
+
 /** Asigna una rutina a varios alumnos a la vez (desde la pantalla de la rutina). */
 export async function assignProgramToMany(slug: string, programId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await coach(slug)
@@ -292,7 +317,14 @@ export async function assignProgramToMany(slug: string, programId: string, _prev
     .in('member_id', allowedIds)
   const has = new Set((already ?? []).map((r) => r.member_id as string))
   const targets = allowedIds.filter((id) => !has.has(id))
-  if (!targets.length) return { ok: true, message: 'Los alumnos elegidos ya tienen esta rutina.' }
+  // Ya se asignó: se apaga el aviso "Falta asignar"
+  const clearPending = () =>
+    supabase.from('workout_programs').update({ pending_member_ids: [], pending_for_all: false }).eq('id', programId).eq('org_id', ctx.org.id)
+  if (!targets.length) {
+    await clearPending()
+    revalidatePath(`/${slug}/admin/rutinas`, 'layout')
+    return { ok: true, message: 'Los alumnos elegidos ya tienen esta rutina.' }
+  }
 
   const archived = await supabase
     .from('program_assignments')
@@ -311,6 +343,7 @@ export async function assignProgramToMany(slug: string, programId: string, _prev
     })),
   )
   if (error) return { message: dbMessage(error) }
+  await clearPending()
   revalidatePath(`/${slug}/admin`, 'layout')
   const n = targets.length
   return { ok: true, message: `Rutina asignada a ${n} ${n === 1 ? 'alumno' : 'alumnos'}: ya la ven en "Entrenar".` }
