@@ -11,6 +11,8 @@ export interface ActionState {
 }
 
 export const ERRORS: Record<string, string> = {
+  PROGRAM_IS_DRAFT: 'Esa rutina es un borrador de la IA: abrila en Rutinas, revisala y tocá "Aprobar" antes de asignarla.',
+  PROGRAM_HAS_ASSIGNMENTS: 'Esa rutina ya está asignada a alumnos: no puede volver a borrador.',
   FORBIDDEN: 'No tenés permiso para esta acción. Si entraste con otra cuenta en otra pestaña, recargá la página: la sesión es una sola por navegador.',
   MFA_REQUIRED: 'Tenés que verificar tu identidad con el código de 2 pasos.',
   NAME_REQUIRED: 'El nombre es obligatorio.',

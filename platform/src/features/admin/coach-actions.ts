@@ -233,6 +233,10 @@ export async function assignProgram(slug: string, memberId: string, _prev: Actio
   if (!programId) return { fieldErrors: { programId: 'Elegí una rutina' } }
   const startsOn = String(form.get('startsOn') ?? '') || undefined
   const supabase = await createClient()
+  // Antes de archivar la rutina actual: si la nueva es un borrador de la IA, no se toca nada
+  const { data: program } = await supabase.from('workout_programs').select('is_draft').eq('id', programId).maybeSingle()
+  if (!program) return { message: ERRORS.FORBIDDEN }
+  if (program.is_draft) return { message: ERRORS.PROGRAM_IS_DRAFT }
   await supabase.from('program_assignments').update({ status: 'archived' }).eq('member_id', memberId).eq('status', 'active')
   const { error } = await supabase.from('program_assignments').insert({
     org_id: ctx.org.id,

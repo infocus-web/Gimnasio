@@ -33,7 +33,8 @@ export default async function StudentPage({ params }: PageProps<'/[org]/admin/al
       .order('performed_at', { ascending: false })
       .limit(10),
     supabase.from('body_metrics').select('measured_at, weight_kg, body_fat_pct').eq('member_id', memberId).order('measured_at', { ascending: false }).limit(6),
-    supabase.from('workout_programs').select('id, name').eq('org_id', ctx.org.id).order('name'),
+    // Los borradores de la IA no se ofrecen hasta que el profe los aprueba (la base también lo impide)
+    supabase.from('workout_programs').select('id, name').eq('org_id', ctx.org.id).eq('is_draft', false).order('name'),
     supabase
       .from('program_assignments')
       .select('program_id, starts_on, workout_programs(name)')

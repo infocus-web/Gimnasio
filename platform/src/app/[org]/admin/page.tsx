@@ -4,7 +4,9 @@ import { Users, ScanLine, AlarmClock, UserX, UserPlus, ArrowRight } from 'lucide
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { CHECKIN_REASON, fmtDate, fmtTime, startOfToday } from '@/features/admin/format'
-import { STAT_TONES, type StatTone } from '@/features/admin/stat-tones'
+import type { StatTone } from '@/features/admin/stat-tones'
+import { StatCard } from '@/features/admin/StatCard'
+import { TrainerHome } from '@/features/admin/TrainerHome'
 
 export const metadata: Metadata = { title: 'Panel' }
 
@@ -80,31 +82,16 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
         <>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {stats.map((s) => (
-              <Link
+              <StatCard
                 key={s.label}
-                href={s.href as Route}
-                className={`group relative flex min-h-[148px] flex-col overflow-hidden rounded-2xl p-4 text-black transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:p-5 ${STAT_TONES[s.tone]}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium text-black/75">{s.label}</p>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/60">
-                    <s.icon className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                </div>
-                <p className="mt-2 text-4xl font-bold tabular-nums tracking-[-0.03em]">{s.value}</p>
-                {s.note !== undefined ? (
-                  <div className="mt-auto pt-3">
-                    <p className="mb-1.5 text-xs font-medium text-black/70">{s.note}</p>
-                    <div className="h-2.5 overflow-hidden rounded-full border border-black/70 bg-white/50">
-                      <div className="w3-hatch h-full rounded-full bg-black/20" style={{ width: `${todayPct}%` }} />
-                    </div>
-                  </div>
-                ) : (
-                  <p className="mt-auto flex items-center gap-1 pt-3 text-xs font-semibold text-black/70">
-                    Ver detalle <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-                  </p>
-                )}
-              </Link>
+                label={s.label}
+                value={s.value}
+                icon={s.icon}
+                href={s.href}
+                tone={s.tone}
+                note={s.note}
+                progress={s.note !== undefined ? todayPct : undefined}
+              />
             ))}
           </div>
 
