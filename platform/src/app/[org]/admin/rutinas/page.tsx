@@ -18,7 +18,13 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
     return <p className="text-sm text-zinc-400">Esta sección es para profesores.</p>
   }
   const supabase = await createClient()
-  const [{ data: programs }, { data: assignments }, { data: exercises }, { data: aiMachines }, { data: aiUsage }] = await Promise.all([
+  let studentsQ = supabase
+    .from('coach_client_overview')
+    .select('member_id, member_name, program_name')
+    .eq('org_id', ctx.org.id)
+    .order('member_name')
+  if (!ctx.can('training.manage_all')) studentsQ = studentsQ.eq('trainer_id', ctx.staff.id)
+  const [{ data: programs }, { data: assignments }, { data: exercises }, { data: aiMachines }, { data: aiUsage }, { data: studentRows }] = await Promise.all([
     supabase
       .from('workout_programs')
       .select('id, name, goal, level, author_id, created_at, is_draft, staff(display_name), program_workouts(id)')
@@ -28,7 +34,14 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
     supabase.from('exercises').select('id, name, muscle_group, video_url').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('muscle_group').order('name'),
     supabase.from('machines').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('name'),
     supabase.rpc('ai_routine_usage', { p_org: ctx.org.id }),
+    studentsQ,
   ])
+  const students = (studentRows ?? []).map((r) => ({
+    id: r.member_id as string,
+    name: r.member_name ?? 'Alumno',
+    programName: r.program_name ?? null,
+    hasThis: false,
+  }))
   const inUse = new Map<string, number>()
   for (const a of assignments ?? []) inUse.set(a.program_id, (inUse.get(a.program_id) ?? 0) + 1)
 
@@ -49,7 +62,7 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
           <Plus className="h-4 w-4" aria-hidden="true" /> Nueva rutina
         </summary>
         <div className="mt-4">
-          <ProgramForm action={createProgram.bind(null, slug)} submitLabel="Crear y armar" />
+          <ProgramForm action={createProgram.bind(null, slug)} submitLabel="Crear y armar" students={students} />
         </div>
       </details>
 

@@ -34,10 +34,13 @@ export function ProgramForm({
   action,
   values,
   submitLabel,
+  students,
 }: {
   action: Action
   values?: { name: string; goal: string | null; level: string | null; description: string | null }
   submitLabel: string
+  /** Solo al crear: permite elegir para qué alumnos es la rutina */
+  students?: AssignableStudent[]
 }) {
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
@@ -64,6 +67,15 @@ export function ProgramForm({
       <Field label="Indicaciones generales (las ve el alumno)" name="description">
         <textarea id="description" name="description" rows={2} defaultValue={values?.description ?? ''} className={`${inputClass} py-2`} />
       </Field>
+      {students && (
+        <fieldset className="space-y-2 rounded-xl border border-zinc-800 p-3">
+          <legend className="px-1 text-xs font-medium text-zinc-400">¿Para quién es? (opcional)</legend>
+          <p className="text-xs text-zinc-500">
+            Elegí uno, varios o todos. Quedan marcados mientras armás la rutina y se la asignás al final con un toque, así nadie ve una rutina a medio armar.
+          </p>
+          <StudentPicker students={students} />
+        </fieldset>
+      )}
       <Notice state={state} />
       <div className="flex justify-end">
         <SubmitButton>{submitLabel}</SubmitButton>
@@ -237,10 +249,19 @@ export function AssignProgramForm({
 
 export type AssignableStudent = { id: string; name: string; programName: string | null; hasThis: boolean }
 
-/** Elegir uno, varios o todos los alumnos para una rutina. */
-export function AssignToStudentsForm({ action, students, today }: { action: Action; students: AssignableStudent[]; today: string }) {
-  const [state, formAction] = useActionForm(action, {})
-  const [picked, setPicked] = useState<Set<string>>(new Set())
+/** Lista con casillas para elegir uno, varios o todos los alumnos. Envía `memberId` (uno por alumno) y `forAll=1` si eligió todos. */
+export function StudentPicker({
+  students,
+  initialPicked = [],
+  error,
+  onCountChange,
+}: {
+  students: AssignableStudent[]
+  initialPicked?: string[]
+  error?: string
+  onCountChange?: (n: number) => void
+}) {
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(initialPicked.filter((id) => students.some((s) => s.id === id && !s.hasThis))))
   const [query, setQuery] = useState('')
   const candidates = students.filter((s) => !s.hasThis)
   const shown = useMemo(() => {
@@ -248,26 +269,31 @@ export function AssignToStudentsForm({ action, students, today }: { action: Acti
     return q ? students.filter((s) => s.name.toLowerCase().includes(q)) : students
   }, [students, query])
   const allPicked = candidates.length > 0 && candidates.every((s) => picked.has(s.id))
-  const toggle = (id: string) =>
-    setPicked((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  const toggleAll = () => setPicked(allPicked ? new Set() : new Set(candidates.map((s) => s.id)))
+  const update = (next: Set<string>) => {
+    setPicked(next)
+    onCountChange?.(next.size)
+  }
+  const toggle = (id: string) => {
+    const next = new Set(picked)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    update(next)
+  }
+  const toggleAll = () => update(allPicked ? new Set() : new Set(candidates.map((s) => s.id)))
 
   if (!students.length) {
     return <p className="text-sm text-zinc-500">Todavía no tenés alumnos asignados. Recepción o administración te los asignan desde la ficha de cada socio.</p>
   }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <div className="space-y-2">
+      {allPicked && <input type="hidden" name="forAll" value="1" />}
       <div className="flex flex-wrap items-center gap-3">
         <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-sm font-semibold text-white">
           <input type="checkbox" checked={allPicked} onChange={toggleAll} disabled={!candidates.length} className="h-4 w-4 accent-[#edcc36]" />
           Todos mis alumnos ({candidates.length})
         </label>
+        {picked.size > 0 && !allPicked && <span className="text-xs text-zinc-400">{picked.size} elegidos</span>}
         {students.length > 8 && (
           <div className="relative ml-auto w-full sm:w-60">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
@@ -305,15 +331,34 @@ export function AssignToStudentsForm({ action, students, today }: { action: Acti
         ))}
         {!shown.length && <li className="px-3 py-4 text-sm text-zinc-500">No hay alumnos con ese nombre.</li>}
       </ul>
-      {state.fieldErrors?.memberId && <p className="text-xs text-red-300">{state.fieldErrors.memberId}</p>}
+      {error && <p className="text-xs text-red-300">{error}</p>}
+    </div>
+  )
+}
 
+/** Asignar la rutina (ya armada) a uno, varios o todos los alumnos. */
+export function AssignToStudentsForm({
+  action,
+  students,
+  today,
+  initialPicked = [],
+}: {
+  action: Action
+  students: AssignableStudent[]
+  today: string
+  initialPicked?: string[]
+}) {
+  const [state, formAction] = useActionForm(action, {})
+  const [count, setCount] = useState(() => initialPicked.filter((id) => students.some((s) => s.id === id && !s.hasThis)).length)
+  if (!students.length) return <StudentPicker students={students} />
+  return (
+    <form action={formAction} className="space-y-3">
+      <StudentPicker students={students} initialPicked={initialPicked} error={state.fieldErrors?.memberId} onCountChange={setCount} />
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Desde" name="startsOn">
           <input name="startsOn" type="date" defaultValue={today} className={inputClass} />
         </Field>
-        <SubmitButton>
-          Asignar{picked.size ? ` a ${picked.size} ${picked.size === 1 ? 'alumno' : 'alumnos'}` : ''}
-        </SubmitButton>
+        <SubmitButton>Asignar{count ? ` a ${count} ${count === 1 ? 'alumno' : 'alumnos'}` : ''}</SubmitButton>
       </div>
       <p className="text-xs text-zinc-500">Si el alumno ya tenía otra rutina, esa queda archivada (su historial no se pierde).</p>
       <Notice state={state} />

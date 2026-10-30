@@ -24,8 +24,9 @@ import { DraftBanner } from '@/features/floor/DraftBanner'
 
 export const metadata: Metadata = { title: 'Armar rutina' }
 
-export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin/rutinas/[programId]'>) {
+export default async function ProgramBuilder({ params, searchParams }: PageProps<'/[org]/admin/rutinas/[programId]'>) {
   const { org: slug, programId } = await params
+  const { para } = await searchParams
   const ctx = await getAdminContext(slug)
   if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
@@ -69,6 +70,11 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
     programName: r.program_name ?? null,
     hasThis: withThis.has(r.member_id as string),
   }))
+  // Alumnos elegidos al crear la rutina (?para=todos | ?para=id1,id2)
+  const paraRaw = typeof para === 'string' ? para : ''
+  const preselected =
+    paraRaw === 'todos' ? students.filter((s) => !s.hasThis).map((s) => s.id) : paraRaw.split(',').filter((id) => students.some((s) => s.id === id))
+  const exerciseCount = (days ?? []).reduce((n, d) => n + ((d.program_exercises as unknown[] | null)?.length ?? 0), 0)
 
   return (
     <div className="space-y-5">
@@ -104,6 +110,14 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
 
       {canAssign && (
         <Card title={`Asignar a alumnos${withThis.size ? ` · la usan ${withThis.size}` : ''}`}>
+          {preselected.length > 0 && !program.is_draft && (
+            <p className="mb-3 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-zinc-100">
+              Ya marcamos {preselected.length === 1 ? 'el alumno que elegiste' : `los ${preselected.length} alumnos que elegiste`}.{' '}
+              {exerciseCount === 0
+                ? 'Primero cargá los ejercicios de cada día (más abajo) y después volvé acá y tocá "Asignar".'
+                : 'Cuando la rutina esté lista, tocá "Asignar".'}
+            </p>
+          )}
           {program.is_draft ? (
             <p className="text-sm text-zinc-500">Es un borrador de la IA: revisalo y tocá "Aprobar" para poder asignarlo.</p>
           ) : (
@@ -111,6 +125,7 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
               action={assignProgramToMany.bind(null, slug, programId)}
               students={students}
               today={todayYMD(ctx.org.timezone)}
+              initialPicked={preselected}
             />
           )}
         </Card>

@@ -65,7 +65,13 @@ export async function createProgram(slug: string, _prev: ActionState, form: Form
   if (error) return { message: dbMessage(error) }
   // Arranca con un Día 1 vacío
   await supabase.from('program_workouts').insert({ org_id: ctx.org.id, program_id: data.id, day_index: 1, name: 'Día 1' })
-  redirect(`/${slug}/admin/rutinas/${data.id}` as Route)
+  // Alumnos elegidos al crear: se preseleccionan en el armador (se asigna al final, con la rutina ya cargada)
+  const uuid = z.uuid()
+  const para =
+    form.get('forAll') === '1'
+      ? 'todos'
+      : [...new Set(form.getAll('memberId').map(String))].filter((v) => uuid.safeParse(v).success).slice(0, 200).join(',')
+  redirect(`/${slug}/admin/rutinas/${data.id}${para ? `?para=${para}` : ''}` as Route)
 }
 
 export async function updateProgram(slug: string, programId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
