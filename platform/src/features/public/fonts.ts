@@ -1,15 +1,18 @@
-import { Barlow, Big_Shoulders } from 'next/font/google'
+import { DM_Sans } from 'next/font/google'
 
-/** Titulares: grotesca condensada de cartelería, como los números de los discos. */
-export const display = Big_Shoulders({
+/**
+ * Tipografía única de la plataforma: DM Sans (estilo W3Admin).
+ * Se exporta dos veces con las variables de siempre (--ff-display y --ff-text)
+ * para no tocar las clases font-display / font-sans que ya usan las pantallas.
+ */
+export const display = DM_Sans({
   subsets: ['latin'],
-  weight: ['700', '800', '900'],
+  weight: ['500', '700', '800', '900'],
   variable: '--ff-display',
   display: 'swap',
 })
 
-/** Texto: Barlow, de la misma familia visual (ruta/señalética), muy legible. */
-export const text = Barlow({
+export const text = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--ff-text',

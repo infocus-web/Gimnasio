@@ -68,7 +68,7 @@ export function LoginForm() {
     <main className="grid min-h-dvh place-items-center p-4">
       <div className="w-full max-w-sm space-y-6 rounded-lg border border-white/10 bg-[#141414] p-6 sm:p-8">
         <div>
-          <h1 className="font-display text-4xl font-black uppercase leading-none text-white">
+          <h1 className="font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-white">
             Evolution <span className="text-brand">Fitness</span>
           </h1>
           <p className="mt-2 text-sm text-zinc-400">Ingresá a tu cuenta de socio</p>

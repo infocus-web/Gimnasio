@@ -38,7 +38,7 @@ const focus =
 
 function Heading({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) {
   return (
-    <h2 id={id} className={`font-display text-[clamp(2.5rem,6vw,4.75rem)] font-black uppercase leading-[0.9] text-white ${className}`}>
+    <h2 id={id} className={`font-display text-[clamp(2.1rem,4.6vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white ${className}`}>
       {children}
     </h2>
   )
@@ -128,7 +128,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <span className={`h-2 w-2 rounded-full ${status.open ? 'animate-pulse-subtle bg-emerald-400' : 'bg-white/40'}`} aria-hidden="true" />
               {status.label}
             </p>
-            <h1 className="hero-title mt-4 max-w-5xl font-display text-[clamp(2.6rem,10.4vw,10.5rem)] font-extrabold uppercase leading-[0.86] tracking-[-0.01em] text-white">
+            <h1 className="hero-title mt-4 max-w-5xl font-display text-[clamp(2.4rem,7.4vw,7rem)] font-bold leading-[1] tracking-[-0.04em] text-white">
               {p.tagline ?? gym.name}
             </h1>
             <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
@@ -191,7 +191,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                       )}
                       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/40 to-transparent" aria-hidden="true" />
                       <span className="mb-4 h-1 w-10 bg-brand" style={{ backgroundColor: a.color || undefined }} aria-hidden="true" />
-                      <h3 className="font-display text-5xl font-black uppercase leading-none text-white sm:text-6xl">{a.name}</h3>
+                      <h3 className="font-display text-4xl font-bold leading-none tracking-[-0.03em] text-white sm:text-5xl">{a.name}</h3>
                       {a.description && <p className="mt-3 max-w-xs text-[15px] text-white/75">{a.description}</p>}
                     </article>
                   )
@@ -209,7 +209,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <ul className="mt-10 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
                 {(EXTRAS[gym.slug] ?? []).map((x, i) => (
                   <li key={x.name} className={`bg-black p-6 sm:p-8 ${i === 0 ? 'sm:col-span-2 lg:col-span-1 lg:row-span-2 lg:bg-[#141414]' : ''}`}>
-                    <h3 className="font-display text-3xl font-extrabold uppercase leading-none text-white">{x.name}</h3>
+                    <h3 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em] text-white">{x.name}</h3>
                     <p className="mt-3 text-[15px] text-white/65">{x.text}</p>
                     {x.detail && (
                       <div className="mt-5 flex items-start gap-2 text-sm font-semibold text-brand">
@@ -308,7 +308,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <div className="mt-12 grid gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 {scheduleDays.map((d) => (
                   <div key={d} className="bg-[#0e0e0e] p-4">
-                    <h3 className="font-display text-2xl font-extrabold uppercase text-white">{DAY_NAMES[d - 1]}</h3>
+                    <h3 className="font-display text-xl font-bold tracking-[-0.01em] text-white">{DAY_NAMES[d - 1]}</h3>
                     <ul className="mt-4 space-y-2">
                       {gym.schedule
                         .filter((s) => s.weekday === d)
@@ -350,10 +350,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                         featured ? 'border-brand bg-brand text-black' : 'border-white/12 bg-[#141414] text-white'
                       }`}
                     >
-                      <h3 className="font-display text-3xl font-extrabold uppercase leading-none">{plan.name}</h3>
+                      <h3 className="font-display text-2xl font-bold leading-tight tracking-[-0.02em]">{plan.name}</h3>
                       {plan.description && <p className={`mt-2 text-[15px] ${featured ? 'text-black/70' : 'text-white/60'}`}>{plan.description}</p>}
                       <p className="mb-8 mt-8 flex items-baseline gap-2">
-                        <span className="font-display text-6xl font-black tabular-nums leading-none">{price.amount}</span>
+                        <span className="font-display text-5xl font-bold tabular-nums leading-none tracking-[-0.03em]">{price.amount}</span>
                         <span className={`text-sm font-semibold ${featured ? 'text-black/70' : 'text-white/55'}`}>{price.period}</span>
                       </p>
                       {plan.max_members > 1 && (
@@ -394,7 +394,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           <Image src={WEB_MEDIA.cta} alt="" fill sizes="100vw" className="-z-20 object-cover" />
           <div className="absolute inset-0 -z-10 bg-black/65" aria-hidden="true" />
           <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-4 py-24 sm:px-8 sm:py-32 lg:flex-row lg:items-end lg:justify-between">
-            <h2 id="cta-title" className="max-w-3xl font-display text-[clamp(3rem,8vw,7rem)] font-black uppercase leading-[0.85] text-white">
+            <h2 id="cta-title" className="max-w-3xl font-display text-[clamp(2.4rem,5.6vw,4.75rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white">
               Vení a entrenar con nosotros
             </h2>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">

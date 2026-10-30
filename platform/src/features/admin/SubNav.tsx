@@ -9,14 +9,14 @@ export function SubNav({ items }: { items: { href: string; label: string }[] }) 
   const exact = items.map((i) => i.href).sort((a, b) => b.length - a.length)
   const active = exact.find((h) => pathname === h || pathname.startsWith(`${h}/`))
   return (
-    <nav aria-label="Secciones" className="flex gap-1 overflow-x-auto border-b border-zinc-900">
+    <nav aria-label="Secciones" className="flex gap-1.5 overflow-x-auto pb-1">
       {items.map((i) => (
         <Link
           key={i.href}
           href={i.href as Route}
           aria-current={active === i.href ? 'page' : undefined}
-          className={`-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-semibold ${
-            active === i.href ? 'border-[#edcc36] text-white' : 'border-transparent text-zinc-400 hover:text-white'
+          className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            active === i.href ? 'bg-brand text-black' : 'bg-[#333] text-zinc-300 hover:bg-[#3a3a3a] hover:text-white'
           }`}
         >
           {i.label}

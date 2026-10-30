@@ -4,6 +4,7 @@ import { Users, ScanLine, AlarmClock, UserX, UserPlus, ArrowRight } from 'lucide
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { CHECKIN_REASON, fmtDate, fmtTime, startOfToday } from '@/features/admin/format'
+import { STAT_TONES, type StatTone } from '@/features/admin/stat-tones'
 
 export const metadata: Metadata = { title: 'Panel' }
 
@@ -47,24 +48,28 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
       ])
     : [null, null, null, null, null]
 
-  const stats = [
-    { label: 'Socios activos', value: active?.count ?? 0, icon: Users, href: `/${slug}/admin/socios` },
-    { label: 'Entradas hoy', value: checkinsToday?.count ?? 0, icon: ScanLine, href: `/${slug}/admin/recepcion` },
-    { label: 'Vencen en 7 días', value: expiring?.count ?? expiring?.data?.length ?? 0, icon: AlarmClock, href: `/${slug}/admin/socios?estado=por_vencer` },
-    { label: 'Vencidos o sin plan', value: noPlan?.count ?? 0, icon: UserX, href: `/${slug}/admin/socios?estado=vencido` },
+  const activeCount = active?.count ?? 0
+  const todayCount = checkinsToday?.count ?? 0
+  // Barra de la primera tarjeta: qué parte de los socios activos ya vino hoy
+  const todayPct = activeCount ? Math.min(100, Math.round((todayCount / activeCount) * 100)) : 0
+  const stats: { label: string; value: number; icon: typeof Users; href: string; tone: StatTone; note?: string }[] = [
+    { label: 'Entradas hoy', value: todayCount, icon: ScanLine, href: `/${slug}/admin/recepcion`, tone: 'brand', note: `${todayPct}% de los socios activos` },
+    { label: 'Socios activos', value: activeCount, icon: Users, href: `/${slug}/admin/socios`, tone: 'salmon' },
+    { label: 'Vencen en 7 días', value: expiring?.count ?? expiring?.data?.length ?? 0, icon: AlarmClock, href: `/${slug}/admin/socios?estado=por_vencer`, tone: 'mint' },
+    { label: 'Vencidos o sin plan', value: noPlan?.count ?? 0, icon: UserX, href: `/${slug}/admin/socios?estado=vencido`, tone: 'lavender' },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#edcc36]">Panel</p>
-          <h1 className="text-2xl font-extrabold text-white">Hola, {ctx.staff.display_name.split(' ')[0]}</h1>
+          <h1 className="text-3xl font-bold text-white">Hola, {ctx.staff.display_name.split(' ')[0]}</h1>
+          <p className="mt-1 text-sm text-zinc-400">Así viene el gimnasio hoy.</p>
         </div>
         {ctx.can('members.write') && (
           <Link
             href={`/${slug}/admin/socios/nuevo` as Route}
-            className="btn-tac inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black"
+            className="btn-tac inline-flex min-h-[44px] items-center gap-2 bg-brand px-4 text-sm text-black lg:hidden"
           >
             <UserPlus className="h-4 w-4" aria-hidden="true" /> Nuevo socio
           </Link>
@@ -73,30 +78,46 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
 
       {canMembers ? (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {stats.map((s) => (
               <Link
                 key={s.label}
                 href={s.href as Route}
-                className="group rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4 transition-colors hover:border-[#edcc36]/40"
+                className={`group relative flex min-h-[148px] flex-col overflow-hidden rounded-2xl p-4 text-black transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:p-5 ${STAT_TONES[s.tone]}`}
               >
-                <s.icon className="h-5 w-5 text-[#edcc36]" aria-hidden="true" />
-                <p className="mt-3 text-3xl font-extrabold tabular-nums text-white">{s.value}</p>
-                <p className="text-xs text-zinc-400">{s.label}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-black/75">{s.label}</p>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/60">
+                    <s.icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                </div>
+                <p className="mt-2 text-4xl font-bold tabular-nums tracking-[-0.03em]">{s.value}</p>
+                {s.note !== undefined ? (
+                  <div className="mt-auto pt-3">
+                    <p className="mb-1.5 text-xs font-medium text-black/70">{s.note}</p>
+                    <div className="h-2.5 overflow-hidden rounded-full border border-black/70 bg-white/50">
+                      <div className="w3-hatch h-full rounded-full bg-black/20" style={{ width: `${todayPct}%` }} />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-auto flex items-center gap-1 pt-3 text-xs font-semibold text-black/70">
+                    Ver detalle <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  </p>
+                )}
               </Link>
             ))}
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-zinc-300">Vencen esta semana</h2>
+            <section className="rounded-2xl border border-[#444] bg-[#2c2c2c] p-5">
+              <h2 className="mb-3 text-base font-bold text-white">Vencen esta semana</h2>
               {expiring?.data?.length ? (
-                <ul className="divide-y divide-zinc-900">
+                <ul className="divide-y divide-[#3d3d3d]">
                   {expiring.data.map((m) => (
                     <li key={m.id}>
                       <Link
                         href={`/${slug}/admin/socios/${m.id}` as Route}
-                        className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-[#edcc36]"
+                        className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-brand"
                       >
                         <span className="truncate text-zinc-100">
                           {m.first_name} {m.last_name}
@@ -112,9 +133,9 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
               )}
             </section>
 
-            <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">
+            <section className="rounded-2xl border border-[#444] bg-[#2c2c2c] p-5">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-300">Últimas entradas</h2>
+                <h2 className="text-base font-bold text-white">Últimas entradas</h2>
                 {ctx.can('checkins.manage') && (
                   <Link href={`/${slug}/admin/recepcion` as Route} className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white">
                     Recepción <ArrowRight className="h-3 w-3" aria-hidden="true" />
@@ -122,7 +143,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
                 )}
               </div>
               {recent?.data?.length ? (
-                <ul className="divide-y divide-zinc-900">
+                <ul className="divide-y divide-[#3d3d3d]">
                   {recent.data.map((c) => {
                     const m = c.members as unknown as { first_name: string; last_name: string } | null
                     return (

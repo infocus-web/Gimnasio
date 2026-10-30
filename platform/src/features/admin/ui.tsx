@@ -56,7 +56,7 @@ export function KeepValues({ values }: { values?: Record<string, string | string
 }
 
 export const inputClass =
-  'min-h-[44px] w-full rounded-xl border border-zinc-800 bg-black px-3 text-sm text-white placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] disabled:opacity-50'
+  'min-h-[44px] w-full rounded-xl border border-[#444] bg-[#1a1a1a] px-3.5 text-sm text-white placeholder:text-zinc-500 focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 disabled:opacity-50'
 
 export function Field({
   label,
@@ -123,16 +123,15 @@ export function Notice({ state }: { state: ActionState | undefined }) {
 }
 
 export function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  // Tarjeta estilo W3Admin: título con línea divisoria y cuerpo con aire
   return (
-    <section className="rounded-2xl border border-white/[0.08] bg-[#111] p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-zinc-200">
-          <span className="h-2 w-2 shrink-0 bg-brand" aria-hidden="true" />
-          {title}
-        </h2>
+    <section className="overflow-hidden rounded-2xl border border-[#444] bg-[#2c2c2c]">
+      <div className="flex min-h-[60px] items-center justify-between gap-3 border-b border-[#444] px-5 py-3">
+        <h2 className="text-base font-bold tracking-[-0.01em] text-white">{title}</h2>
         {action}
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </section>
   )
 }
+

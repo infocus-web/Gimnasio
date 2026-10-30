@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
-import { ExternalLink, KeyRound } from 'lucide-react'
+import { ExternalLink, KeyRound, Search, CalendarDays, ScanLine, UserPlus } from 'lucide-react'
 import { Wordmark } from '@/components/Wordmark'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
@@ -86,62 +86,76 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
     ...(ctx.can('org.manage') ? [{ href: `${base}/web`, label: 'Web', icon: 'web' } as const] : []),
   ]
 
+  const initials = ctx.staff.display_name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join('')
+  const roleLabel = ROLE_LABELS[ctx.staff.role] ?? ctx.staff.role
+  const iconBtn =
+    'grid h-11 w-11 place-items-center rounded-full text-zinc-300 transition-colors hover:bg-[#3a3a3a] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand'
+
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="hidden border-r border-white/[0.08] bg-[#0a0a0a] lg:sticky lg:top-0 lg:flex lg:max-h-dvh lg:overflow-y-auto lg:min-h-dvh lg:flex-col lg:gap-6 lg:p-4">
-        <Link href={base as Route} className="block px-2 pt-2">
+    <div className="w3-shell min-h-dvh lg:grid lg:grid-cols-[288px_1fr]">
+      {/* Barra lateral (compu) */}
+      <aside className="hidden bg-black lg:sticky lg:top-0 lg:flex lg:max-h-dvh lg:min-h-dvh lg:flex-col lg:overflow-y-auto">
+        <Link href={base as Route} className="flex min-h-[88px] items-center border-b border-[#2c2c2c] px-5">
           <Wordmark name={ctx.org.name} sub="Panel de gestión" />
         </Link>
-        <AdminNav items={items} variant="side" />
-        <div className="mt-auto space-y-3 border-t border-zinc-900 pt-4">
+        <div className="flex-1 px-4 py-6">
+          <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Menú</p>
+          <AdminNav items={items} variant="side" />
+        </div>
+        <div className="space-y-3 border-t border-[#2c2c2c] px-5 py-5">
           <Link
             href={`/${slug}` as Route}
             target="_blank"
-            className="flex items-center gap-2 px-2 text-xs text-zinc-400 hover:text-white"
+            className="flex items-center gap-2 text-xs text-zinc-400 hover:text-white"
           >
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Ver la web pública
           </Link>
           <Link
             href={`/equipo/clave?next=${encodeURIComponent(base)}` as Route}
-            className="flex items-center gap-2 px-2 text-xs text-zinc-400 hover:text-white"
+            className="flex items-center gap-2 text-xs text-zinc-400 hover:text-white"
           >
             <KeyRound className="h-3.5 w-3.5" aria-hidden="true" /> Cambiar mi contraseña
           </Link>
-          <div className="px-2">
-            <p className="truncate text-sm font-semibold text-white">{ctx.staff.display_name}</p>
-            <p className="text-xs text-zinc-500">{ROLE_LABELS[ctx.staff.role] ?? ctx.staff.role}</p>
-          </div>
           <SignOutButton compact to="/equipo" />
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-zinc-900 bg-black/85 backdrop-blur-md lg:hidden">
+      {/* Encabezado (celular) */}
+      <header className="sticky top-0 z-30 border-b border-[#2c2c2c] bg-black/90 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <Link href={base as Route} className="min-w-0">
             <Wordmark name={ctx.org.name} size="sm" />
           </Link>
           {/* Menú de la cuenta en el celular (en la compu está en la barra lateral) */}
           <details className="relative">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-zinc-800 px-3 text-xs text-zinc-300 [&::-webkit-details-marker]:hidden">
-              <span className="max-w-[9rem] truncate font-semibold text-white">{ctx.staff.display_name}</span>
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-full bg-[#2c2c2c] py-1 pl-1 pr-3 text-xs text-zinc-300 [&::-webkit-details-marker]:hidden">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand text-xs font-bold text-black" aria-hidden="true">
+                {initials}
+              </span>
+              <span className="max-w-[8rem] truncate font-semibold text-white">{ctx.staff.display_name}</span>
               <span className="text-zinc-500">▾</span>
             </summary>
-            <div className="absolute right-0 top-full z-40 mt-2 w-60 space-y-1 rounded-2xl border border-zinc-800 bg-zinc-950 p-2 shadow-xl">
-              <p className="px-2 pb-1 pt-1 text-xs text-zinc-500">{ROLE_LABELS[ctx.staff.role] ?? ctx.staff.role}</p>
+            <div className="absolute right-0 top-full z-40 mt-2 w-60 space-y-1 rounded-2xl border border-[#444] bg-[#2c2c2c] p-2 shadow-xl">
+              <p className="px-2 pb-1 pt-1 text-xs text-zinc-400">{roleLabel}</p>
               <Link
                 href={`/${slug}` as Route}
                 target="_blank"
-                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-300 hover:bg-zinc-900"
+                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-200 hover:bg-[#3a3a3a]"
               >
                 <ExternalLink className="h-4 w-4" aria-hidden="true" /> Ver la web pública
               </Link>
               <Link
                 href={`/equipo/clave?next=${encodeURIComponent(base)}` as Route}
-                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-300 hover:bg-zinc-900"
+                className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-zinc-200 hover:bg-[#3a3a3a]"
               >
                 <KeyRound className="h-4 w-4" aria-hidden="true" /> Cambiar mi contraseña
               </Link>
-              <div className="border-t border-zinc-900 pt-2">
+              <div className="border-t border-[#444] pt-2">
                 <SignOutButton compact to="/equipo" />
               </div>
             </div>
@@ -150,7 +164,55 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
         <AdminNav items={items} variant="bar" />
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">{children}</main>
+      {/* Panel de contenido: tarjeta gris redondeada sobre el fondo negro (compu) */}
+      <div className="w3-panel min-w-0 lg:my-3 lg:mr-3 lg:flex lg:min-h-[calc(100dvh-1.5rem)] lg:flex-col lg:overflow-hidden lg:rounded-3xl lg:border lg:border-[#2c2c2c]">
+        <div className="w3-header sticky top-0 z-20 hidden min-h-[88px] items-center gap-4 border-b border-[#3a3a3a] px-8 lg:flex">
+          {ctx.can('members.read') ? (
+            <form action={`${base}/socios`} method="get" role="search" className="relative w-full max-w-sm">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden="true" />
+              <input
+                type="search"
+                name="q"
+                placeholder="Buscar socio…"
+                aria-label="Buscar socio"
+                className="min-h-[44px] w-full rounded-xl border border-transparent bg-black pl-11 pr-4 text-sm text-white placeholder:text-zinc-500 focus-visible:border-brand focus-visible:outline-none"
+              />
+            </form>
+          ) : (
+            <span />
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            {(ctx.can('schedule.manage') || ctx.can('bookings.manage')) && (
+              <Link href={`${base}/agenda` as Route} className={iconBtn} aria-label="Agenda" title="Agenda">
+                <CalendarDays className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            )}
+            {ctx.can('checkins.manage') && (
+              <Link href={`${base}/recepcion` as Route} className={iconBtn} aria-label="Recepción" title="Recepción">
+                <ScanLine className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            )}
+            {ctx.can('members.write') && (
+              <Link
+                href={`${base}/socios/nuevo` as Route}
+                className="btn-tac ml-2 inline-flex min-h-[46px] items-center gap-2 bg-brand px-5 text-sm text-black"
+              >
+                <UserPlus className="h-4 w-4" aria-hidden="true" /> Nuevo socio
+              </Link>
+            )}
+            <div className="ml-4 flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#444] text-sm font-bold text-white" aria-hidden="true">
+                {initials}
+              </span>
+              <div className="leading-tight">
+                <p className="max-w-[12rem] truncate text-[15px] font-bold text-white">{ctx.staff.display_name}</p>
+                <p className="text-xs text-zinc-400">{roleLabel}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+      </div>
     </div>
   )
 }

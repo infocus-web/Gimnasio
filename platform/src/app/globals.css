@@ -3,10 +3,29 @@
 @theme {
   --color-brand: #edcc36;
   --color-ink: #000000;
-  /* Esquinas más rectas en toda la plataforma (estética "táctica") */
-  --radius-xl: 0.375rem;
-  --radius-2xl: 0.5rem;
-  --radius-3xl: 0.625rem;
+  /* Estilo W3Admin (versión oscura): superficies grises en vez de casi negras */
+  --color-zinc-700: #555555;
+  --color-zinc-800: #444444;
+  --color-zinc-900: #333333;
+  --color-zinc-950: #262626;
+  /* Tarjetas pastel (métricas) */
+  --color-pastel-salmon: #ffccc0;
+  --color-pastel-lavender: #d7e3ff;
+  --color-pastel-mint: #a7ffea;
+  --color-pastel-lemon: #fcef73;
+  /* Esquinas redondeadas como el template */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.875rem;
+  --radius-3xl: 1.25rem;
+}
+
+/* La web pública conserva los grises casi negros originales (sus fondos son fotos y negro) */
+.public-site {
+  --color-zinc-700: oklch(37% 0.013 285.805);
+  --color-zinc-800: oklch(27.4% 0.006 286.033);
+  --color-zinc-900: oklch(21% 0.006 285.885);
+  --color-zinc-950: oklch(14.1% 0.005 285.823);
 }
 
 /* Fuentes de la web pública: las variables las define next/font en .public-site */
@@ -22,22 +41,21 @@
     color: #f4f4f5;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Titulares con la tipografía condensada de la marca (salvo los rótulos chicos) */
+  /* Titulares: DM Sans en negrita, compactos (estilo W3Admin) */
   :where(h1, h2):not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]) {
-    font-family: var(--ff-display), 'Arial Narrow', sans-serif;
-    letter-spacing: 0;
+    font-family: var(--ff-display), sans-serif;
+    letter-spacing: -0.02em;
   }
   :where(h1):not([class*="text-xs"]):not([class*="text-sm"]):not([class*="text-base"]) {
-    text-transform: uppercase;
-    line-height: 0.95;
+    line-height: 1.1;
   }
-  h1.text-lg, h1.text-xl { font-size: 1.85rem; }
-  h1.text-2xl { font-size: 2.4rem; }
-  h1.text-3xl { font-size: 2.9rem; }
+  h1.text-lg, h1.text-xl { font-size: 1.6rem; }
+  h1.text-2xl { font-size: 2rem; }
+  h1.text-3xl { font-size: 2.35rem; }
 }
 
 /* Clases del diseño "cyber" (Fase A, AI Studio) */
-.font-cyber { font-family: var(--ff-display), 'Arial Narrow', sans-serif; letter-spacing: 0; }
+.font-cyber { font-family: var(--ff-display), sans-serif; letter-spacing: -0.01em; }
 .font-tech  { font-family: var(--font-sans); }
 
 .cyber-grid {
@@ -53,42 +71,44 @@
   background-size: 14px 14px;
 }
 .glass-panel {
-  background: #141414;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #262626;
+  border: 1px solid #444444;
+  border-radius: 0.875rem;
 }
 .glass-panel-yellow {
-  background: #17150b;
+  background: #2a2716;
   border: 1px solid rgba(237, 204, 54, 0.45);
+  border-radius: 0.875rem;
 }
 .glow-yellow, .glow-yellow-sm { box-shadow: none; }
 .glow-yellow-border { border-color: rgba(237, 204, 54, 0.45); }
 
-/* ---------- Botón táctico (esquineros tipo mira) ----------
-   Se agrega a los botones amarillos (.btn-tac) y a los de borde amarillo (.btn-tac-ghost). */
+/* ---------- Botones (estilo W3Admin) ----------
+   Mantienen los nombres .btn-tac (relleno amarillo) y .btn-tac-ghost (gris con borde)
+   para no tocar cada pantalla: ahora son botones redondeados, sin esquineros. */
 .btn-tac {
   position: relative;
-  border-radius: 0 !important;
+  border-radius: 0.625rem !important;
   box-shadow: none !important;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-weight: 700;
-  transition: background-color 200ms, color 200ms, border-color 200ms;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  transition: background-color 200ms, color 200ms, border-color 200ms, transform 150ms;
 }
-.btn-tac::before, .btn-tac::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  pointer-events: none;
-  border-color: #000;
-  border-style: solid;
+.btn-tac:not(:disabled):active { transform: scale(0.97); }
+.btn-tac:not(:disabled):not(.btn-tac-ghost):hover { background-color: #f5db5c; }
+.btn-tac-ghost { background-color: #333333; border: 1px solid #444444; color: #fff; }
+.btn-tac-ghost:not(:disabled):hover { border-color: #edcc36; background-color: #3a3a3a; color: #fff; }
+
+/* Superficies del panel y la app */
+.w3-shell { background-color: #000; }
+.w3-panel { background-color: #202020; }
+.w3-header { background-color: #2c2c2c; }
+
+/* Barras rayadas de las tarjetas de métricas */
+.w3-hatch {
+  background-image: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.55) 0 2px, transparent 2px 6px);
 }
-.btn-tac::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
-.btn-tac::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
-.btn-tac:not(:disabled):not(.btn-tac-ghost):hover { background-color: #fff; }
-.btn-tac-ghost { background-color: #141414; border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; }
-.btn-tac-ghost::before, .btn-tac-ghost::after { border-color: #edcc36; }
-.btn-tac-ghost:not(:disabled):hover { border-color: #edcc36; background-color: #141414; color: #edcc36; }
 
 @keyframes cyber-scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(400%); } }
 .animate-scan { animation: cyber-scan 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
@@ -96,8 +116,8 @@
 .animate-pulse-subtle { animation: pulse-subtle 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #09090b; }
-::-webkit-scrollbar-thumb { background: #27272a; border-radius: 9999px; }
+::-webkit-scrollbar-track { background: #1a1a1a; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 9999px; }
 ::-webkit-scrollbar-thumb:hover { background: #edcc36; }
 
 @media (prefers-reduced-motion: reduce) {

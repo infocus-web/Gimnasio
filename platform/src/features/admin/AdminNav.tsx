@@ -23,7 +23,7 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
 
   if (variant === 'bar') {
     return (
-      <nav aria-label="Panel" className="flex gap-1 overflow-x-auto px-3 pb-2">
+      <nav aria-label="Panel" className="flex gap-1.5 overflow-x-auto px-3 pb-3">
         {items
           .filter((i) => !i.soon)
           .map((item) => {
@@ -34,8 +34,8 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
                 key={item.href}
                 href={item.href as Route}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium ${
-                  active ? 'bg-[#edcc36] font-semibold text-black' : 'text-zinc-300 hover:bg-zinc-900'
+                className={`flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors ${
+                  active ? 'bg-brand font-semibold text-black' : 'bg-[#2c2c2c] text-zinc-300 hover:text-white'
                 }`}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -47,18 +47,19 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
     )
   }
 
+  // Barra lateral estilo W3Admin: cada ítem es un círculo con el ícono + el nombre al lado
   return (
-    <nav aria-label="Panel" className="space-y-1">
+    <nav aria-label="Panel" className="space-y-1.5">
       {items.map((item) => {
         const Icon = ICONS[item.icon]
         if (item.soon) {
           return (
-            <span key={item.href} className="flex min-h-[42px] items-center gap-3 rounded-xl px-3 text-sm text-zinc-600">
-              <Icon className="h-4 w-4" aria-hidden="true" />
-              {item.label}
-              <span className="ml-auto rounded-md border border-zinc-800 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-                Pronto
+            <span key={item.href} className="flex min-h-[48px] items-center gap-3 px-1 text-sm text-zinc-600">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1a1a1a]">
+                <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
               </span>
+              {item.label}
+              <span className="ml-auto rounded-full border border-zinc-800 px-2 py-0.5 text-[10px]">Pronto</span>
             </span>
           )
         }
@@ -68,14 +69,18 @@ export function AdminNav({ items, variant }: { items: NavItem[]; variant: 'side'
             key={item.href}
             href={item.href as Route}
             aria-current={active ? 'page' : undefined}
-            className={`relative flex min-h-[42px] items-center gap-3 px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] ${
-              active
-                ? 'bg-white/[0.06] text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:bg-[#edcc36] [&>svg]:text-[#edcc36]'
-                : 'text-zinc-400 hover:bg-white/[0.04] hover:text-white'
+            className={`group flex min-h-[48px] items-center gap-3 rounded-full px-1 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
+              active ? 'font-semibold text-white' : 'font-medium text-zinc-300 hover:text-white'
             }`}
           >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            {item.label}
+            <span
+              className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition-colors ${
+                active ? 'bg-brand text-black' : 'bg-[#2c2c2c] text-zinc-300 group-hover:bg-[#3a3a3a] group-hover:text-white'
+              }`}
+            >
+              <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+            </span>
+            <span className="truncate">{item.label}</span>
           </Link>
         )
       })}
