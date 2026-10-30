@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/server'
 import { CHECKIN_REASON, fmtDate, fmtTime, startOfToday } from '@/features/admin/format'
 import type { StatTone } from '@/features/admin/stat-tones'
 import { StatCard } from '@/features/admin/StatCard'
-import { TrainerHome } from '@/features/admin/TrainerHome'
 
 export const metadata: Metadata = { title: 'Panel' }
 
