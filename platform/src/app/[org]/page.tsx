@@ -6,7 +6,7 @@ import {
   ArrowUpRight, AtSign, Download, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users, X,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
-import { WEB_MEDIA, activityImage } from '@/features/public/media'
+import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
 import { EXTRAS } from '@/features/public/content'
@@ -52,7 +52,6 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const p = gym.profile
   const status = openStatus(gym.opening_hours)
   const loginHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/pase`)}` as Route
-  const [first, ...rest] = gym.name.split(' ')
   const whatsapp = p.whatsapp ? `https://wa.me/${p.whatsapp.replace(/\D/g, '')}` : null
   const tel = p.phone ? `tel:${p.phone.replace(/[^\d+]/g, '')}` : null
   const mapQuery = gym.address ? `${gym.name}, ${gym.address}` : p.geo ? `${p.geo.lat},${p.geo.lng}` : null
@@ -71,8 +70,15 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
       <header className="absolute inset-x-0 top-0 z-40">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-8">
           <a href="#inicio" className={`flex min-w-0 items-baseline gap-1.5 rounded ${focus}`} aria-label={`${gym.name}, inicio`}>
-            <span className="font-display text-2xl font-black uppercase leading-none tracking-tight text-white sm:text-3xl">{first}</span>
-            <span className="hidden truncate font-display text-lg font-bold uppercase leading-none text-brand min-[420px]:inline sm:text-xl">{rest.join(' ')}</span>
+            <Image
+              src={BRAND.logo}
+              alt={gym.name}
+              width={BRAND.logoWidth}
+              height={BRAND.logoHeight}
+              priority
+              sizes="(min-width: 640px) 260px, 200px"
+              className="h-9 w-auto sm:h-12"
+            />
           </a>
           <nav aria-label="Secciones" className="hidden items-center gap-7 lg:flex">
             {NAV.map(([href, label]) => (
@@ -481,9 +487,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
       <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div>
-            <p className="font-display text-2xl font-black uppercase leading-none text-white">
-              {first} <span className="text-brand">{rest.join(' ')}</span>
-            </p>
+            <div className="flex items-center gap-4">
+              <Image src={BRAND.emblem} alt="" width={72} height={72} className="h-16 w-16 rounded-full sm:h-[72px] sm:w-[72px]" />
+              <Image src={BRAND.logo} alt={gym.name} width={BRAND.logoWidth} height={BRAND.logoHeight} sizes="240px" className="h-10 w-auto sm:h-11" />
+            </div>
             <p className="mt-2 text-sm text-white/45">© {new Date().getFullYear()} {gym.name}{shortAddress ? `, ${shortAddress}` : ''}</p>
           </div>
           <Link

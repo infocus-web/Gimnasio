@@ -254,6 +254,62 @@ export async function createExercise(slug: string, _prev: ActionState, form: For
 // ---------------------------------------------------------------------
 // Asignar rutina a un alumno
 // ---------------------------------------------------------------------
+/** Asigna una rutina a varios alumnos a la vez (desde la pantalla de la rutina). */
+export async function assignProgramToMany(slug: string, programId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await coach(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const uuid = z.uuid()
+  const ids = [...new Set(form.getAll('memberId').map(String))].filter((v) => uuid.safeParse(v).success)
+  if (!ids.length) return { fieldErrors: { memberId: 'Elegí al menos un alumno' } }
+  const startsOn = String(form.get('startsOn') ?? '') || undefined
+  const supabase = await createClient()
+
+  const { data: program } = await supabase.from('workout_programs').select('is_draft').eq('id', programId).eq('org_id', ctx.org.id).maybeSingle()
+  if (!program) return { message: ERRORS.FORBIDDEN }
+  if (program.is_draft) return { message: ERRORS.PROGRAM_IS_DRAFT }
+
+  // Solo alumnos que este profe puede ver (los suyos, o todos si administra el entrenamiento)
+  let allowedQ = supabase.from('coach_client_overview').select('member_id').eq('org_id', ctx.org.id).in('member_id', ids)
+  if (!ctx.can('training.manage_all')) allowedQ = allowedQ.eq('trainer_id', ctx.staff.id)
+  const { data: allowed, error: allowedError } = await allowedQ
+  if (allowedError) return { message: dbMessage(allowedError) }
+  const allowedIds = (allowed ?? []).map((r) => r.member_id as string)
+  if (!allowedIds.length) return { message: ERRORS.FORBIDDEN }
+
+  // Los que ya la tienen activa no se tocan
+  const { data: already } = await supabase
+    .from('program_assignments')
+    .select('member_id')
+    .eq('org_id', ctx.org.id)
+    .eq('program_id', programId)
+    .eq('status', 'active')
+    .in('member_id', allowedIds)
+  const has = new Set((already ?? []).map((r) => r.member_id as string))
+  const targets = allowedIds.filter((id) => !has.has(id))
+  if (!targets.length) return { ok: true, message: 'Los alumnos elegidos ya tienen esta rutina.' }
+
+  const archived = await supabase
+    .from('program_assignments')
+    .update({ status: 'archived' })
+    .eq('org_id', ctx.org.id)
+    .eq('status', 'active')
+    .in('member_id', targets)
+  if (archived.error) return { message: dbMessage(archived.error) }
+  const { error } = await supabase.from('program_assignments').insert(
+    targets.map((memberId) => ({
+      org_id: ctx.org.id,
+      program_id: programId,
+      member_id: memberId,
+      trainer_id: ctx.staff.id,
+      ...(startsOn ? { starts_on: startsOn } : {}),
+    })),
+  )
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  const n = targets.length
+  return { ok: true, message: `Rutina asignada a ${n} ${n === 1 ? 'alumno' : 'alumnos'}: ya la ven en "Entrenar".` }
+}
+
 export async function assignProgram(slug: string, memberId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await coach(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }

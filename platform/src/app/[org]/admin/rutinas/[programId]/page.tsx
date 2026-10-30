@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import {
   addProgramExercise,
   addWorkoutDay,
+  assignProgramToMany,
   deleteProgram,
   deleteProgramExercise,
   deleteWorkoutDay,
@@ -14,7 +15,8 @@ import {
   renameWorkoutDay,
   updateProgram,
 } from '@/features/admin/coach-actions'
-import { AddDayForm, AddExerciseForm, ProgramForm, RenameDayForm } from '@/features/admin/CoachForms'
+import { AddDayForm, AddExerciseForm, AssignToStudentsForm, ProgramForm, RenameDayForm } from '@/features/admin/CoachForms'
+import { todayYMD } from '@/features/admin/format'
 import { Card } from '@/features/admin/ui'
 import { ActionButton, ConfirmAction } from '@/features/admin/ConfirmAction'
 import { approveDraft } from '@/features/floor/actions'
@@ -44,6 +46,29 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
     supabase.from('exercises').select('id, name, muscle_group').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('name'),
   ])
   const canEdit = program.author_id === ctx.staff.id || ctx.can('training.manage_all')
+  const manageAll = ctx.can('training.manage_all')
+  const canAssign = ctx.staff.role === 'trainer' || manageAll
+
+  // Alumnos a los que este profe puede asignarle la rutina
+  let studentsQ = supabase
+    .from('coach_client_overview')
+    .select('member_id, member_name, program_name')
+    .eq('org_id', ctx.org.id)
+    .order('member_name')
+  if (!manageAll) studentsQ = studentsQ.eq('trainer_id', ctx.staff.id)
+  const [{ data: studentRows }, { data: current }] = canAssign
+    ? await Promise.all([
+        studentsQ,
+        supabase.from('program_assignments').select('member_id').eq('org_id', ctx.org.id).eq('program_id', programId).eq('status', 'active'),
+      ])
+    : [{ data: null }, { data: null }]
+  const withThis = new Set((current ?? []).map((r) => r.member_id as string))
+  const students = (studentRows ?? []).map((r) => ({
+    id: r.member_id as string,
+    name: r.member_name ?? 'Alumno',
+    programName: r.program_name ?? null,
+    hasThis: withThis.has(r.member_id as string),
+  }))
 
   return (
     <div className="space-y-5">
@@ -75,6 +100,20 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
         </details>
       ) : (
         <p className="text-sm text-zinc-500">Esta rutina es de otro profesor: podés verla y asignarla, pero no editarla.</p>
+      )}
+
+      {canAssign && (
+        <Card title={`Asignar a alumnos${withThis.size ? ` · la usan ${withThis.size}` : ''}`}>
+          {program.is_draft ? (
+            <p className="text-sm text-zinc-500">Es un borrador de la IA: revisalo y tocá "Aprobar" para poder asignarlo.</p>
+          ) : (
+            <AssignToStudentsForm
+              action={assignProgramToMany.bind(null, slug, programId)}
+              students={students}
+              today={todayYMD(ctx.org.timezone)}
+            />
+          )}
+        </Card>
       )}
 
       {(days ?? []).map((d) => {

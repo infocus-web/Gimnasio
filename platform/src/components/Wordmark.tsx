@@ -1,15 +1,20 @@
-/** Logotipo de texto de la marca: "EVOLUTION" en blanco + resto del nombre en amarillo. */
+import Image from 'next/image'
+import { BRAND } from '@/features/public/media'
+
+/** Logotipo de la marca (imagen "EVOLUTION FITNESS GYM"). `name` se usa como texto alternativo. */
 export function Wordmark({ name, size = 'md', sub }: { name: string; size?: 'sm' | 'md'; sub?: string }) {
-  const [first, ...rest] = name.split(' ')
   return (
     <span className="flex min-w-0 flex-col">
-      <span className="flex min-w-0 items-baseline gap-1.5 font-display uppercase leading-none">
-        <span className={`font-black tracking-tight text-white ${size === 'md' ? 'text-2xl' : 'text-xl'}`}>{first}</span>
-        {rest.length > 0 && (
-          <span className={`truncate font-bold text-brand ${size === 'md' ? 'text-base' : 'text-sm'}`}>{rest.join(' ')}</span>
-        )}
-      </span>
-      {sub && <span className="mt-1 text-xs text-zinc-500">{sub}</span>}
+      <Image
+        src={BRAND.logo}
+        alt={name}
+        width={BRAND.logoWidth}
+        height={BRAND.logoHeight}
+        priority
+        sizes={size === 'md' ? '220px' : '170px'}
+        className={`w-auto max-w-full object-contain object-left ${size === 'md' ? 'h-9' : 'h-7'}`}
+      />
+      {sub && <span className="mt-1.5 text-xs text-zinc-500">{sub}</span>}
     </span>
   )
 }

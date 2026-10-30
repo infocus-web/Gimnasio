@@ -1,6 +1,7 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Plus, Search } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 
@@ -229,6 +230,92 @@ export function AssignProgramForm({
         </Field>
         <SubmitButton>Asignar</SubmitButton>
       </div>
+      <Notice state={state} />
+    </form>
+  )
+}
+
+export type AssignableStudent = { id: string; name: string; programName: string | null; hasThis: boolean }
+
+/** Elegir uno, varios o todos los alumnos para una rutina. */
+export function AssignToStudentsForm({ action, students, today }: { action: Action; students: AssignableStudent[]; today: string }) {
+  const [state, formAction] = useActionForm(action, {})
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const [query, setQuery] = useState('')
+  const candidates = students.filter((s) => !s.hasThis)
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return q ? students.filter((s) => s.name.toLowerCase().includes(q)) : students
+  }, [students, query])
+  const allPicked = candidates.length > 0 && candidates.every((s) => picked.has(s.id))
+  const toggle = (id: string) =>
+    setPicked((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  const toggleAll = () => setPicked(allPicked ? new Set() : new Set(candidates.map((s) => s.id)))
+
+  if (!students.length) {
+    return <p className="text-sm text-zinc-500">Todavía no tenés alumnos asignados. Recepción o administración te los asignan desde la ficha de cada socio.</p>
+  }
+
+  return (
+    <form action={formAction} className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 text-sm font-semibold text-white">
+          <input type="checkbox" checked={allPicked} onChange={toggleAll} disabled={!candidates.length} className="h-4 w-4 accent-[#edcc36]" />
+          Todos mis alumnos ({candidates.length})
+        </label>
+        {students.length > 8 && (
+          <div className="relative ml-auto w-full sm:w-60">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar alumno"
+              aria-label="Buscar alumno"
+              className={`${inputClass} pl-9`}
+            />
+          </div>
+        )}
+      </div>
+
+      <ul className="max-h-72 divide-y divide-zinc-900 overflow-y-auto rounded-xl border border-zinc-800">
+        {shown.map((s) => (
+          <li key={s.id}>
+            <label className={`flex min-h-[44px] items-center gap-3 px-3 py-2 text-sm ${s.hasThis ? 'cursor-default opacity-60' : 'cursor-pointer hover:bg-zinc-950'}`}>
+              <input
+                type="checkbox"
+                name="memberId"
+                value={s.id}
+                checked={s.hasThis || picked.has(s.id)}
+                disabled={s.hasThis}
+                onChange={() => toggle(s.id)}
+                className="h-4 w-4 accent-[#edcc36]"
+              />
+              <span className="min-w-0 flex-1 truncate text-zinc-100">{s.name}</span>
+              <span className="shrink-0 text-xs text-zinc-500">
+                {s.hasThis ? 'Ya tiene esta rutina' : s.programName ? `Ahora: ${s.programName}` : 'Sin rutina'}
+              </span>
+            </label>
+          </li>
+        ))}
+        {!shown.length && <li className="px-3 py-4 text-sm text-zinc-500">No hay alumnos con ese nombre.</li>}
+      </ul>
+      {state.fieldErrors?.memberId && <p className="text-xs text-red-300">{state.fieldErrors.memberId}</p>}
+
+      <div className="flex flex-wrap items-end gap-3">
+        <Field label="Desde" name="startsOn">
+          <input name="startsOn" type="date" defaultValue={today} className={inputClass} />
+        </Field>
+        <SubmitButton>
+          Asignar{picked.size ? ` a ${picked.size} ${picked.size === 1 ? 'alumno' : 'alumnos'}` : ''}
+        </SubmitButton>
+      </div>
+      <p className="text-xs text-zinc-500">Si el alumno ya tenía otra rutina, esa queda archivada (su historial no se pierde).</p>
       <Notice state={state} />
     </form>
   )

@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
+import Image from 'next/image'
 import { Mail, KeyRound } from 'lucide-react'
+import { BRAND } from '@/features/public/media'
 import { createClient } from '@/lib/supabase/client'
 import { safeInternalPath } from '@/lib/safe-path'
 
@@ -68,8 +70,8 @@ export function LoginForm() {
     <main className="grid min-h-dvh place-items-center p-4">
       <div className="w-full max-w-sm space-y-6 rounded-lg border border-white/10 bg-[#141414] p-6 sm:p-8">
         <div>
-          <h1 className="font-display text-3xl font-bold leading-tight tracking-[-0.03em] text-white">
-            Evolution <span className="text-brand">Fitness</span>
+          <h1>
+            <Image src={BRAND.logo} alt="Evolution Fitness Gym" width={BRAND.logoWidth} height={BRAND.logoHeight} priority sizes="240px" className="h-10 w-auto" />
           </h1>
           <p className="mt-2 text-sm text-zinc-400">Ingresá a tu cuenta de socio</p>
         </div>

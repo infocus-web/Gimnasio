@@ -29,3 +29,11 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 export function activityImage(name: string, fallback: string | null) {
   return ACTIVITY_IMAGES[norm(name)] ?? fallback
 }
+
+/** Logos de la marca (en /public/brand). El horizontal es transparente; el emblema tiene fondo negro. */
+export const BRAND = {
+  logo: '/brand/logo-evolution.png',
+  logoWidth: 1200,
+  logoHeight: 217,
+  emblem: '/brand/emblema-evolution.png',
+} as const
