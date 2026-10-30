@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import {
   addProgramExercise,
   addWorkoutDay,
+  deleteProgram,
   deleteProgramExercise,
   deleteWorkoutDay,
   moveProgramExercise,
@@ -60,6 +61,16 @@ export default async function ProgramBuilder({ params }: PageProps<'/[org]/admin
           <summary className="cursor-pointer text-sm font-semibold text-zinc-300">Datos de la rutina</summary>
           <div className="mt-4">
             <ProgramForm action={updateProgram.bind(null, slug, programId)} values={program} submitLabel="Guardar" />
+          </div>
+          <div className="mt-5 border-t border-zinc-800 pt-4">
+            <ConfirmAction
+              action={deleteProgram.bind(null, slug, programId)}
+              confirmText="Se borra la rutina con todos sus días y ejercicios. No se puede deshacer."
+              yesLabel="Sí, borrar rutina"
+              variant="danger"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" /> Borrar rutina
+            </ConfirmAction>
           </div>
         </details>
       ) : (

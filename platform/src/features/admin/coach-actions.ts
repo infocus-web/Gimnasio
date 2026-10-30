@@ -84,6 +84,34 @@ export async function updateProgram(slug: string, programId: string, _prev: Acti
   return { ok: true, message: 'Rutina guardada.' }
 }
 
+export async function deleteProgram(slug: string, programId: string, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await coach(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  // No dejamos a nadie sin rutina por error: primero hay que quitársela a los alumnos.
+  const { count, error: countError } = await supabase
+    .from('program_assignments')
+    .select('id', { count: 'exact', head: true })
+    .eq('program_id', programId)
+    .eq('org_id', ctx.org.id)
+    .eq('status', 'active')
+  if (countError) return { message: dbMessage(countError) }
+  if (count) {
+    return { message: `La usan ${count} ${count === 1 ? 'alumno' : 'alumnos'}. Quitásela desde su ficha antes de borrarla.` }
+  }
+  // Días y ejercicios se borran en cascada; las sesiones ya registradas quedan guardadas.
+  const { data, error } = await supabase
+    .from('workout_programs')
+    .delete()
+    .eq('id', programId)
+    .eq('org_id', ctx.org.id)
+    .select('id')
+  if (error) return { message: dbMessage(error) }
+  if (!data?.length) return { message: ERRORS.FORBIDDEN }
+  revalidatePath(`/${slug}/admin/rutinas`, 'layout')
+  redirect(`/${slug}/admin/rutinas` as Route)
+}
+
 export async function addWorkoutDay(slug: string, programId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await coach(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
