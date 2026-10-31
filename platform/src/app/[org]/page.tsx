@@ -10,6 +10,8 @@ import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
 import { IosInstallButton } from '@/components/IosInstallButton'
+import { SplitWords } from '@/components/RevealText'
+import { REVEAL_BOOT, RevealObserver } from '@/components/RevealObserver'
 import { EXTRAS } from '@/features/public/content'
 
 export const revalidate = 300
@@ -39,8 +41,8 @@ const focus =
 
 function Heading({ id, children, className = '' }: { id?: string; children: React.ReactNode; className?: string }) {
   return (
-    <h2 id={id} className={`font-display text-[clamp(2.1rem,4.6vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white ${className}`}>
-      {children}
+    <h2 id={id} data-reveal className={`font-display text-[clamp(2.1rem,4.6vw,3.75rem)] font-bold leading-[1.05] tracking-[-0.03em] text-white ${className}`}>
+      <SplitWords>{children}</SplitWords>
     </h2>
   )
 }
@@ -112,6 +114,8 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
         </div>
       </header>
 
+      <script dangerouslySetInnerHTML={{ __html: REVEAL_BOOT }} />
+      <RevealObserver />
       <main>
         {/* ---------- Hero con video ---------- */}
         <section id="inicio" className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
@@ -135,10 +139,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <span className={`h-2 w-2 rounded-full ${status.open ? 'animate-pulse-subtle bg-emerald-400' : 'bg-white/40'}`} aria-hidden="true" />
               {status.label}
             </p>
-            <h1 className="hero-title mt-4 max-w-5xl font-display text-[clamp(2.4rem,7.4vw,7rem)] font-bold leading-[1] tracking-[-0.04em] text-white">
-              {p.tagline ?? gym.name}
+            <h1 className="hero-split mt-4 max-w-5xl font-display text-[clamp(2.4rem,7.4vw,7rem)] font-bold leading-[1] tracking-[-0.04em] text-white">
+              <SplitWords>{p.tagline ?? gym.name}</SplitWords>
             </h1>
-            <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="hero-fade mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               {p.hero_text && <p className="max-w-md text-lg leading-relaxed text-white/80">{p.hero_text}</p>}
               <div className="flex flex-col gap-3 sm:flex-row">
                 <TacticalButton href="#planes" variant="solid">
@@ -243,7 +247,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </div>
             <div>
               <Heading id="app-title">Tu gimnasio<br />en el celular</Heading>
-              <p className="mt-5 max-w-md text-lg text-white/70">Cada socio tiene su cuenta: rutina, clases y pagos en un solo lugar.</p>
+              <p data-reveal-fade className="mt-5 max-w-md text-lg text-white/70">Cada socio tiene su cuenta: rutina, clases y pagos en un solo lugar.</p>
               <ul className="mt-10 space-y-7">
                 {[
                   { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones serie por serie.' },
@@ -281,7 +285,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <Heading id="about-title" className="text-[clamp(2.25rem,4.6vw,3.75rem)]">
                 {p.about_title ?? gym.name}
               </Heading>
-              {p.about_text && <p className="mt-6 text-lg leading-relaxed text-white/70">{p.about_text}</p>}
+              {p.about_text && <p data-reveal-fade className="mt-6 text-lg leading-relaxed text-white/70">{p.about_text}</p>}
               <ul className="mt-8 grid gap-3 text-[15px] font-semibold text-white">
                 {['Sala de musculación completa', 'Clases grupales toda la semana', 'Rutina personalizada con seguimiento'].map((t) => (
                   <li key={t} className="flex items-center gap-3 border-b border-white/10 pb-3">

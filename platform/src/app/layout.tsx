@@ -23,7 +23,7 @@ export const viewport: Viewport = { themeColor: '#000000', width: 'device-width'
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="es-AR" className={`${display.variable} ${text.variable}`}>
+    <html lang="es-AR" className={`${display.variable} ${text.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh bg-ink font-sans text-zinc-100 antialiased selection:bg-brand/30 selection:text-brand">
         {children}
       </body>
