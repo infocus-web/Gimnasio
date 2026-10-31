@@ -261,12 +261,12 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-10 flex flex-col flex-wrap gap-3 sm:flex-row">
-                <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight}>
+              <div className="mt-10 grid max-w-xl gap-3 sm:grid-cols-2">
+                <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight} className="sm:col-span-2">
                   Entrar a la app
                 </TacticalButton>
                 <TacticalButton href="/descargas/evolution-fitness.apk" icon={Download}>
-                  Descargar para Android
+                  App para Android
                 </TacticalButton>
                 <IosInstallButton appHref={`/${gym.slug}/app`} />
               </div>

@@ -38,7 +38,7 @@ export function IosInstallButton({ appHref }: { appHref: string }) {
         onClick={() => setOpen(true)}
         className="group relative inline-flex min-h-[54px] items-center justify-between gap-5 rounded-xl border border-[#444] bg-[#2c2c2c]/90 py-3 pl-6 pr-3 transition-colors duration-200 hover:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-black active:scale-[0.98]"
       >
-        <span className="whitespace-nowrap text-[15px] font-semibold text-white">Instalar en iPhone</span>
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">App para iPhone</span>
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-black transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true">
           <Share className="h-4 w-4" strokeWidth={2.5} />
         </span>
