@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
@@ -118,6 +118,8 @@ export interface ExerciseOpt {
   muscle_group: string | null
 }
 
+const MUSCLES = ['Pecho', 'Espalda', 'Piernas', 'Glúteos', 'Hombros', 'Brazos', 'Bíceps', 'Tríceps', 'Core', 'Abdominales', 'Cardio']
+
 export function AddExerciseForm({ action, exercises }: { action: Action; exercises: ExerciseOpt[] }) {
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
@@ -126,14 +128,33 @@ export function AddExerciseForm({ action, exercises }: { action: Action; exercis
     const g = e.muscle_group ?? 'Otros'
     groups.set(g, [...(groups.get(g) ?? []), e])
   }
+  const formKey = state.ok ? String(Date.now()) : 'f'
+  return <AddExerciseFields key={formKey} formAction={formAction} state={state} err={err} groups={groups} />
+}
+
+function AddExerciseFields({
+  formAction,
+  state,
+  err,
+  groups,
+}: {
+  formAction: (form: FormData) => void
+  state: ActionState
+  err: Record<string, string>
+  groups: Map<string, ExerciseOpt[]>
+}) {
+  const [choice, setChoice] = useState('')
+  const isNew = choice === '__new'
+  const listId = useId()
   return (
-    <form action={formAction} className="space-y-2 rounded-xl border border-dashed border-zinc-800 p-3" noValidate key={state.ok ? String(Date.now()) : 'f'}>
+    <form action={formAction} className="space-y-2 rounded-xl border border-dashed border-zinc-800 p-3" noValidate>
       <div className="grid gap-2 sm:grid-cols-[1.6fr_70px_90px_90px_80px]">
         <Field label="Ejercicio" name="exerciseId" error={err.exerciseId}>
-          <select id="exerciseId" name="exerciseId" defaultValue="" className={inputClass}>
+          <select id="exerciseId" name="exerciseId" value={choice} onChange={(e) => setChoice(e.target.value)} className={inputClass}>
             <option value="" disabled>
               Elegí…
             </option>
+            <option value="__new">＋ Crear ejercicio nuevo…</option>
             {[...groups.entries()]
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([g, list]) => (
@@ -160,6 +181,25 @@ export function AddExerciseForm({ action, exercises }: { action: Action; exercis
           <input id="rest" name="rest" inputMode="numeric" defaultValue="60" className={inputClass} />
         </Field>
       </div>
+      {isNew && (
+        <div className="grid gap-2 rounded-lg border border-[#edcc36]/25 bg-[#edcc36]/5 p-3 sm:grid-cols-[1.4fr_1fr_1.4fr]">
+          <Field label="Nombre del ejercicio nuevo" name="newName" error={err.newName}>
+            <input id="newName" name="newName" autoFocus placeholder="Ej. Hip thrust" className={inputClass} />
+          </Field>
+          <Field label="Grupo muscular" name="newGroup">
+            <input id="newGroup" name="newGroup" list={listId} placeholder="Ej. Glúteos" className={inputClass} />
+            <datalist id={listId}>
+              {[...new Set([...groups.keys(), ...MUSCLES])].map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+          </Field>
+          <Field label="Video (opcional)" name="newVideo" error={err.newVideo}>
+            <input id="newVideo" name="newVideo" inputMode="url" placeholder="Link de YouTube / Instagram" className={inputClass} />
+          </Field>
+          <p className="text-xs text-zinc-400 sm:col-span-3">Queda guardado en la biblioteca para usarlo en otras rutinas.</p>
+        </div>
+      )}
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[200px] flex-1">
           <Field label="Nota para el alumno" name="notes">

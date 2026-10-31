@@ -164,8 +164,19 @@ export async function deleteWorkoutDay(slug: string, programId: string, workoutI
   return { ok: true, message: 'Día borrado.' }
 }
 
+/** Valor del desplegable para "Crear ejercicio nuevo…" desde el armador de rutinas. */
+const NEW_EXERCISE = '__new'
+
 const exerciseRowSchema = z.object({
-  exerciseId: z.uuid('Elegí un ejercicio'),
+  exerciseId: z.union([z.uuid('Elegí un ejercicio'), z.literal(NEW_EXERCISE)], { error: 'Elegí un ejercicio' }),
+  newName: z.string().trim().max(80).optional(),
+  newGroup: z.string().trim().max(40).optional(),
+  newVideo: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined)
+    .pipe(z.url('Link inválido').optional()),
   sets: num(1, 20),
   reps: z.string().trim().max(20).optional(),
   weight: num(0, 1000),
@@ -184,6 +195,34 @@ export async function addProgramExercise(slug: string, programId: string, workou
   }
   const e = parsed.data
   const supabase = await createClient()
+
+  // Ejercicio que no está en la biblioteca: se crea en el momento (o se reusa si ya hay uno con ese nombre)
+  let exerciseId = e.exerciseId
+  let created: string | null = null
+  if (exerciseId === NEW_EXERCISE) {
+    const name = e.newName ?? ''
+    if (name.length < 2) return { fieldErrors: { newName: 'Poné el nombre del ejercicio' } }
+    const { data: same } = await supabase
+      .from('exercises')
+      .select('id')
+      .or(`org_id.eq.${ctx.org.id},org_id.is.null`)
+      .ilike('name', name.replace(/[%_\\]/g, '\\$&'))
+      .limit(1)
+      .maybeSingle()
+    if (same) {
+      exerciseId = same.id
+    } else {
+      const ins = await supabase
+        .from('exercises')
+        .insert({ org_id: ctx.org.id, name, muscle_group: e.newGroup || null, video_url: e.newVideo ?? null })
+        .select('id')
+        .single()
+      if (ins.error) return { message: dbMessage(ins.error) }
+      exerciseId = ins.data.id
+      created = name
+    }
+  }
+
   const { data: last } = await supabase
     .from('program_exercises')
     .select('position')
@@ -194,7 +233,7 @@ export async function addProgramExercise(slug: string, programId: string, workou
   const { error } = await supabase.from('program_exercises').insert({
     org_id: ctx.org.id,
     workout_id: workoutId,
-    exercise_id: e.exerciseId,
+    exercise_id: exerciseId,
     position: (last?.position ?? 0) + 1,
     target_sets: e.sets ?? 3,
     target_reps: e.reps || '10',
@@ -203,8 +242,9 @@ export async function addProgramExercise(slug: string, programId: string, workou
     notes: e.notes || null,
   })
   if (error) return { message: dbMessage(error) }
-  revalidatePath(`/${slug}/admin/rutinas/${programId}`)
-  return { ok: true, message: 'Ejercicio agregado.' }
+  if (created) revalidatePath(`/${slug}/admin/rutinas`, 'layout')
+  else revalidatePath(`/${slug}/admin/rutinas/${programId}`)
+  return { ok: true, message: created ? `"${created}" agregado (y guardado en la biblioteca).` : 'Ejercicio agregado.' }
 }
 
 export async function deleteProgramExercise(slug: string, programId: string, rowId: string, _prev?: ActionState): Promise<ActionState> {
