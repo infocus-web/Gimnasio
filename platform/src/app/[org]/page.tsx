@@ -9,6 +9,7 @@ import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/pub
 import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
+import { IosInstallButton } from '@/components/IosInstallButton'
 import { EXTRAS } from '@/features/public/content'
 
 export const revalidate = 300
@@ -260,13 +261,14 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-10 flex flex-col flex-wrap gap-3 sm:flex-row">
                 <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight}>
                   Entrar a la app
                 </TacticalButton>
                 <TacticalButton href="/descargas/evolution-fitness.apk" icon={Download}>
                   Descargar para Android
                 </TacticalButton>
+                <IosInstallButton appHref={`/${gym.slug}/app`} />
               </div>
             </div>
           </div>

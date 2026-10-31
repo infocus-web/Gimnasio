@@ -5,7 +5,6 @@ import QRCode from 'qrcode'
 import { Search, Tv, PlayCircle } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from '@/features/admin/ui'
-import { InfoTip } from '@/components/InfoTip'
 
 type WithForm = (prev: ActionState, form: FormData) => Promise<ActionState>
 type Bare = (prev: ActionState) => Promise<ActionState>
@@ -136,52 +135,119 @@ export function MachineForm({
 // ---------------------------------------------------------------------
 // Pantalla de TV
 // ---------------------------------------------------------------------
-export function TvLinkPanel({ slug, linked, seenLabel, action }: { slug: string; linked: boolean; seenLabel: string | null; action: Bare }) {
+/** Se considera "conectada" si la TV pidió datos hace menos de 5 minutos (el feed marca seen_at como mucho 1 vez por minuto). */
+const TV_ONLINE_MS = 5 * 60_000
+
+function TvSteps({ link }: { link?: string | null }) {
+  return (
+    <ol className="list-decimal space-y-1.5 pl-5 text-sm text-zinc-300 marker:font-semibold marker:text-[#edcc36]">
+      <li>{link ? 'Listo, este es el link de tu TV (se muestra una sola vez).' : 'Tocá el botón de abajo: se genera un link y un código QR.'}</li>
+      <li>
+        En el televisor abrí el <strong className="text-white">navegador</strong> (Internet, Chrome…) y entrá a ese link. Lo más fácil: escaneá el QR con
+        el celular y mandátelo, o usá un TV Box / Chromecast / compu conectada por HDMI.
+      </li>
+      <li>Dejalo abierto en pantalla completa. Queda guardado en el TV: después de un corte de luz arranca solo.</li>
+      <li>Acá abajo vas a ver “Conectada ahora” en verde cuando la TV esté mostrando la pantalla.</li>
+    </ol>
+  )
+}
+
+export function TvLinkPanel({
+  slug,
+  linked,
+  seenAt,
+  seenLabel,
+  action,
+}: {
+  slug: string
+  linked: boolean
+  seenAt: string | null
+  seenLabel: string | null
+  action: Bare
+}) {
   const [state, submit] = useActionForm(action)
   const [sure, setSure] = useState(false)
   const [qr, setQr] = useState<string | null>(null)
+  const [now, setNow] = useState<number | null>(null)
   const link = state.secret && typeof window !== 'undefined' ? `${window.location.origin}/${slug}/tv#k=${state.secret}` : null
+
   useEffect(() => {
     if (!link) return
     QRCode.toDataURL(link, { margin: 1, width: 240 }).then(setQr).catch(() => setQr(null))
   }, [link])
 
+  // El "ahora" se calcula en el navegador (evita diferencias entre servidor y cliente) y se refresca cada 30 s
+  useEffect(() => {
+    setNow(Date.now())
+    const t = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(t)
+  }, [])
+
+  const online = !!(seenAt && now !== null && now - new Date(seenAt).getTime() < TV_ONLINE_MS)
+
   return (
     <div className="space-y-3">
       {linked && !link && (
-        <p className={`text-sm ${seenLabel ? 'text-emerald-300' : 'text-zinc-400'}`}>
-          {seenLabel ? `TV vinculada · última conexión ${seenLabel}` : 'TV vinculada, esperando que se abra el link en el televisor.'}
-        </p>
+        <div
+          className={`rounded-xl border p-3 text-sm ${
+            online
+              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+              : 'border-amber-300/30 bg-amber-300/10 text-amber-200'
+          }`}
+        >
+          {online ? (
+            <p className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" /> TV conectada ahora · mostrando la pantalla
+            </p>
+          ) : seenAt ? (
+            <p>
+              <strong>La TV no se conecta desde el {seenLabel}.</strong> Fijate que esté prendida, con internet y con la pantalla abierta en el navegador. Si
+              es otro televisor o se borró, vinculalo de nuevo.
+            </p>
+          ) : (
+            <p>
+              <strong>Link generado, pero ningún televisor lo abrió todavía.</strong> Si perdiste el link, generá uno nuevo.
+            </p>
+          )}
+        </div>
       )}
+
       {link ? (
-        <div className="flex flex-wrap items-start gap-4 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-[#f5e38a]">
-          {qr && <img src={qr} alt="Código QR con el link de la TV" width={160} height={160} className="rounded-lg bg-white p-1" />}
-          <div className="min-w-0 flex-1 space-y-2">
-            <p>Abrí este link en el navegador del Smart TV (o en la compu/TV Box conectada). Queda guardado: después de un corte arranca solo.</p>
-            <p className="break-all font-mono text-xs text-white">{link}</p>
+        <div className="space-y-3 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3">
+          <TvSteps link={link} />
+          <div className="flex flex-wrap items-start gap-4">
+            {qr && <img src={qr} alt="Código QR con el link de la TV" width={160} height={160} className="rounded-lg bg-white p-1" />}
+            <div className="min-w-0 flex-1 space-y-2">
+              <p className="break-all rounded-lg bg-black/30 p-2 font-mono text-xs text-white">{link}</p>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(link).catch(() => {})}
+                className="min-h-[44px] text-sm text-[#f5e38a] underline hover:text-white"
+              >
+                Copiar link
+              </button>
+            </div>
           </div>
         </div>
       ) : linked && !sure ? (
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline hover:text-white">
-            Vincular otro televisor
-          </button>
-          <InfoTip label="Televisor del gimnasio">
-            <p>Genera un link (con su QR) para abrir en el Smart TV, o en la compu o TV Box conectada, y mostrar la pantalla del gimnasio.</p>
-            <p>Queda guardado en el televisor y después de un corte de luz arranca solo. Si vinculás otro, <strong>el anterior deja de mostrar la pantalla</strong>.</p>
-          </InfoTip>
-        </div>
+        <button type="button" onClick={() => setSure(true)} className="min-h-[44px] text-sm text-zinc-400 underline hover:text-white">
+          {online ? 'Vincular otro televisor' : 'Vincular de nuevo / otro televisor'}
+        </button>
       ) : (
-        <form action={submit} className="flex flex-wrap items-center gap-2">
-          {linked && <span className="text-xs text-amber-200">El televisor anterior deja de mostrar la pantalla.</span>}
-          <SubmitButton variant={linked ? 'ghost' : 'primary'}>
-            <Tv className="h-4 w-4" aria-hidden="true" /> {linked ? 'Sí, generar link nuevo' : 'Generar link para la TV'}
-          </SubmitButton>
-          <InfoTip label="Televisor del gimnasio">
-            <p>Genera un link (con su QR) para abrir en el Smart TV, o en la compu o TV Box conectada, y mostrar la pantalla del gimnasio.</p>
-            <p>Queda guardado en el televisor y después de un corte de luz arranca solo. Si vinculás otro, <strong>el anterior deja de mostrar la pantalla</strong>.</p>
-          </InfoTip>
-        </form>
+        <div className="space-y-3">
+          <TvSteps />
+          <form action={submit} className="flex flex-wrap items-center gap-2">
+            <SubmitButton variant="primary">
+              <Tv className="h-4 w-4" aria-hidden="true" /> {linked ? 'Sí, generar link nuevo' : 'Generar link para la TV'}
+            </SubmitButton>
+            {linked && (
+              <button type="button" onClick={() => setSure(false)} className="min-h-[44px] px-2 text-sm text-zinc-400 hover:text-white">
+                Cancelar
+              </button>
+            )}
+          </form>
+          {linked && <p className="text-xs text-amber-200">Al generar uno nuevo, el televisor que tenga el link anterior deja de mostrar la pantalla.</p>}
+        </div>
       )}
       <Notice state={state} />
     </div>

@@ -138,6 +138,7 @@ export default async function MachinesPage({ params }: { params: Promise<{ org: 
               <TvLinkPanel
                 slug={slug}
                 linked={tvSettings.linked}
+                seenAt={tvSettings.seen_at}
                 seenLabel={tvSettings.seen_at ? fmtDateTime(tvSettings.seen_at, ctx.org.timezone) : null}
                 action={linkTv.bind(null, slug)}
               />
