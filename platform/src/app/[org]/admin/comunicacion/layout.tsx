@@ -25,6 +25,8 @@ export default async function ComunicacionLayout({ children, params }: LayoutPro
         items={[
           { href: base, label: 'Avisos automáticos' },
           { href: `${base}/riesgo`, label: 'En riesgo' },
+          { href: `${base}/encuestas`, label: 'Encuestas' },
+          { href: `${base}/retos`, label: 'Retos' },
           { href: `${base}/referidos`, label: 'Referidos' },
           { href: `${base}/historial`, label: 'Historial' },
           { href: `${base}/reglas`, label: 'Reglas' },

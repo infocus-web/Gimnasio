@@ -1,18 +1,23 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata, Route } from 'next'
-import { ArrowLeft, HeartPulse, Trophy } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, HeartPulse, Trophy } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { assignProgram } from '@/features/admin/coach-actions'
 import { AssignProgramForm } from '@/features/admin/CoachForms'
 import { fmtDate, fmtDateTime, todayYMD } from '@/features/admin/format'
 import { Card } from '@/features/admin/ui'
+import { addScaleReading, deleteAssessment } from '@/features/admin/assessment-actions'
+import { DeleteAssessmentButton, ScaleReadingForm } from '@/features/admin/AssessmentForms'
+import { AiRoutineButton } from '@/features/floor/AiRoutineButton'
+import { ASSESSMENT_COLUMNS, AssessmentView, toAssessmentRow } from '@/components/assessment/AssessmentView'
 
 export const metadata: Metadata = { title: 'Alumno' }
 
-export default async function StudentPage({ params }: PageProps<'/[org]/admin/alumnos/[memberId]'>) {
+export default async function StudentPage({ params, searchParams }: PageProps<'/[org]/admin/alumnos/[memberId]'>) {
   const { org: slug, memberId } = await params
+  const justChecked = (await searchParams).check === '1'
   const ctx = await getAdminContext(slug)
   if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
   const supabase = await createClient()
@@ -25,14 +30,14 @@ export default async function StudentPage({ params }: PageProps<'/[org]/admin/al
     .maybeSingle()
   if (!s) notFound()
 
-  const [{ data: logs }, { data: metrics }, { data: programs }, { data: assignment }] = await Promise.all([
+  const [{ data: logs }, { data: metrics }, { data: programs }, { data: assignment }, { data: checks }, { data: aiMachines }, { data: aiUsage }] = await Promise.all([
     supabase
       .from('workout_logs')
       .select('id, performed_at, duration_min, effort_rpe, notes, program_workouts(name), set_logs(exercise_id, set_number, reps, weight_kg, exercises(name))')
       .eq('member_id', memberId)
       .order('performed_at', { ascending: false })
       .limit(10),
-    supabase.from('body_metrics').select('measured_at, weight_kg, body_fat_pct').eq('member_id', memberId).order('measured_at', { ascending: false }).limit(6),
+    supabase.from('body_metrics').select('measured_at, weight_kg, body_fat_pct, measurements, source').eq('member_id', memberId).order('measured_at', { ascending: false }).limit(8),
     // Los borradores de la IA no se ofrecen hasta que el profe los aprueba (la base también lo impide)
     supabase.from('workout_programs').select('id, name').eq('org_id', ctx.org.id).eq('is_draft', false).order('name'),
     supabase
@@ -43,7 +48,12 @@ export default async function StudentPage({ params }: PageProps<'/[org]/admin/al
       .order('starts_on', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from('fitness_assessments').select(ASSESSMENT_COLUMNS).eq('member_id', memberId).order('assessed_at', { ascending: false }).limit(2),
+    supabase.from('machines').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('name'),
+    supabase.rpc('ai_routine_usage', { p_org: ctx.org.id }),
   ])
+  const [latestCheck, previousCheck] = (checks ?? []).map((r) => toAssessmentRow(r as unknown as Record<string, unknown>))
+  const today = todayYMD(ctx.org.timezone)
 
   type SetRow = { exercise_id: string; set_number: number; reps: number | null; weight_kg: number | null; exercises: { name: string } | null }
   // Mejores marcas: mayor peso por ejercicio en los últimos 10 entrenos
@@ -75,7 +85,49 @@ export default async function StudentPage({ params }: PageProps<'/[org]/admin/al
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-5">
-          <Card title="Rutina">
+          <Card
+            title="Evolution Check"
+            action={
+              <Link
+                href={`/${slug}/admin/alumnos/${memberId}/evaluacion` as Route}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-[#edcc36] px-3 text-sm font-bold text-black hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <ClipboardCheck className="h-4 w-4" aria-hidden="true" /> {latestCheck ? 'Nueva evaluación' : 'Evaluar'}
+              </Link>
+            }
+          >
+            {justChecked && (
+              <p role="status" className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-100">
+                Evaluación guardada. El alumno ya la ve en la app (Progreso).
+              </p>
+            )}
+            {latestCheck ? (
+              <>
+                <AssessmentView latest={latestCheck} previous={previousCheck ?? null} />
+                <div className="mt-2 flex justify-end">
+                  <DeleteAssessmentButton action={deleteAssessment.bind(null, slug, memberId, latestCheck.id)} />
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-zinc-400">
+                Todavía no tiene evaluación física. Con 15 minutos de pruebas (sentadillas, flexiones, plancha, escalón, flexibilidad y
+                equilibrio) sabés por dónde empezar y el alumno ve su &quot;edad fitness&quot;.
+              </p>
+            )}
+          </Card>
+
+          <Card
+            title="Rutina"
+            action={
+              <AiRoutineButton
+                slug={slug}
+                configured={Boolean(process.env.ANTHROPIC_API_KEY)}
+                remaining={(aiUsage as { remaining?: number } | null)?.remaining ?? null}
+                machines={aiMachines ?? []}
+                member={{ id: memberId, name: s.member_name ?? 'Alumno', hasCheck: Boolean(latestCheck) }}
+              />
+            }
+          >
             {assignment ? (
               <p className="mb-3 text-sm text-zinc-300">
                 Actual:{' '}
@@ -151,22 +203,43 @@ export default async function StudentPage({ params }: PageProps<'/[org]/admin/al
               <p className="text-sm text-zinc-500">Sin registros de peso todavía.</p>
             )}
           </Card>
-          <Card title="Medidas">
+          <Card title="Balanza y medidas">
             {metrics?.length ? (
-              <ul className="space-y-1.5 text-sm">
-                {metrics.map((m) => (
-                  <li key={m.measured_at} className="flex justify-between gap-2">
-                    <span className="tabular-nums text-zinc-400">{fmtDate(m.measured_at)}</span>
-                    <span className="tabular-nums text-white">
-                      {m.weight_kg ? `${m.weight_kg} kg` : ''}
-                      {m.body_fat_pct ? ` · ${m.body_fat_pct}% grasa` : ''}
-                    </span>
-                  </li>
-                ))}
+              <ul className="mb-4 space-y-2 text-sm">
+                {metrics.map((m) => {
+                  const x = (m.measurements ?? {}) as Record<string, number | undefined>
+                  const extra = [
+                    x.muscle_kg ? `músculo ${x.muscle_kg} kg` : '',
+                    x.visceral_fat ? `visceral ${x.visceral_fat}` : '',
+                    x.water_pct ? `agua ${x.water_pct}%` : '',
+                    x.cintura_cm ? `cintura ${x.cintura_cm} cm` : '',
+                  ].filter(Boolean)
+                  return (
+                    <li key={`${m.measured_at}-${m.source}`} className="border-b border-[#3a3a3a] pb-2 last:border-0">
+                      <div className="flex justify-between gap-2">
+                        <span className="tabular-nums text-zinc-400">
+                          {fmtDate(m.measured_at)}
+                          <span className="ml-1 text-[11px] text-zinc-500">{m.source === 'app' ? '(alumno)' : m.source === 'scale_csv' ? '(balanza)' : '(profe)'}</span>
+                        </span>
+                        <span className="tabular-nums text-white">
+                          {m.weight_kg ? `${m.weight_kg} kg` : ''}
+                          {m.body_fat_pct ? ` · ${m.body_fat_pct}% grasa` : ''}
+                        </span>
+                      </div>
+                      {extra.length > 0 && <p className="text-right text-xs text-zinc-400">{extra.join(' · ')}</p>}
+                    </li>
+                  )
+                })}
               </ul>
             ) : (
-              <p className="text-sm text-zinc-500">El alumno carga sus medidas desde la app (Progreso).</p>
+              <p className="mb-4 text-sm text-zinc-500">Sin mediciones todavía.</p>
             )}
+            <details className="rounded-xl border border-dashed border-zinc-700 p-3 open:border-solid">
+              <summary className="cursor-pointer text-sm font-semibold text-[#edcc36]">Cargar medición de balanza</summary>
+              <div className="mt-3">
+                <ScaleReadingForm action={addScaleReading.bind(null, slug, memberId)} today={today} />
+              </div>
+            </details>
           </Card>
         </div>
       </div>

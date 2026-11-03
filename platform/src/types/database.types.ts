@@ -196,6 +196,80 @@ export type Database = {
         Update: { email_sent_at?: string | null }
         Relationships: []
       }
+      // ↓ 0036 (encuestas, Evolution Check, retos)
+      survey_responses: {
+        Row: { campaign: string; comment: string | null; created_at: string; id: string; member_id: string; org_id: string; score: number | null }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
+      fitness_assessments: {
+        Row: {
+          age_years: number
+          assessed_at: string
+          assessed_by: string | null
+          balance_s: number | null
+          body_fat_pct: number | null
+          created_at: string
+          goal: string | null
+          height_cm: number | null
+          id: string
+          member_id: string
+          notes: string | null
+          org_id: string
+          plank_s: number | null
+          pushups: number | null
+          resting_hr: number | null
+          sex: string
+          sit_reach_cm: number | null
+          squats_1min: number | null
+          step_hr: number | null
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          age_years: number
+          assessed_at?: string
+          assessed_by: string | null
+          balance_s?: number | null
+          body_fat_pct?: number | null
+          goal?: string | null
+          height_cm?: number | null
+          member_id: string
+          notes?: string | null
+          org_id: string
+          plank_s?: number | null
+          pushups?: number | null
+          resting_hr?: number | null
+          sex: string
+          sit_reach_cm?: number | null
+          squats_1min?: number | null
+          step_hr?: number | null
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: Partial<Database['public']['Tables']['fitness_assessments']['Insert']>
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          created_at: string
+          description: string | null
+          ends_on: string
+          goal: number
+          id: string
+          metric: string
+          org_id: string
+          reward_days: number
+          show_ranking: boolean
+          starts_on: string
+          status: string
+          title: string
+        }
+        Insert: { [_ in never]: never }
+        Update: { [_ in never]: never }
+        Relationships: []
+      }
       product_costs: {
         Row: { cost_cents: number; org_id: string; product_id: string; updated_at: string; updated_by: string | null }
         Insert: { cost_cents: number; org_id: string; product_id: string }
@@ -922,6 +996,8 @@ export type Database = {
           measurements: Json
           member_id: string
           org_id: string
+          recorded_by: string | null
+          source: string
           weight_kg: number | null
         }
         Insert: {
@@ -931,6 +1007,7 @@ export type Database = {
           measurements?: Json
           member_id: string
           org_id: string
+          source?: string
           weight_kg?: number | null
         }
         Update: {
@@ -3094,6 +3171,33 @@ export type Database = {
       }
     }
     Functions: {
+      // ↓ 0036 (encuestas, balanza, retos)
+      member_survey: { Args: { p_member: string }; Returns: Json }
+      survey_answer: { Args: { p_member: string; p_campaign: string; p_score: number | null; p_comment?: string | null }; Returns: undefined }
+      nps_report: { Args: { p_org: string; p_days?: number }; Returns: Json }
+      nps_set_enabled: { Args: { p_org: string; p_enabled: boolean }; Returns: undefined }
+      scale_import: { Args: { p_org: string; p_rows: Json }; Returns: Json }
+      member_challenges: { Args: { p_member: string }; Returns: Json }
+      challenge_join: { Args: { p_challenge: string; p_member: string }; Returns: undefined }
+      challenge_leave: { Args: { p_challenge: string; p_member: string }; Returns: undefined }
+      challenge_admin_list: { Args: { p_org: string }; Returns: Json }
+      challenge_save: {
+        Args: {
+          p_org: string
+          p_id: string | null
+          p_title: string
+          p_description: string | null
+          p_metric: string
+          p_goal: number
+          p_starts_on: string
+          p_ends_on: string
+          p_reward_days: number
+          p_show_ranking: boolean
+        }
+        Returns: string
+      }
+      challenge_cancel: { Args: { p_challenge: string }; Returns: undefined }
+      challenge_settle: { Args: { p_challenge: string }; Returns: number }
       // ↓ agente A (comunicación y retención)
       engagement_generate: { Args: { p_kinds?: string[] | null }; Returns: Json }
       engagement_freeze_tick: { Args: never; Returns: number }

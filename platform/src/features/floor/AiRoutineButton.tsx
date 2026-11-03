@@ -13,11 +13,14 @@ export function AiRoutineButton({
   configured,
   remaining,
   machines,
+  member,
 }: {
   slug: string
   configured: boolean
   remaining: number | null
   machines: { id: string; name: string }[]
+  /** Desde la ficha del alumno: la rutina queda marcada para él y usa su Evolution Check */
+  member?: { id: string; name: string; hasCheck: boolean }
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const router = useRouter()
@@ -47,6 +50,7 @@ export function AiRoutineButton({
           level: form.get('level'),
           limitations: String(form.get('limitations') ?? ''),
           machineIds: form.getAll('machine').map(String),
+          ...(member ? { memberId: member.id } : {}),
         }),
       })
       const data = (await res.json().catch(() => ({}))) as { programId?: string; remaining?: number; message?: string }
@@ -115,6 +119,14 @@ export function AiRoutineButton({
               La IA arma un <strong className="text-zinc-200">borrador</strong> solo con ejercicios de tu biblioteca. Lo revisás y lo editás antes de asignarlo.
               {left != null && ` Quedan ${left} sugerencias hoy en el gimnasio.`}
             </p>
+            {member && (
+              <p className="rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-xs text-[#f5e38a]">
+                Para <strong>{member.name}</strong>.{' '}
+                {member.hasCheck
+                  ? 'La IA tiene en cuenta su último Evolution Check (prioriza las áreas más bajas).'
+                  : 'Todavía no tiene Evolution Check: si lo evaluás antes, la rutina sale más a medida.'}
+              </p>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Objetivo" name="goal">
                 <select name="goal" defaultValue="hipertrofia" className={inputClass}>

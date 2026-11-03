@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata, Route } from 'next'
-import { HeartPulse } from 'lucide-react'
+import { HeartPulse, Scale } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { daysUntil, fmtDate } from '@/features/admin/format'
@@ -45,6 +45,12 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
             ? 'Para asignar un profesor, entrá a la ficha del socio.'
             : 'Recepción o administración te asignan alumnos desde la ficha de cada socio.'}
         </p>
+        <Link
+          href={`/${slug}/admin/alumnos/balanza` as Route}
+          className="mt-2 inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-zinc-700 px-3 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white"
+        >
+          <Scale className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Importar balanza (CSV)
+        </Link>
       </div>
       {students.length > 0 && <WhatsAppComposer slug={slug} senderName={ctx.staff.display_name} students={students} />}
       {rows?.length ? (

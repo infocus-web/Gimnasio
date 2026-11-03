@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getOrg } from '@/lib/member-context'
 import type { Json } from '@/types/database.types'
+import { assessmentPromptText } from '@/features/assessment/scoring'
+import { ASSESSMENT_COLUMNS, toAssessmentRow } from '@/components/assessment/AssessmentView'
 import { buildPrompt, callAnthropic, routineRequestSchema, validateRoutine, type MachineInfo } from '@/features/floor/ai'
 
 /**
@@ -89,8 +91,22 @@ export async function POST(req: NextRequest) {
       exerciseIds: ((m.machine_exercises ?? []) as { exercise_id: string }[]).map((x) => x.exercise_id),
     }))
 
-    // 3. IA
-    const { system, user: prompt } = buildPrompt(input, exercises, machineInfo)
+    // 3. Evolution Check del alumno (si se pidió desde su ficha). RLS: solo profes del gimnasio lo leen.
+    let assessment = ''
+    if (input.memberId) {
+      const { data: check } = await supabase
+        .from('fitness_assessments')
+        .select(ASSESSMENT_COLUMNS)
+        .eq('member_id', input.memberId)
+        .eq('org_id', org.id)
+        .order('assessed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (check) assessment = assessmentPromptText(toAssessmentRow(check as unknown as Record<string, unknown>))
+    }
+
+    // 4. IA
+    const { system, user: prompt } = buildPrompt(input, exercises, machineInfo, assessment)
     let text: string
     try {
       text = await callAnthropic(system, prompt)
@@ -100,14 +116,14 @@ export async function POST(req: NextRequest) {
       return json({ error: 'AI_UNAVAILABLE', message: 'La IA no respondió. Probá de nuevo en un rato (no se descontó del límite).' }, 502)
     }
 
-    // 4. Validación estricta contra el catálogo
+    // 5. Validación estricta contra el catálogo
     const draft = validateRoutine(text, input, new Set(exercises.map((e) => e.id)))
     if (!draft) {
       await release()
       return json({ error: 'AI_INVALID', message: 'La IA devolvió una rutina que no se pudo usar. Probá de nuevo (no se descontó del límite).' }, 502)
     }
 
-    // 5. Borrador
+    // 6. Borrador
     const { data: programId, error: draftError } = await supabase.rpc('ai_routine_create_draft', {
       p_org: org.id,
       p_ticket: ticket,
@@ -117,6 +133,14 @@ export async function POST(req: NextRequest) {
       console.error('[ai/routine] draft', draftError?.message)
       await release()
       return json({ error: 'ERROR', message: 'No se pudo guardar el borrador. Probá de nuevo.' }, 500)
+    }
+    // La rutina queda marcada "falta asignar" para ese alumno (se asigna cuando el profe la aprueba)
+    if (input.memberId) {
+      const { error: pendingError } = await supabase
+        .from('workout_programs')
+        .update({ pending_member_ids: [input.memberId] })
+        .eq('id', programId as string)
+      if (pendingError) console.error('[ai/routine] pending', pendingError.message)
     }
     return json({ programId, remaining })
   } catch (e) {

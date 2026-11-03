@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Snowflake,
   Ticket,
+  Trophy,
   Users,
 } from 'lucide-react'
 import { InfoTip } from '@/components/InfoTip'
@@ -122,6 +123,7 @@ export function YoScreen() {
         {[
           { href: `/${org.slug}/app/horarios`, label: 'Concurrencia', sub: '¿Hay mucha gente?', Icon: Users },
           { href: `/${org.slug}/app/invitados`, label: 'Invitados', sub: 'Traé a alguien', Icon: Ticket },
+          { href: `/${org.slug}/app/retos`, label: 'Retos', sub: 'Desafíos del mes', Icon: Trophy },
         ].map(({ href, label, sub, Icon }) => (
           <Link
             key={href}

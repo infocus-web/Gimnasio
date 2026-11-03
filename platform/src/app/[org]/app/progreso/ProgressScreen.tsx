@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { StrengthProgress } from '@/components/workout/StrengthProgress'
 import { useMember } from '@/features/member/MemberProvider'
 import { useProgram } from '@/features/member/useProgram'
+import { ProgressExtras } from '@/features/member/ProgressExtras'
 import type { LoggedSet, PrescribedExercise } from '@/types/platform'
 
 export function ProgressScreen() {
@@ -105,5 +106,10 @@ export function ProgressScreen() {
     })
   }
 
-  return <StrengthProgress exercises={exercises} loggedSets={sets} isLoading={loading || loadingProgram} />
+  return (
+    <>
+      <ProgressExtras />
+      <StrengthProgress exercises={exercises} loggedSets={sets} isLoading={loading || loadingProgram} />
+    </>
+  )
 }

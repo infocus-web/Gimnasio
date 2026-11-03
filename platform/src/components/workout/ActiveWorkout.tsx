@@ -15,12 +15,13 @@ import {
   ChevronRight,
   Flame,
   Flag,
+  TrendingUp,
 } from 'lucide-react';
 import { PrescribedExercise, LoggedSet } from '../../types/platform';
 import { PlateCalculator } from './PlateCalculator';
 import { sound } from '../../utils/audio';
 import { fmtKg } from './format';
-import { formatAgo, formatPreviousSets, type PreviousExercise } from '../../features/member/usePreviousPerformance';
+import { formatAgo, formatPreviousSets, suggestionFor, type PreviousExercise } from '../../features/member/usePreviousPerformance';
 
 export interface ActiveWorkoutProps {
   exercises: PrescribedExercise[];
@@ -84,6 +85,7 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
   const [isPlateModalOpen, setIsPlateModalOpen] = useState<boolean>(false);
 
   const activeExercise = exercises[currentExerciseIdx] || exercises[0];
+  const activeSuggestion = activeExercise ? suggestionFor(previous[activeExercise.id], activeExercise.targetSets, activeExercise.targetReps) : null;
 
   // Al cambiar de ejercicio: carga y reps sugeridas (o las de la última serie de este ejercicio).
   // No depende de loggedSets: si no, cada serie guardada pisaba el peso que el socio había ajustado.
@@ -93,7 +95,9 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
     const last = [...loggedSets].reverse().find((s) => s.exerciseId === activeExercise.id)
     // Si hoy todavía no hizo series de este ejercicio, arranca con la carga de la vez pasada
     const prevFirst = previous[activeExercise.id]?.sets[0]
-    setSelectedWeight(last?.weightKg ?? prevFirst?.weightKg ?? activeExercise.targetWeightKg ?? 0)   // 0 = peso corporal
+    // Rutina que se ajusta sola: si la vez pasada completó todo, arranca con la carga sugerida
+    const suggested = suggestionFor(previous[activeExercise.id], activeExercise.targetSets, activeExercise.targetReps)
+    setSelectedWeight(last?.weightKg ?? suggested?.weightKg ?? prevFirst?.weightKg ?? activeExercise.targetWeightKg ?? 0)   // 0 = peso corporal
     const parsedReps = parseInt(activeExercise.targetReps, 10) || 8
     setSelectedReps(last?.reps ?? prevFirst?.reps ?? parsedReps)
     setRestDuration(activeExercise.restSeconds || 60)
@@ -309,6 +313,11 @@ export const ActiveWorkout: React.FC<ActiveWorkoutProps> = ({
             <span className="mt-1 block text-xs text-zinc-300">
               <span className="text-zinc-500">La vez pasada ({formatAgo(previous[activeExercise.id]!.performedAt)}):</span>{' '}
               {formatPreviousSets(previous[activeExercise.id]!.sets)}
+            </span>
+          ) : null}
+          {activeSuggestion && activeSuggestion.kind !== 'keep' ? (
+            <span className={`mt-1 inline-flex items-start gap-1 text-left text-xs font-semibold ${activeSuggestion.kind === 'up' ? 'text-emerald-300' : 'text-amber-200'}`}>
+              <TrendingUp className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {activeSuggestion.text}
             </span>
           ) : null}
         </div>

@@ -6,6 +6,7 @@ import { getMemberContext, getStaffContext } from '@/lib/member-context'
 import { MemberProvider } from '@/features/member/MemberProvider'
 import { MemberNav } from '@/features/member/MemberNav'
 import { SignOutButton } from '@/features/member/SignOutButton'
+import { SurveyPrompt } from '@/features/member/SurveyPrompt'
 
 export default async function MemberAppLayout({ children, params }: LayoutProps<'/[org]/app'>) {
   const { org: slug } = await params
@@ -49,6 +50,7 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
         </div>
       </header>
       <main className="mx-auto w-full max-w-lg px-4 pt-4" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
+        <SurveyPrompt />
         {children}
       </main>
       <MemberNav orgSlug={org.slug} />

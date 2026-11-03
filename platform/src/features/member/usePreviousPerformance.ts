@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { fmtKg } from '@/components/workout/format'
 import { useMember } from './MemberProvider'
+import { suggestLoad } from './progression'
 
 export interface PreviousSet {
   setNumber: number
   reps: number | null
   weightKg: number | null
+  rpe: number | null
 }
 
 export interface PreviousExercise {
@@ -36,7 +38,7 @@ export function usePreviousPerformance(workoutId: string | null, refreshKey = 0)
     let cancelled = false
     void supabase
       .from('workout_logs')
-      .select('id, performed_at, duration_min, workout_id, set_logs(exercise_id, set_number, reps, weight_kg)')
+      .select('id, performed_at, duration_min, workout_id, set_logs(exercise_id, set_number, reps, weight_kg, rpe)')
       .eq('member_id', activeMemberId)
       .order('performed_at', { ascending: false })
       .limit(40)
@@ -48,13 +50,13 @@ export function usePreviousPerformance(workoutId: string | null, refreshKey = 0)
           if (lastDurationMin === null && workoutId && log.workout_id === workoutId && log.duration_min) {
             lastDurationMin = log.duration_min
           }
-          const sets = (log.set_logs ?? []) as { exercise_id: string; set_number: number; reps: number | null; weight_kg: number | null }[]
+          const sets = (log.set_logs ?? []) as { exercise_id: string; set_number: number; reps: number | null; weight_kg: number | null; rpe: number | null }[]
           for (const s of sets) {
             // Los logs vienen del más nuevo al más viejo: el primero que aparece es "la vez pasada"
             const prev = byExercise[s.exercise_id]
             if (prev && prev.performedAt !== log.performed_at) continue
             const entry = prev ?? (byExercise[s.exercise_id] = { performedAt: log.performed_at, sets: [] })
-            entry.sets.push({ setNumber: s.set_number, reps: s.reps, weightKg: s.weight_kg == null ? null : Number(s.weight_kg) })
+            entry.sets.push({ setNumber: s.set_number, reps: s.reps, weightKg: s.weight_kg == null ? null : Number(s.weight_kg), rpe: s.rpe == null ? null : Number(s.rpe) })
           }
         }
         for (const e of Object.values(byExercise)) e.sets.sort((a, b) => a.setNumber - b.setNumber)
@@ -76,6 +78,13 @@ export function formatPreviousSets(sets: PreviousSet[]) {
       return `${w} × ${s.reps ?? '–'}`
     })
     .join(' · ')
+}
+
+/** Carga sugerida para hoy a partir de la vez pasada (ver progression.ts) */
+export function suggestionFor(prev: PreviousExercise | undefined, targetSets: number, targetReps: string) {
+  if (!prev) return null
+  const days = Math.floor((Date.now() - new Date(prev.performedAt).getTime()) / 86_400_000)
+  return suggestLoad(prev.sets, targetSets, targetReps, days)
 }
 
 export function formatAgo(iso: string) {

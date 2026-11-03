@@ -12,6 +12,8 @@ export const routineRequestSchema = z.object({
   level: z.enum(['beginner', 'intermediate', 'advanced']),
   limitations: z.string().trim().max(500).optional().default(''),
   machineIds: z.array(z.string().uuid()).max(100).optional().default([]),
+  /** Desde la ficha del alumno: se usa su Evolution Check y la rutina queda pendiente para él */
+  memberId: z.string().uuid().optional(),
 })
 export type RoutineRequest = z.infer<typeof routineRequestSchema>
 
@@ -29,7 +31,7 @@ export interface MachineInfo {
 
 const LEVEL_TEXT = { beginner: 'principiante', intermediate: 'intermedio', advanced: 'avanzado' } as const
 
-export function buildPrompt(req: RoutineRequest, catalog: CatalogExercise[], machines: MachineInfo[]) {
+export function buildPrompt(req: RoutineRequest, catalog: CatalogExercise[], machines: MachineInfo[], assessment = '') {
   const system = [
     'Sos un profesor de educación física con experiencia en musculación en un gimnasio de Argentina.',
     'Armás rutinas seguras, progresivas y realistas para que un profesor las revise antes de dárselas a un alumno.',
@@ -46,7 +48,7 @@ export function buildPrompt(req: RoutineRequest, catalog: CatalogExercise[], mac
 - Días por semana: ${req.days} (la rutina tiene que tener exactamente ${req.days} días)
 - Nivel: ${LEVEL_TEXT[req.level]}
 - Lesiones o limitaciones: ${req.limitations || 'ninguna informada'}
-
+${assessment ? `\n${assessment}\n` : ''}
 Equipamiento disponible en la sala:
 ${machineText}
 

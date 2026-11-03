@@ -7,7 +7,7 @@ import { fmtKg } from '@/components/workout/format'
 import { VideoEmbed } from '@/components/workout/VideoEmbed'
 import { useMember } from '@/features/member/MemberProvider'
 import { useProgram } from '@/features/member/useProgram'
-import { formatAgo, formatPreviousSets, usePreviousPerformance } from '@/features/member/usePreviousPerformance'
+import { formatAgo, formatPreviousSets, suggestionFor, usePreviousPerformance } from '@/features/member/usePreviousPerformance'
 import type { LoggedSet } from '@/types/platform'
 
 export function WorkoutScreen() {
@@ -259,6 +259,12 @@ export function WorkoutScreen() {
                     <span className="text-zinc-500">Última vez ({formatAgo(prev.performedAt)}):</span> {formatPreviousSets(prev.sets)}
                   </p>
                 )}
+                {(() => {
+                  const sug = suggestionFor(prev, e.targetSets, e.targetReps)
+                  return sug && sug.kind !== 'keep' ? (
+                    <p className={`mt-0.5 text-xs font-semibold ${sug.kind === 'up' ? 'text-emerald-300' : 'text-amber-200'}`}>{sug.text}</p>
+                  ) : null
+                })()}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {e.muscleGroup && (
