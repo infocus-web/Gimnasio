@@ -10,3 +10,6 @@ envato_raw/
 # Claves y proyecto de la app Android (nunca al repo)
 app-android/
 *.keystore
+
+# Videos explicativos (pesados, no van a GitHub)
+videos/

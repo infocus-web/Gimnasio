@@ -117,10 +117,12 @@ export async function saveTvSettings(slug: string, _prev: ActionState, form: For
     p_org: ctx.org.id,
     p_ranking: form.get('ranking') === 'on',
     p_message: message || null,
+    p_web: form.get('web') === 'on',
   })
   if (error) return { message: msg(error) }
   revalidatePath(`/${slug}/admin/maquinas`)
-  return { ok: true, message: 'Listo: la TV lo muestra en menos de un minuto.' }
+  revalidatePath(`/${slug}`)
+  return { ok: true, message: 'Listo: la TV y la web lo muestran en menos de un minuto.' }
 }
 
 // ---------------------------------------------------------------------

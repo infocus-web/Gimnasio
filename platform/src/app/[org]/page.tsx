@@ -13,6 +13,8 @@ import { IosInstallButton } from '@/components/IosInstallButton'
 import { SplitWords } from '@/components/RevealText'
 import { REVEAL_BOOT, RevealObserver } from '@/components/RevealObserver'
 import { EXTRAS } from '@/features/public/content'
+import { getPublicToday } from '@/features/public/today'
+import { TodayLive } from '@/features/public/TodayLive'
 
 export const revalidate = 300
 
@@ -28,6 +30,7 @@ export async function generateMetadata({ params }: PageProps<'/[org]'>): Promise
 }
 
 const NAV = [
+  ['#hoy', 'Hoy'],
   ['#actividades', 'Actividades'],
   ['#app', 'La app'],
   ['#horarios', 'Horarios'],
@@ -49,7 +52,7 @@ function Heading({ id, children, className = '' }: { id?: string; children: Reac
 
 export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const { org } = await params
-  const gym = await getPublicGym(org)
+  const [gym, today] = await Promise.all([getPublicGym(org), getPublicToday(org)])
   if (!gym) notFound()
 
   const p = gym.profile
@@ -66,6 +69,8 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const contactHref = whatsapp ?? tel ?? '#contacto'
   const gallery: readonly string[] = p.gallery?.length ? p.gallery : WEB_MEDIA.gallery
   const about: readonly string[] = p.about_images?.length === 2 ? p.about_images : WEB_MEDIA.about
+  const bookHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/clases`)}`
+  const todayTitle = `Hoy en ${gym.name.split(' ')[0]}`
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -174,6 +179,9 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </dl>
           </div>
         </section>
+
+        {/* ---------- Hoy en el gimnasio (en vivo) ---------- */}
+        <TodayLive slug={gym.slug} title={todayTitle} initial={today} bookHref={bookHref} whatsapp={whatsapp} />
 
         {/* ---------- Actividades ---------- */}
         {gym.activities.length > 0 && (

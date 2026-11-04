@@ -3320,7 +3320,8 @@ export type Database = {
       floor_tv_settings: { Args: { p_org: string }; Returns: Json }
       floor_tv_link: { Args: { p_org: string }; Returns: string }
       floor_tv_unlink: { Args: { p_org: string }; Returns: undefined }
-      floor_tv_save: { Args: { p_org: string; p_ranking: boolean; p_message: string | null }; Returns: undefined }
+      floor_tv_save: { Args: { p_org: string; p_ranking: boolean; p_message: string | null; p_web?: boolean }; Returns: undefined }
+      public_today: { Args: { p_slug: string }; Returns: Json }
       tv_feed: { Args: { p_token: string }; Returns: Json }
       ai_routine_reserve: { Args: { p_org: string }; Returns: Json }
       ai_routine_release: { Args: { p_org: string; p_ticket: number }; Returns: undefined }

@@ -254,7 +254,7 @@ export function TvLinkPanel({
   )
 }
 
-export function TvSettingsForm({ action, ranking, message }: { action: WithForm; ranking: boolean; message: string | null }) {
+export function TvSettingsForm({ action, ranking, message, web }: { action: WithForm; ranking: boolean; message: string | null; web: boolean }) {
   const [state, submit] = useActionForm(action)
   const [text, setText] = useState(message ?? '')
   return (
@@ -272,6 +272,10 @@ export function TvSettingsForm({ action, ranking, message }: { action: WithForm;
       <label className="flex min-h-[44px] items-center gap-3 text-sm text-zinc-200">
         <input type="checkbox" name="ranking" defaultChecked={ranking} className="h-5 w-5 accent-[#edcc36]" />
         Mostrar el ranking de constancia del mes (nombre e inicial del apellido)
+      </label>
+      <label className="flex min-h-[44px] items-center gap-3 text-sm text-zinc-200">
+        <input type="checkbox" name="web" defaultChecked={web} className="h-5 w-5 shrink-0 accent-[#edcc36]" />
+        Mostrar también en la web: el mensaje, cuánta gente hay y las clases de hoy con botón para anotarse (sin ranking ni cumpleaños)
       </label>
       <Notice state={state} />
       <SubmitButton variant="ghost">Guardar</SubmitButton>

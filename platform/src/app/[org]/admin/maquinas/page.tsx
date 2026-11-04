@@ -33,7 +33,7 @@ export default async function MachinesPage({ params }: { params: Promise<{ org: 
     supabase.from('exercises').select('id, name, muscle_group, video_url').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('name'),
     canTv ? supabase.rpc('floor_tv_settings', { p_org: ctx.org.id }) : Promise.resolve({ data: null }),
   ])
-  const tvSettings = (tv.data ?? null) as { linked: boolean; seen_at: string | null; ranking_enabled: boolean; message: string | null } | null
+  const tvSettings = (tv.data ?? null) as { linked: boolean; seen_at: string | null; ranking_enabled: boolean; message: string | null; web_enabled?: boolean } | null
   const base = `/${slug}/admin/maquinas`
 
   return (
@@ -131,8 +131,8 @@ export default async function MachinesPage({ params }: { params: Promise<{ org: 
         >
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="space-y-2">
-              <p className="flex items-center gap-2 text-sm text-zinc-300">
-                <Tv className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Muestra la hora, cuánta gente hay, las clases que siguen hoy, el ranking del mes,
+              <p className="flex items-start gap-2 text-sm text-zinc-300">
+                <Tv className="mt-0.5 h-4 w-4 shrink-0 text-[#edcc36]" aria-hidden="true" /> Muestra la hora, cuánta gente hay, las clases que siguen hoy, el ranking del mes,
                 los cumpleaños y tu mensaje. Va rotando sola cada 15 segundos.
               </p>
               <TvLinkPanel
@@ -143,7 +143,7 @@ export default async function MachinesPage({ params }: { params: Promise<{ org: 
                 action={linkTv.bind(null, slug)}
               />
             </div>
-            <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} />
+            <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} web={tvSettings.web_enabled ?? true} />
           </div>
         </Card>
       )}
