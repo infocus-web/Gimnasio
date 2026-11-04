@@ -1,5 +1,6 @@
 'use server'
 
+import type { Route } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -99,5 +100,5 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     console.error('[inscripción] preferencia', e instanceof Error ? e.message : e)
     return { error: 'No pudimos conectar con Mercado Pago. Probá de nuevo en unos minutos.' }
   }
-  redirect(initPoint)
+  redirect(initPoint as Route)   // checkout de Mercado Pago (URL externa)
 }
