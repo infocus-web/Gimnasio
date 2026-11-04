@@ -71,6 +71,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const about: readonly string[] = p.about_images?.length === 2 ? p.about_images : WEB_MEDIA.about
   const bookHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/clases`)}`
   const todayTitle = `Hoy en ${gym.name.split(' ')[0]}`
+  const signupHref = `/${gym.slug}/inscripcion`
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -181,7 +182,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
         </section>
 
         {/* ---------- Hoy en el gimnasio (en vivo) ---------- */}
-        <TodayLive slug={gym.slug} title={todayTitle} initial={today} bookHref={bookHref} whatsapp={whatsapp} />
+        <TodayLive slug={gym.slug} title={todayTitle} initial={today} bookHref={bookHref} signupHref={signupHref} />
 
         {/* ---------- Actividades ---------- */}
         {gym.activities.length > 0 && (
@@ -259,7 +260,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <ul className="mt-10 space-y-7">
                 {[
                   { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones serie por serie.' },
-                  { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario y, en spinning, también tu bici.' },
+                  { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario, ves cuántos lugares quedan y listo.' },
                   { Icon: QrCode, title: 'Pagás y ves tu plan', text: 'Cuándo vence, qué incluye y tus pagos, sin preguntar en recepción.' },
                 ].map(({ Icon, title, text: t }) => (
                   <li key={title} className="flex gap-4">
@@ -354,7 +355,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           <div className="mx-auto max-w-7xl px-4 sm:px-8">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <Heading id="plans-title">Planes</Heading>
-              <p className="max-w-sm text-white/65">Sin matrícula. Te asociás en recepción con efectivo, transferencia o tarjeta, o pagás desde la app.</p>
+              <p className="max-w-sm text-white/65">Sin matrícula. Te inscribís online y pagás con Mercado Pago, o te asociás en recepción con efectivo, transferencia o tarjeta.</p>
             </div>
             {gym.plans.length === 0 ? (
               <p className="mt-10 text-white/60">Consultá los planes vigentes en recepción.</p>
@@ -381,7 +382,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                           <Users className="h-4 w-4" aria-hidden="true" /> Hasta {plan.max_members} personas
                         </p>
                       )}
-                      <TacticalButton href={contactHref} newTab={!!whatsapp} variant={featured ? 'onBrand' : 'dark'} className="mt-auto w-full">
+                      <TacticalButton href={`${signupHref}?plan=${encodeURIComponent(plan.name.toLowerCase())}`} variant={featured ? 'onBrand' : 'dark'} className="mt-auto w-full">
                         Quiero este plan
                       </TacticalButton>
                     </article>
@@ -418,8 +419,11 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               Vení a entrenar con nosotros
             </h2>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <TacticalButton href={signupHref} variant="solid" icon={ArrowUpRight}>
+                Inscribite online
+              </TacticalButton>
               {whatsapp && (
-                <TacticalButton href={whatsapp} newTab variant="solid" icon={MessageCircle}>
+                <TacticalButton href={whatsapp} newTab icon={MessageCircle}>
                   Escribinos
                 </TacticalButton>
               )}

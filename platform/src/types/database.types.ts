@@ -3258,6 +3258,20 @@ export type Database = {
         Returns: Json
       }
       public_day_pass_offer: { Args: { p_slug: string }; Returns: Json }
+      public_signup_plans: { Args: { p_slug: string }; Returns: Json }
+      payment_intent_create_signup: {
+        Args: {
+          p_slug: string
+          p_plan: string
+          p_first_name: string
+          p_last_name: string
+          p_email: string
+          p_phone?: string
+          p_document?: string
+          p_birth_date?: string
+        }
+        Returns: Json
+      }
       member_payment_options: { Args: { p_member: string }; Returns: Json }
       payment_intent_set_preference: {
         Args: { p_init_point: string; p_intent: string; p_preference_id: string }

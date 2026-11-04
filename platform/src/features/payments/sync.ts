@@ -2,11 +2,12 @@ import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getPayment } from './mercadopago'
 import { sendDayPassEmailOnce } from './day-pass'
+import { sendSignupAccessOnce } from './signup'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export type SyncResult =
-  | { ok: true; intentId: string; status: string; duplicate?: boolean; periodEnd?: string | null; dayPass?: boolean }
+  | { ok: true; intentId: string; status: string; duplicate?: boolean; periodEnd?: string | null; dayPass?: boolean; signup?: boolean }
   | { ok: false; reason: 'NOT_FOUND' | 'NOT_OURS' | 'ERROR' }
 
 /**
@@ -33,11 +34,20 @@ export async function syncMpPayment(paymentId: string): Promise<SyncResult> {
     console.error('[mercadopago] settle', error.message)
     return { ok: false, reason: 'ERROR' }
   }
-  const r = (data ?? {}) as { status?: string; duplicate?: boolean; result?: { period_end?: string; code?: string } | null }
+  const r = (data ?? {}) as {
+    status?: string
+    duplicate?: boolean
+    result?: { period_end?: string; code?: string; member_id?: string; new_member?: boolean } | null
+  }
   const dayPass = r.status === 'approved' && !!r.result?.code
   if (dayPass) {
     // Pase comprado en la web: se le manda el link por email (una sola vez)
     await sendDayPassEmailOnce(intentId).catch((e) => console.error('[pase online]', e instanceof Error ? e.message : e))
   }
-  return { ok: true, intentId, status: r.status ?? 'pending', duplicate: r.duplicate, periodEnd: r.result?.period_end ?? null, dayPass }
+  const signup = r.status === 'approved' && typeof r.result?.new_member === 'boolean'
+  if (signup) {
+    // Inscripción desde la web: email para entrar a la app (una sola vez)
+    await sendSignupAccessOnce(intentId).catch((e) => console.error('[inscripción]', e instanceof Error ? e.message : e))
+  }
+  return { ok: true, intentId, status: r.status ?? 'pending', duplicate: r.duplicate, periodEnd: r.result?.period_end ?? null, dayPass, signup }
 }

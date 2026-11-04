@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowUpRight, Megaphone, MessageCircle, Users } from 'lucide-react'
+import { ArrowUpRight, Megaphone, Users } from 'lucide-react'
 import type { PublicToday, PublicTodayClass } from './today-types'
 
 const REFRESH_MS = 60_000
@@ -32,13 +32,13 @@ export function TodayLive({
   title,
   initial,
   bookHref,
-  whatsapp,
+  signupHref,
 }: {
   slug: string
   title: string
   initial: PublicToday | null
   bookHref: string
-  whatsapp: string | null
+  signupHref: string
 }) {
   const [data, setData] = useState<PublicToday | null>(initial)
   const [now, setNow] = useState<Date | null>(null)
@@ -157,19 +157,12 @@ export function TodayLive({
           </ul>
         )}
 
-        {whatsapp && (
-          <p className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-white/65">
-            ¿Todavía no sos socio?
-            <a
-              href={`${whatsapp}?text=${encodeURIComponent('Hola! Vi en la web las clases de hoy y quiero probar una.')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-semibold text-brand underline-offset-4 hover:underline"
-            >
-              <MessageCircle className="h-4 w-4" aria-hidden="true" /> Escribinos y probá una clase
-            </a>
-          </p>
-        )}
+        <p className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-white/65">
+          ¿Todavía no sos socio?
+          <a href={signupHref} className="inline-flex items-center gap-1.5 font-semibold text-brand underline-offset-4 hover:underline">
+            Inscribite online y empezá hoy <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </p>
       </div>
     </section>
   )

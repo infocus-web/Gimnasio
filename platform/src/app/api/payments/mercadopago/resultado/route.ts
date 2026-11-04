@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   let until: string | null = null
   let passUrl: string | null = null
   let passByEmail = false
+  let signup = false
   const preferenceId = sp.get('preference_id')
 
   if (paymentId && /^\d{1,20}$/.test(paymentId) && mpConfigured() && process.env.SUPABASE_SECRET_KEY) {
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
           if (info && preferenceId && info.preferenceId && preferenceId === info.preferenceId) passUrl = info.url
           else passByEmail = true
         }
+        if (r.signup) signup = true
         if (r.periodEnd) {
           until = new Intl.DateTimeFormat('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', dateStyle: 'long' }).format(new Date(r.periodEnd))
         }
@@ -53,6 +55,10 @@ export async function GET(req: NextRequest) {
       color: '#34d399',
       title: '¡Pase comprado!',
       text: 'Te mandamos el pase por email. Abrilo desde el celular en la entrada y mostrá el QR.',
+    } : signup ? {
+      color: '#34d399',
+      title: '¡Bienvenido a Evolution!',
+      text: `Ya sos socio${until ? ` y tu plan está activo hasta el ${esc(until)}` : ''}. Te mandamos un email para entrar a la app: ahí tenés tu QR para pasar por el molinete, tus clases y tu rutina.`,
     } : {
       color: '#34d399',
       title: '¡Pago aprobado!',
@@ -61,7 +67,7 @@ export async function GET(req: NextRequest) {
     pending: {
       color: '#edcc36',
       title: 'Pago en proceso',
-      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo (el plan se renueva o el pase te llega por email). No hace falta que pagues de nuevo.',
+      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo (el plan se activa o te llega el email para entrar). No hace falta que pagues de nuevo.',
     },
     fail: {
       color: '#f87171',
