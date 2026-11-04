@@ -3,7 +3,8 @@ import { Plus } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { savePlan, saveRates } from '@/features/admin/billing-actions'
-import { RatesForm } from '@/features/admin/RatesForm'
+import { RatesForm, type RateGroup, type RateOther } from '@/features/admin/RatesForm'
+import { periodOf } from '@/features/admin/rates'
 import { Card } from '@/features/admin/ui'
 import { formatMoney } from '@/features/admin/format'
 import { PlanForm } from '@/features/admin/PlanForm'
@@ -25,29 +26,64 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
   const supabase = await createClient()
   const [{ data: plans }, { data: types }, { data: pct }, { data: counts }] = await Promise.all([
     supabase.from('membership_plans').select('*').eq('org_id', ctx.org.id).order('active', { ascending: false }).order('sort').order('price_cents'),
-    supabase.from('class_types').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('name'),
+    supabase.from('class_types').select('id, name, color').eq('org_id', ctx.org.id).eq('active', true).order('name'),
     supabase.from('plan_class_types').select('plan_id, class_type_id').eq('org_id', ctx.org.id),
     supabase.from('member_directory').select('plan_id').eq('org_id', ctx.org.id).not('plan_id', 'is', null),
   ])
   const members = new Map<string, number>()
   for (const c of counts ?? []) members.set(c.plan_id!, (members.get(c.plan_id!) ?? 0) + 1)
 
-  const typeName = new Map((types ?? []).map((t) => [t.id, t.name]))
-  const rates = (plans ?? [])
-    .filter((p) => p.active)
+  // Tarifas agrupadas por actividad: un plan "es de" una actividad si está limitado solo a ella
+  const typesOf = new Map<string, string[]>()
+  for (const x of pct ?? []) typesOf.set(x.plan_id, [...(typesOf.get(x.plan_id) ?? []), x.class_type_id])
+  const ownerOf = (planId: string) => {
+    const t = typesOf.get(planId) ?? []
+    return t.length === 1 && (types ?? []).some((ct) => ct.id === t[0]) ? t[0]! : null
+  }
+  const activePlans = (plans ?? []).filter((p) => p.active)
+  // Musculación primero, después el resto por nombre
+  const orderedTypes = [...(types ?? [])].sort((a, b) => Number(b.name === 'Musculación') - Number(a.name === 'Musculación') || a.name.localeCompare(b.name))
+  const groups: RateGroup[] = orderedTypes.map((t) => {
+    const own = activePlans.filter((p) => ownerOf(p.id) === t.id)
+    const openGym = t.name === 'Musculación' || (own.length > 0 && own.every((p) => p.includes_open_gym))
+    return {
+      typeId: t.id,
+      name: t.name,
+      color: t.color,
+      openGym,
+      options: own
+        .sort((a, b) => a.sort - b.sort || b.price_cents - a.price_cents)
+        .map((p) => ({
+          id: p.id,
+          perWeek: p.max_bookings_per_week,
+          period: periodOf(p.billing_interval, p.interval_count),
+          priceCents: p.price_cents,
+          members: members.get(p.id) ?? 0,
+        })),
+    }
+  })
+  const others: RateOther[] = activePlans
+    .filter((p) => !ownerOf(p.id))
     .map((p) => {
-      const acts = (pct ?? []).filter((x) => x.plan_id === p.id).map((x) => typeName.get(x.class_type_id)).filter(Boolean)
-      const what = acts.length ? acts.join(' + ') : 'Todas las actividades'
-      const gym = p.includes_open_gym ? (acts.length === 1 && acts[0] === 'Musculación' ? '' : ' · con musculación') : ' · sin musculación'
-      const per = p.kind === 'recurring' ? ` · por ${p.interval_count > 1 ? `${p.interval_count} ` : ''}${PERIOD[p.billing_interval ?? 'month']}${p.interval_count > 1 ? 'es' : ''}` : ''
-      return { id: p.id, name: p.name, detail: `${what}${gym}${per}`, priceCents: p.price_cents }
+      const acts = (typesOf.get(p.id) ?? []).map((id) => (types ?? []).find((t) => t.id === id)?.name).filter(Boolean)
+      return {
+        id: p.id,
+        name: p.name,
+        detail: `${acts.length ? acts.join(' + ') : 'Todas las actividades'}${p.includes_open_gym ? ' · con musculación' : ''}`,
+        priceCents: p.price_cents,
+      }
     })
+  // Lista de abajo: también agrupada por actividad
+  const sections = [
+    ...orderedTypes.map((t) => ({ key: t.id, title: t.name, items: (plans ?? []).filter((p) => ownerOf(p.id) === t.id) })),
+    { key: 'otros', title: 'Combos y otros planes', items: (plans ?? []).filter((p) => !ownerOf(p.id)) },
+  ].filter((x) => x.items.length > 0)
 
   return (
     <div className="space-y-4">
-      {canEdit && rates.length > 0 && (
+      {canEdit && (
         <Card title="Tarifas">
-          <RatesForm action={saveRates.bind(null, slug)} rows={rates} />
+          <RatesForm action={saveRates.bind(null, slug)} groups={groups} others={others} />
         </Card>
       )}
 
@@ -62,8 +98,11 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
         </details>
       )}
 
+      {sections.map((sec) => (
+      <section key={sec.key} className="space-y-3">
+      <h2 className="pt-2 text-sm font-bold uppercase tracking-wider text-zinc-400">{sec.title}</h2>
       <ul className="space-y-3">
-        {(plans ?? []).map((p) => {
+        {sec.items.map((p) => {
           const detail =
             p.kind === 'recurring'
               ? `por ${p.interval_count > 1 ? `${p.interval_count} ` : ''}${PERIOD[p.billing_interval ?? 'month']}${p.interval_count > 1 ? 'es' : ''}`
@@ -121,6 +160,8 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
           )
         })}
       </ul>
+      </section>
+      ))}
       <p className="text-xs text-zinc-500">
         Cambiar el precio no modifica lo que ya pagaron los socios: aplica a los próximos cobros.
       </p>
