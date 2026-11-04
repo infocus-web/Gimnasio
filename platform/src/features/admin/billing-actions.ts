@@ -100,6 +100,7 @@ export async function savePlan(slug: string, planId: string | null, _prev: Actio
     booking_window_days: p.bookingWindowDays,
     is_public: raw.isPublic === 'on',
     active: raw.active === 'on',
+    includes_open_gym: raw.includesOpenGym === 'on',
     sort: p.sort,
   }
   const supabase = await createClient()
@@ -121,4 +122,36 @@ export async function savePlan(slug: string, planId: string | null, _prev: Actio
   revalidatePath(`/${slug}/admin/pagos`, 'layout')
   revalidatePath(`/${slug}`)
   return { ok: true, message: planId ? 'Plan actualizado.' : 'Plan creado.' }
+}
+
+/**
+ * Tarifas: cambia de una vez el precio de varios planes (Pagos → Planes → Tarifas).
+ * El formulario manda price_<planId> por cada plan. Vacío o 0 = sin tarifa: no se muestra ni se vende en la web.
+ */
+export async function saveRates(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('billing.write')) return { message: ERRORS.FORBIDDEN }
+  const updates: { id: string; cents: number }[] = []
+  const fe: Record<string, string> = {}
+  for (const [k, v] of form.entries()) {
+    if (!k.startsWith('price_')) continue
+    const id = k.slice(6)
+    if (!/^[0-9a-f-]{36}$/i.test(id)) continue
+    const text = String(v).trim()
+    const cents = text === '' ? 0 : toCents(text)
+    if (cents === null) {
+      fe[k] = 'Precio inválido'
+      continue
+    }
+    updates.push({ id, cents })
+  }
+  if (Object.keys(fe).length) return { fieldErrors: fe, message: 'Revisá los precios marcados.' }
+  const supabase = await createClient()
+  for (const u of updates) {
+    const { error } = await supabase.from('membership_plans').update({ price_cents: u.cents }).eq('id', u.id).eq('org_id', ctx.org.id)
+    if (error) return { message: dbMessage(error) }
+  }
+  revalidatePath(`/${slug}/admin/pagos`, 'layout')
+  revalidatePath(`/${slug}`)
+  return { ok: true, message: 'Tarifas guardadas. La web ya muestra los precios nuevos.' }
 }

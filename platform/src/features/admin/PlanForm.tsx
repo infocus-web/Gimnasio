@@ -18,6 +18,7 @@ export interface PlanValues {
   bookingWindowDays: number
   isPublic: boolean
   active: boolean
+  includesOpenGym: boolean
   sort: number
   classTypeIds: string[]
 }
@@ -118,6 +119,14 @@ export function PlanForm({
           </div>
         </fieldset>
       )}
+
+      <label className="flex min-h-[44px] items-start gap-2 rounded-xl border border-zinc-800 p-3 text-sm text-zinc-200 has-[:checked]:border-[#edcc36]/60">
+        <input type="checkbox" name="includesOpenGym" defaultChecked={v?.includesOpenGym ?? true} className="mt-0.5 h-4 w-4 shrink-0 accent-[#edcc36]" />
+        <span>
+          Incluye musculación
+          <span className="block text-xs text-zinc-500">Puede entrar a la sala por el molinete. Destildalo en los planes de una sola actividad (Yoga, K-Pop…).</span>
+        </span>
+      </label>
 
       <div className="flex flex-wrap gap-4">
         <label className="flex min-h-[40px] items-center gap-2 text-sm text-zinc-200">

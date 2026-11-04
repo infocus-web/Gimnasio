@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Plus } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { savePlan } from '@/features/admin/billing-actions'
+import { savePlan, saveRates } from '@/features/admin/billing-actions'
+import { RatesForm } from '@/features/admin/RatesForm'
+import { Card } from '@/features/admin/ui'
 import { formatMoney } from '@/features/admin/format'
 import { PlanForm } from '@/features/admin/PlanForm'
 import { PlanHoursForm } from '@/features/access-plus/PlanHoursForm'
@@ -30,8 +32,25 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
   const members = new Map<string, number>()
   for (const c of counts ?? []) members.set(c.plan_id!, (members.get(c.plan_id!) ?? 0) + 1)
 
+  const typeName = new Map((types ?? []).map((t) => [t.id, t.name]))
+  const rates = (plans ?? [])
+    .filter((p) => p.active)
+    .map((p) => {
+      const acts = (pct ?? []).filter((x) => x.plan_id === p.id).map((x) => typeName.get(x.class_type_id)).filter(Boolean)
+      const what = acts.length ? acts.join(' + ') : 'Todas las actividades'
+      const gym = p.includes_open_gym ? (acts.length === 1 && acts[0] === 'Musculación' ? '' : ' · con musculación') : ' · sin musculación'
+      const per = p.kind === 'recurring' ? ` · por ${p.interval_count > 1 ? `${p.interval_count} ` : ''}${PERIOD[p.billing_interval ?? 'month']}${p.interval_count > 1 ? 'es' : ''}` : ''
+      return { id: p.id, name: p.name, detail: `${what}${gym}${per}`, priceCents: p.price_cents }
+    })
+
   return (
     <div className="space-y-4">
+      {canEdit && rates.length > 0 && (
+        <Card title="Tarifas">
+          <RatesForm action={saveRates.bind(null, slug)} rows={rates} />
+        </Card>
+      )}
+
       {canEdit && (
         <details className="rounded-2xl border border-dashed border-zinc-700 p-4 open:border-solid open:border-[#edcc36]/40">
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-[#edcc36]">
@@ -90,6 +109,7 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
                         bookingWindowDays: p.booking_window_days,
                         isPublic: p.is_public,
                         active: p.active,
+                        includesOpenGym: p.includes_open_gym,
                         sort: p.sort,
                         classTypeIds: (pct ?? []).filter((x) => x.plan_id === p.id).map((x) => x.class_type_id),
                       }}

@@ -72,6 +72,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const bookHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/clases`)}`
   const todayTitle = `Hoy en ${gym.name.split(' ')[0]}`
   const signupHref = `/${gym.slug}/inscripcion`
+  const plans = gym.plans.filter((pl) => pl.price_cents > 0)   // sin tarifa cargada = no se muestra
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -357,13 +358,13 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <Heading id="plans-title">Planes</Heading>
               <p className="max-w-sm text-white/65">Sin matrícula. Te inscribís online y pagás con Mercado Pago, o te asociás en recepción con efectivo, transferencia o tarjeta.</p>
             </div>
-            {gym.plans.length === 0 ? (
+            {plans.length === 0 ? (
               <p className="mt-10 text-white/60">Consultá los planes vigentes en recepción.</p>
             ) : (
               <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {gym.plans.map((plan, i) => {
+                {plans.map((plan, i) => {
                   const price = formatPrice(plan)
-                  const featured = gym.plans.length >= 3 && i === 0
+                  const featured = plans.length >= 3 && i === 0
                   return (
                     <article
                       key={plan.name}
