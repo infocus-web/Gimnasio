@@ -55,7 +55,8 @@ select test.expect_error($q$select public.admin_create_member(
   (select org_id from public.staff limit 1), 'X')$q$, 'FORBIDDEN');
 do $$
 begin
-  if exists (select 1 from public.my_permissions((select org_id from public.staff where display_name = 'Ana'))) then
+  if exists (select 1 from public.my_permissions((select org_id from public.staff where display_name = 'Ana')) p
+              where p <> 'schedule.own') then   -- 0040: el profe solo maneja SUS clases
     raise exception 'permisos del trainer incorrectos';
   end if;
 end $$;

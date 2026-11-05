@@ -4,13 +4,18 @@ import type { Metadata, Route } from 'next'
 import { ArrowLeft, X, HeartPulse, Check, UserX } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { bookForMember, cancelBookingDesk, cancelSession } from '@/features/admin/schedule-actions'
+import { bookForMember, cancelBookingDesk, cancelSession, editSession } from '@/features/admin/schedule-actions'
 import { markAttendance } from '@/features/admin/coach-actions'
 import { fmtTime } from '@/features/admin/format'
 import { BookForMemberForm, CancelSessionForm } from '@/features/admin/ScheduleForms'
 import { Card } from '@/features/admin/ui'
 import { ActionButton, ConfirmAction } from '@/features/admin/ConfirmAction'
 import { equipmentLabel } from '@/features/admin/equipment'
+import { EditSessionForm } from '@/features/admin/ClassEditForms'
+import { WhatsAppComposer, type ComposerStudent } from '@/features/admin/WhatsAppComposer'
+import { classVars, normalizeArPhone } from '@/features/admin/whatsapp'
+import { loadTemplates } from '@/features/admin/templates'
+import { todayYMD } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Clase' }
 
@@ -38,15 +43,28 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
     .maybeSingle()
   if (!s) notFound()
 
-  const [{ data: roster }, { data: sessionRow }] = await Promise.all([
+  // 0040: el profe maneja SU clase (horario, cupo, anotar/sacar socios, cancelar)
+  const canManageClass = ctx.can('schedule.manage') || (ctx.can('schedule.own') && s.instructor_id === ctx.staff.id)
+  const canBook = ctx.can('bookings.manage') || canManageClass
+  const isMine = s.instructor_id === ctx.staff.id
+
+  const [{ data: roster }, { data: sessionRow }, { data: rooms }, { data: myClients }, templates] = await Promise.all([
     supabase
       .from('session_roster')
-      .select('booking_id, member_id, member_name, status, waitlist_position, equipment_label, medical_notes, source')
+      .select('booking_id, member_id, member_name, phone, status, waitlist_position, equipment_label, medical_notes, source')
       .eq('session_id', sessionId)
       .order('status')
       .order('created_at'),
     supabase.from('class_sessions').select('cancel_reason').eq('id', sessionId).maybeSingle(),
+    canManageClass
+      ? supabase.from('rooms').select('id, name, capacity').eq('org_id', ctx.org.id).eq('active', true).order('name')
+      : Promise.resolve({ data: null }),
+    ctx.can('members.read')
+      ? Promise.resolve({ data: null })
+      : supabase.from('trainer_clients').select('member_id').eq('trainer_id', ctx.staff.id),
+    isMine || ctx.can('members.write') ? loadTemplates(ctx.org.id, ctx.staff.id) : Promise.resolve(null),
   ])
+  const clientIds = new Set((myClients ?? []).map((c) => c.member_id))
 
   const active = (roster ?? []).filter((r) => r.status === 'booked' || r.status === 'checked_in')
   // "No vino" sigue ocupando su lugar (así lo cuentan los reportes): va en la lista principal, no en cancelaciones
@@ -64,12 +82,41 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
     new Date(s.starts_at!).getTime() - 30 * 60_000 <= Date.now()
   const dateLabel = new Intl.DateTimeFormat('es-AR', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(s.starts_at!))
 
-  const Row = ({ r }: { r: NonNullable<typeof roster>[number] }) => (
+  // Día y hora de la clase en la zona del gimnasio (para el formulario de edición)
+  const localDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(s.starts_at!))
+  const localTime = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(s.starts_at!))
+  const durationMin = Math.round((new Date(s.ends_at!).getTime() - new Date(s.starts_at!).getTime()) / 60_000)
+
+  // WhatsApp a los de esta clase
+  const tagOf: Record<string, string> = { booked: 'anotados', checked_in: 'anotados', waitlisted: 'espera', no_show: 'no_vino' }
+  const students: ComposerStudent[] = [...active, ...waiting, ...noShows].map((r) => ({
+    id: r.member_id!,
+    name: r.member_name ?? 'Socio',
+    phone: normalizeArPhone(r.phone),
+    tags: [tagOf[r.status!] ?? 'otros'],
+  }))
+  const waFilters = [
+    { key: 'anotados', label: `Anotados (${active.length})` },
+    ...(waiting.length ? [{ key: 'espera', label: `En espera (${waiting.length})` }] : []),
+    ...(noShows.length ? [{ key: 'no_vino', label: `No vinieron (${noShows.length})` }] : []),
+    { key: 'all', label: 'Todos' },
+  ]
+
+  const memberHref = (memberId: string) =>
+    ctx.can('members.read') ? `/${slug}/admin/socios/${memberId}` : clientIds.has(memberId) ? `/${slug}/admin/alumnos/${memberId}` : null
+
+  const Row = ({ r }: { r: NonNullable<typeof roster>[number] }) => {
+    const href = memberHref(r.member_id!)
+    return (
     <li className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
       <span className="min-w-0 flex-1">
-        <Link href={(ctx.can('members.read') ? `/${slug}/admin/socios/${r.member_id}` : `/${slug}/admin/alumnos/${r.member_id}`) as Route} className="font-semibold text-white hover:text-[#edcc36]">
-          {r.member_name}
-        </Link>
+        {href ? (
+          <Link href={href as Route} className="font-semibold text-white hover:text-[#edcc36]">
+            {r.member_name}
+          </Link>
+        ) : (
+          <span className="font-semibold text-white">{r.member_name}</span>
+        )}
         <span className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
           {r.equipment_label && (
             <span>
@@ -107,7 +154,7 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
       ) : (
         <span className={`text-xs ${STATUS[r.status!]?.cls ?? ''}`}>{STATUS[r.status!]?.label ?? r.status}</span>
       )}
-      {ctx.can('bookings.manage') && scheduled && notEnded && (r.status === 'booked' || r.status === 'waitlisted') && (
+      {canBook && scheduled && notEnded && (r.status === 'booked' || r.status === 'waitlisted') && (
         <ConfirmAction
           action={cancelBookingDesk.bind(null, slug, r.booking_id!)}
           variant="icon"
@@ -120,13 +167,20 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
         </ConfirmAction>
       )}
     </li>
-  )
+    )
+  }
 
   return (
     <div className="space-y-5">
-      <Link href={`/${slug}/admin/agenda` as Route} className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white">
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Agenda
-      </Link>
+      {ctx.can('schedule.manage') || ctx.can('bookings.manage') ? (
+        <Link href={`/${slug}/admin/agenda` as Route} className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Agenda
+        </Link>
+      ) : (
+        <Link href={`/${slug}/admin/mis-clases` as Route} className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Mis clases
+        </Link>
+      )}
       <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-5" style={{ borderLeft: `6px solid ${s.color ?? '#edcc36'}` }}>
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 first-letter:uppercase">{dateLabel}</p>
         <h2 className={`text-2xl font-extrabold text-white ${scheduled ? '' : 'line-through'}`}>{s.class_name}</h2>
@@ -175,12 +229,41 @@ export default async function SessionPage({ params }: PageProps<'/[org]/admin/ag
         </Card>
 
         <div className="space-y-5">
-          {ctx.can('bookings.manage') && scheduled && future && (
+          {templates && students.length > 0 && (
+            <WhatsAppComposer
+              slug={slug}
+              senderName={ctx.staff.display_name}
+              students={students}
+              templates={templates}
+              filters={waFilters}
+              preselect="anotados"
+              classInfo={classVars(s.class_name ?? 'la clase', s.starts_at!, tz)}
+              buttonLabel="WhatsApp a los de esta clase"
+            />
+          )}
+          {canBook && scheduled && future && (
             <Card title="Anotar a un socio">
-              <BookForMemberForm action={bookForMember.bind(null, slug, sessionId)} orgId={ctx.org.id} />
+              <BookForMemberForm
+                action={bookForMember.bind(null, slug, sessionId)}
+                orgId={ctx.org.id}
+                sessionId={ctx.can('bookings.manage') ? undefined : sessionId}
+              />
             </Card>
           )}
-          {ctx.can('schedule.manage') && scheduled && future && (
+          {canManageClass && scheduled && notEnded && rooms && (
+            <EditSessionForm
+              action={editSession.bind(null, slug, sessionId)}
+              date={localDate}
+              time={localTime}
+              durationMin={durationMin}
+              capacity={s.capacity ?? 1}
+              roomId={s.room_id!}
+              rooms={rooms.map((r) => ({ id: r.id, name: r.name, capacity: r.capacity }))}
+              booked={occupied}
+              minDate={todayYMD(tz)}
+            />
+          )}
+          {canManageClass && scheduled && future && (
             <CancelSessionForm action={cancelSession.bind(null, slug, sessionId)} />
           )}
         </div>

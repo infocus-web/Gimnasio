@@ -11,8 +11,18 @@ async function guard(slug: string, perm: 'schedule.manage' | 'bookings.manage' =
   return ctx?.can(perm) ? ctx : null
 }
 
+/**
+ * Acciones sobre UNA clase u horario: administración, o el profe en lo suyo (schedule.own).
+ * La base verifica que la clase sea del profe (private.can_edit_class); acá solo filtramos quién puede intentarlo.
+ */
+async function classGuard(slug: string, perm: 'schedule.manage' | 'bookings.manage' = 'schedule.manage') {
+  const ctx = await getAdminContext(slug)
+  return ctx && (ctx.can(perm) || ctx.can('schedule.own')) ? ctx : null
+}
+
 function done(slug: string, message: string): ActionState {
   revalidatePath(`/${slug}/admin/agenda`, 'layout')
+  revalidatePath(`/${slug}/admin/mis-clases`, 'layout')
   revalidatePath(`/${slug}`)
   return { ok: true, message }
 }
@@ -39,7 +49,7 @@ export async function generateSessions(slug: string, _prev: ActionState): Promis
 }
 
 export async function cancelSession(slug: string, sessionId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
-  const ctx = await guard(slug)
+  const ctx = await classGuard(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('cancel_session', {
@@ -51,7 +61,7 @@ export async function cancelSession(slug: string, sessionId: string, _prev: Acti
 }
 
 export async function bookForMember(slug: string, sessionId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
-  const ctx = await guard(slug, 'bookings.manage')
+  const ctx = await classGuard(slug, 'bookings.manage')
   if (!ctx) return { message: ERRORS.FORBIDDEN }
   const memberId = String(form.get('memberId') ?? '')
   if (!memberId) return { fieldErrors: { memberId: 'Elegí un socio de la lista' } }
@@ -67,7 +77,7 @@ export async function bookForMember(slug: string, sessionId: string, _prev: Acti
 }
 
 export async function cancelBookingDesk(slug: string, bookingId: string, _prev?: ActionState): Promise<ActionState> {
-  const ctx = await guard(slug, 'bookings.manage')
+  const ctx = await classGuard(slug, 'bookings.manage')
   if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('cancel_booking', { p_booking_id: bookingId })
@@ -139,7 +149,7 @@ export async function updateSeries(slug: string, seriesId: string, _prev: Action
 }
 
 export async function endSeries(slug: string, seriesId: string, _prev: ActionState): Promise<ActionState> {
-  const ctx = await guard(slug)
+  const ctx = await classGuard(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('end_series', { p_series: seriesId })
@@ -240,4 +250,112 @@ export async function saveClassType(slug: string, typeId: string | null, _prev: 
     : await supabase.from('class_types').insert({ ...row, org_id: ctx.org.id })
   if (error) return { message: dbMessage(error) }
   return done(slug, typeId ? 'Actividad guardada.' : 'Actividad creada.')
+}
+
+// ---------------------------------------------------------------------
+// 0040 · Editar una clase y la grilla (profe en lo suyo / administración)
+// ---------------------------------------------------------------------
+
+const sessionEditSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Elegí el día'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Elegí la hora'),
+  durationMin: z.coerce.number().int().min(5, 'Mínimo 5 minutos').max(480, 'Máximo 8 horas'),
+  capacity: z.coerce.number().int().min(1, 'Mínimo 1 lugar').max(500),
+  roomId: z.uuid('Elegí la sala'),
+})
+
+/** Cambiar día/hora, duración, cupo o sala de UNA clase. Si cambia el horario se avisa por email a los anotados. */
+export async function editSession(slug: string, sessionId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await classGuard(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const parsed = sessionEditSchema.safeParse(formObject(form))
+  if (!parsed.success) return issues(parsed.error)
+  const v = parsed.data
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('update_session', {
+    p_session: sessionId,
+    // Postgres interpreta la hora en la zona del gimnasio
+    p_starts_at: `${v.date} ${v.time}:00 ${ctx.org.timezone}`,
+    p_duration_min: v.durationMin,
+    p_capacity: v.capacity,
+    p_room: v.roomId,
+    p_notify: form.getAll('notify').includes('on'),
+  })
+  if (error) return { message: dbMessage(error) }
+  const r = (data ?? {}) as { moved?: boolean; notified?: number; promoted?: number }
+  const parts = ['Clase actualizada.']
+  if (r.moved) parts.push(r.notified ? `Se avisó por email a ${r.notified} anotado${r.notified === 1 ? '' : 's'}.` : 'No había anotados con email para avisar.')
+  if (r.promoted) parts.push(`Entraron ${r.promoted} de la lista de espera.`)
+  return done(slug, parts.join(' '))
+}
+
+const ownSeriesSchema = z.object({
+  classTypeId: z.uuid('Elegí la actividad'),
+  roomId: z.uuid('Elegí la sala'),
+  instructorId: z.uuid().optional().or(z.literal('')),
+  weekday: z.coerce.number().int().min(1).max(7),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Hora inválida'),
+  durationMin: z.coerce.number().int().min(5, 'Mínimo 5 minutos').max(480),
+  capacity: z.coerce.number().int().min(1, 'Mínimo 1 lugar').max(500),
+  validFrom: z.string().optional(),
+})
+
+/** Agregar un horario fijo (el profe para él mismo; administración puede elegir el profe). */
+export async function createSeriesRpc(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await classGuard(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const parsed = ownSeriesSchema.safeParse(formObject(form))
+  if (!parsed.success) return issues(parsed.error)
+  const s = parsed.data
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('create_series', {
+    p_org: ctx.org.id,
+    p_class_type: s.classTypeId,
+    p_room: s.roomId,
+    p_weekday: s.weekday,
+    p_start_time: s.startTime,
+    p_duration_min: s.durationMin,
+    p_capacity: s.capacity,
+    ...(s.validFrom ? { p_valid_from: s.validFrom } : {}),
+    ...(s.instructorId && ctx.can('schedule.manage') ? { p_instructor: s.instructorId } : {}),
+  })
+  if (error) return { message: dbMessage(error) }
+  const r = (data ?? {}) as { created?: number }
+  return done(slug, `Horario agregado. Se crearon ${r.created ?? 0} clases de las próximas 4 semanas.`)
+}
+
+const seriesEditSchema = z.object({
+  weekday: z.coerce.number().int().min(1).max(7),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Hora inválida'),
+  durationMin: z.coerce.number().int().min(5, 'Mínimo 5 minutos').max(480),
+  capacity: z.coerce.number().int().min(1, 'Mínimo 1 lugar').max(500),
+  roomId: z.uuid('Elegí la sala'),
+  instructorId: z.uuid().optional().or(z.literal('')),
+})
+
+/** Cambiar día, hora, duración, sala o cupo de un horario fijo (y el profe, solo administración). */
+export async function editSeries(slug: string, seriesId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await classGuard(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const parsed = seriesEditSchema.safeParse(formObject(form))
+  if (!parsed.success) return issues(parsed.error)
+  const v = parsed.data
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('update_series', {
+    p_series: seriesId,
+    p_weekday: v.weekday,
+    p_start_time: v.startTime,
+    p_duration_min: v.durationMin,
+    p_capacity: v.capacity,
+    p_room: v.roomId,
+    ...(v.instructorId && ctx.can('schedule.manage') ? { p_instructor: v.instructorId } : {}),
+    p_move_booked: form.getAll('moveBooked').includes('on'),
+  })
+  if (error) return { message: dbMessage(error) }
+  const r = (data ?? {}) as { moved?: number; kept_with_bookings?: number; notified?: number; created?: number; deleted?: number }
+  const parts = ['Horario guardado.']
+  if (r.moved) parts.push(`Se movieron ${r.moved} clases que ya tenían anotados${r.notified ? ` y se avisó por email a ${r.notified}` : ''}.`)
+  if (r.kept_with_bookings)
+    parts.push(`${r.kept_with_bookings} clases con anotados quedaron en el horario anterior: movelas o cancelalas desde la clase.`)
+  return done(slug, parts.join(' '))
 }

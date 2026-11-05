@@ -8,9 +8,24 @@ export interface MessageTemplate {
   key: string
   label: string
   body: string
+  /** id en message_templates (si viene de la base) */
+  id?: string
+  /** true = es del profe; false/undefined = del gimnasio */
+  mine?: boolean
 }
 
-/** {nombre} = nombre del alumno · {profe} = quien envía. Lo que está entre [corchetes] lo completa el profe. */
+/** Datos de una clase para completar {clase} {dia} {hora} */
+export interface ClassVars {
+  clase: string
+  dia: string
+  hora: string
+}
+
+/**
+ * Plantillas de respaldo (si el gimnasio todavía no tiene mensajes cargados en la base).
+ * {nombre} = nombre del alumno · {profe} = quien envía · {clase} {dia} {hora} = la clase (desde una clase).
+ * Lo que está entre [corchetes] lo completa el profe.
+ */
 export const MESSAGE_TEMPLATES: MessageTemplate[] = [
   {
     key: 'recordatorio_clase',
@@ -44,14 +59,27 @@ export const MESSAGE_TEMPLATES: MessageTemplate[] = [
   },
 ]
 
-/** Reemplaza {nombre} y {profe}. Usa solo el primer nombre para que suene cercano. */
-export function fillMessage(body: string, vars: { nombre: string; profe: string }) {
+/** Reemplaza {nombre}, {profe} y (si vienen) {clase} {dia} {hora}. Usa solo el primer nombre para que suene cercano. */
+export function fillMessage(body: string, vars: { nombre: string; profe: string } & Partial<ClassVars>) {
   // Primer nombre y en formato normal ("CAMILA DAIANA" → "Camila")
   const first = (s: string) => {
     const w = s.trim().split(/\s+/)[0] ?? s
     return w.charAt(0).toLocaleUpperCase('es-AR') + w.slice(1).toLocaleLowerCase('es-AR')
   }
-  return body.replace(/\{nombre\}/gi, first(vars.nombre)).replace(/\{profe\}/gi, first(vars.profe))
+  let out = body.replace(/\{nombre\}/gi, first(vars.nombre)).replace(/\{profe\}/gi, first(vars.profe))
+  // Sin clase elegida quedan como [clase] [día] [hora] para completar a mano
+  out = out.replace(/\{clase\}/gi, vars.clase ?? '[clase]')
+  out = out.replace(/\{dia\}/gi, vars.dia ?? '[día]')
+  out = out.replace(/\{hora\}/gi, vars.hora ?? '[hora]')
+  return out
+}
+
+/** "martes 12/11" y "19:00" de una clase, en la zona del gimnasio */
+export function classVars(name: string, startsAt: string, tz: string): ClassVars {
+  const d = new Date(startsAt)
+  const dia = new Intl.DateTimeFormat('es-AR', { timeZone: tz, weekday: 'long', day: '2-digit', month: '2-digit' }).format(d).replace(',', '')
+  const hora = new Intl.DateTimeFormat('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d)
+  return { clase: name, dia, hora }
 }
 
 /**

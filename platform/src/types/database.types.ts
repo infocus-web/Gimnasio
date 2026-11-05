@@ -1311,6 +1311,7 @@ export type Database = {
           org_id: string
           room_id: string
           series_id: string | null
+          series_slot: string | null
           starts_at: string
           status: Database["public"]["Enums"]["session_status"]
           waitlist_capacity: number
@@ -1778,6 +1779,32 @@ export type Database = {
           sent_at?: string | null
           status?: string
           template_key?: string | null
+        }
+        Relationships: []
+      }
+      message_templates: {
+        Row: {
+          id: string
+          org_id: string
+          staff_id: string | null
+          label: string
+          body: string
+          sort: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          org_id: string
+          staff_id?: string | null
+          label: string
+          body: string
+          sort?: number
+        }
+        Update: {
+          label?: string
+          body?: string
+          sort?: number
         }
         Relationships: []
       }
@@ -3275,6 +3302,69 @@ export type Database = {
         Returns: Json
       }
       public_referral_lookup: { Args: { p_slug: string; p_code: string }; Returns: Json }
+      update_session: {
+        Args: {
+          p_session: string
+          p_starts_at?: string
+          p_duration_min?: number
+          p_capacity?: number
+          p_room?: string
+          p_notify?: boolean
+        }
+        Returns: Json
+      }
+      create_series: {
+        Args: {
+          p_org: string
+          p_class_type: string
+          p_room: string
+          p_weekday: number
+          p_start_time: string
+          p_duration_min: number
+          p_capacity: number
+          p_valid_from?: string
+          p_instructor?: string
+        }
+        Returns: Json
+      }
+      update_series: {
+        Args: {
+          p_series: string
+          p_weekday: number
+          p_start_time: string
+          p_duration_min: number
+          p_capacity: number
+          p_room: string
+          p_instructor?: string
+          p_move_booked?: boolean
+        }
+        Returns: Json
+      }
+      class_member_search: {
+        Args: { p_session: string; p_q: string }
+        Returns: { id: string; name: string; plan_name: string | null; member_number: number | null; plan_ok: boolean }[]
+      }
+      trainer_members: {
+        Args: { p_org: string; p_days?: number }
+        Returns: {
+          member_id: string
+          member_name: string
+          phone: string | null
+          medical_notes: string | null
+          member_status: string
+          is_my_client: boolean
+          plan_name: string | null
+          membership_status: string | null
+          current_period_end: string | null
+          last_checkin_at: string | null
+          attended: number
+          no_shows: number
+          pending_marks: number
+          last_class_at: string | null
+          next_class_at: string | null
+          next_class_name: string | null
+        }[]
+      }
       friend_promo_admin: { Args: { p_org: string }; Returns: Json }
       friend_promo_save: {
         Args: { p_org: string; p_cross: boolean; p_duo: boolean; p_duo_pct: number; p_welcome: boolean; p_welcome_pct: number }

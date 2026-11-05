@@ -424,3 +424,23 @@ export async function adjustMembershipEnd(slug: string, memberId: string, _prev:
   revalidatePath(`/${slug}/admin`, 'layout')
   return { ok: true, message: `Nuevo vencimiento: ${date.split('-').reverse().join('/')}.` }
 }
+
+/**
+ * 0040 · ¿El profe puede manejar su agenda (sus horarios, cupos, anotar/sacar socios, cancelar sus clases)?
+ * Por defecto sí (permiso del rol). Para sacárselo se guarda una excepción en staff_permission_overrides.
+ */
+export async function setTrainerScheduleAccess(slug: string, staffId: string, allow: boolean, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: target } = await supabase.from('staff').select('id, role').eq('id', staffId).eq('org_id', ctx.org.id).maybeSingle()
+  if (!target || target.role !== 'trainer') return { message: 'Esa opción es solo para profesores.' }
+  const { error } = allow
+    ? await supabase.from('staff_permission_overrides').delete().eq('staff_id', staffId).eq('permission', 'schedule.own')
+    : await supabase
+        .from('staff_permission_overrides')
+        .upsert({ staff_id: staffId, permission: 'schedule.own', granted: false }, { onConflict: 'staff_id,permission' })
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin/equipo`)
+  return { ok: true, message: allow ? 'Ahora maneja su agenda.' : 'Ya no puede cambiar su agenda.' }
+}

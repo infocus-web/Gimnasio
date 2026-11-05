@@ -4,7 +4,8 @@ import { Clock, X, Lock } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { cancelInvitation, inviteStaff, resendInvitation, updateStaff } from '@/features/admin/actions'
+import { cancelInvitation, inviteStaff, resendInvitation, setTrainerScheduleAccess, updateStaff } from '@/features/admin/actions'
+import { ActionButton } from '@/features/admin/ConfirmAction'
 import { createStaffAccount, deleteStaff, resetStaffPassword, setStaffBlocked } from '@/features/admin/staff-account-actions'
 import { fmtDate } from '@/features/admin/format'
 import { CreateStaffAccountForm, InviteStaffForm, StaffAccountActions, StaffRowForm } from '@/features/admin/TeamForms'
@@ -24,7 +25,7 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
   if (!ctx.can('staff.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador gestiona el equipo.</p>
 
   const supabase = await createClient()
-  const [{ data: staff }, { data: invites }, { data: requests }] = await Promise.all([
+  const [{ data: staff }, { data: invites }, { data: requests }, { data: overrides }] = await Promise.all([
     supabase
       .from('staff')
       .select('id, display_name, role, active, user_id, created_at')
@@ -43,7 +44,10 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
       .eq('org_id', ctx.org.id)
       .eq('status', 'pending')
       .order('created_at'),
+    // Profes a los que se les sacó el manejo de su agenda (0040)
+    supabase.from('staff_permission_overrides').select('staff_id, granted').eq('permission', 'schedule.own'),
   ])
+  const scheduleBlocked = new Set((overrides ?? []).filter((o) => !o.granted).map((o) => o.staff_id))
   const h = await headers()
   const padronUrl = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}/${slug}/padron`
 
@@ -133,6 +137,23 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
                         <StaffRowForm action={updateStaff.bind(null, slug, s.id)} role={s.role} allowAdmin={isOwner} />
                       )}
                     </div>
+                    {s.role === 'trainer' && s.active && (
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+                        <span>Maneja su agenda (horarios, cupos, anotar socios, cancelar sus clases):</span>
+                        <ActionButton
+                          action={setTrainerScheduleAccess.bind(null, slug, s.id, scheduleBlocked.has(s.id))}
+                          ariaPressed={!scheduleBlocked.has(s.id)}
+                          ariaLabel={`${s.display_name} maneja su agenda`}
+                          className={`inline-flex min-h-[36px] items-center rounded-full border px-3 text-xs font-semibold ${
+                            scheduleBlocked.has(s.id)
+                              ? 'border-zinc-700 text-zinc-400 hover:border-[#edcc36]/60'
+                              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:border-red-500/40'
+                          }`}
+                        >
+                          {scheduleBlocked.has(s.id) ? 'No · habilitar' : 'Sí · quitar'}
+                        </ActionButton>
+                      </div>
+                    )}
                     {!locked && (
                       <StaffAccountActions
                         name={s.display_name}

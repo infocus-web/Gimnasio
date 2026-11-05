@@ -6,6 +6,8 @@ export default async function AgendaLayout({ children, params }: LayoutProps<'/[
   const ctx = await getAdminContext(slug)
   const base = `/${slug}/admin/agenda`
   const manage = ctx?.can('schedule.manage')
+  // El profe llega acá solo para ver/manejar una clase suya (desde «Mis clases»)
+  if (ctx && !manage && !ctx.can('bookings.manage')) return <div className="space-y-5">{children}</div>
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-extrabold text-white">Agenda</h1>

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { daysUntil, fmtDate } from '@/features/admin/format'
 import { WhatsAppComposer, type ComposerStudent } from '@/features/admin/WhatsAppComposer'
 import { normalizeArPhone } from '@/features/admin/whatsapp'
+import { loadTemplates } from '@/features/admin/templates'
 
 export const metadata: Metadata = { title: 'Alumnos' }
 
@@ -23,7 +24,7 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
     .eq('org_id', ctx.org.id)
     .order('member_name')
   if (!manageAll) q = q.eq('trainer_id', ctx.staff.id)
-  const { data: rows } = await q
+  const [{ data: rows }, templates] = await Promise.all([q, loadTemplates(ctx.org.id, ctx.staff.id)])
 
   const students: ComposerStudent[] = (rows ?? []).map((r) => {
     const idle = daysUntil(r.last_workout_at)
@@ -31,8 +32,7 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
       id: r.member_id!,
       name: r.member_name ?? 'Alumno',
       phone: normalizeArPhone(r.phone),
-      stale: idle === null || idle < -7,
-      hasProgram: !!r.program_name,
+      tags: [...(idle === null || idle < -7 ? ['stale'] : []), ...(r.program_name ? [] : ['noProgram'])],
     }
   })
 
@@ -52,7 +52,17 @@ export default async function StudentsPage({ params }: PageProps<'/[org]/admin/a
           <Scale className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Importar balanza (CSV)
         </Link>
       </div>
-      {students.length > 0 && <WhatsAppComposer slug={slug} senderName={ctx.staff.display_name} students={students} />}
+      {students.length > 0 && <WhatsAppComposer
+          slug={slug}
+          senderName={ctx.staff.display_name}
+          students={students}
+          templates={templates}
+          filters={[
+            { key: 'all', label: 'Todos' },
+            { key: 'stale', label: 'No entrenan hace +7 días' },
+            { key: 'noProgram', label: 'Sin rutina' },
+          ]}
+        />}
       {rows?.length ? (
         <ul className="divide-y divide-zinc-900 overflow-hidden rounded-2xl border border-zinc-800/80">
           {rows.map((r) => {

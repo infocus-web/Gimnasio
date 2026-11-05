@@ -20,6 +20,8 @@ export function LoginForm() {
   const next = safeNext(params.get('next'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
   const [mode, setMode] = useState<'link' | 'password'>('link')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(params.get('error') ? 'El link venció o ya se usó. Pedí uno nuevo.' : null)
@@ -42,12 +44,13 @@ export function LoginForm() {
         const code = error.code ?? ''
         setMessage(
           code.includes('rate_limit') || error.status === 429
-            ? 'Ya te mandamos un link hace un momento. Revisá tu correo (también Spam) o probá de nuevo en un minuto.'
+            ? 'Ya te mandamos un código hace un momento. Revisá tu correo (también Spam) o probá de nuevo en un minuto.'
             : code === 'otp_disabled' || code === 'signup_disabled' || code === 'user_not_found' || error.status === 422
               ? 'No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.'
-              : 'No pudimos enviar el link. Probá de nuevo en un minuto.',
+              : 'No pudimos enviar el código. Probá de nuevo en un minuto.',
         )
       } else {
+        setCode('')
         setStatus('sent')
       }
       return
@@ -59,6 +62,34 @@ export function LoginForm() {
         error?.code === 'email_not_confirmed'
           ? 'Tu cuenta todavía no está activada: abrí el mail que te mandamos o pedí una contraseña nueva en el gimnasio.'
           : 'Email o contraseña incorrectos.',
+      )
+      return
+    }
+    router.replace(next as Route)
+    router.refresh()
+  }
+
+  /**
+   * Código de 6 dígitos del email. Se escribe dentro de la app, así la sesión queda
+   * guardada en la app instalada (en iPhone, tocar el link del email abre Safari y
+   * la sesión quedaba allá, no en la app del ícono).
+   */
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const token = code.replace(/\D/g, '')
+    if (token.length < 6) {
+      setMessage('El código tiene 6 números.')
+      return
+    }
+    setVerifying(true)
+    setMessage(null)
+    const { error } = await createClient().auth.verifyOtp({ email, token, type: 'email' })
+    if (error) {
+      setVerifying(false)
+      setMessage(
+        error.status === 429
+          ? 'Demasiados intentos. Esperá un minuto y probá de nuevo.'
+          : 'El código no es correcto o ya venció. Revisalo o pedí uno nuevo.',
       )
       return
     }
@@ -79,9 +110,39 @@ export function LoginForm() {
         {status === 'sent' ? (
           <div className="space-y-3">
             <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
-              Te mandamos un link a <strong>{email}</strong>. Abrí el email y tocá el link para entrar. Si no llega en un par de
+              Te mandamos un código a <strong>{email}</strong>. Escribilo acá abajo para entrar. Si no llega en un par de
               minutos, revisá la carpeta de Spam o Promociones.
             </p>
+            <form onSubmit={verifyCode} className="space-y-3">
+              <label className="block space-y-1">
+                <span className="text-sm text-zinc-300">Código del email</span>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  pattern="[0-9 ]*"
+                  maxLength={12}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="min-h-[56px] w-full rounded-xl border border-zinc-800 bg-black px-4 text-center text-2xl tracking-[0.4em] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
+                />
+              </label>
+              {message && (
+                <p role="alert" className="text-sm text-red-300">
+                  {message}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={verifying}
+                className="btn-tac relative flex min-h-[54px] w-full items-center justify-center gap-2 border border-brand bg-brand text-xs font-bold uppercase tracking-[0.18em] text-black transition-colors hover:border-white hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <KeyRound className="h-5 w-5" aria-hidden="true" />
+                {verifying ? 'Verificando…' : 'Entrar'}
+              </button>
+            </form>
             <button
               type="button"
               onClick={() => {
@@ -90,7 +151,7 @@ export function LoginForm() {
               }}
               className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline"
             >
-              Usar otro email o pedir otro link
+              Usar otro email o pedir otro código
             </button>
           </div>
         ) : (
@@ -131,14 +192,14 @@ export function LoginForm() {
               className="btn-tac relative flex min-h-[54px] w-full items-center justify-center gap-2 border border-brand bg-brand text-xs font-bold uppercase tracking-[0.18em] text-black transition-colors hover:border-white hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               {mode === 'link' ? <Mail className="h-5 w-5" aria-hidden="true" /> : <KeyRound className="h-5 w-5" aria-hidden="true" />}
-              {status === 'sending' ? 'Enviando…' : mode === 'link' ? 'Enviarme un link para entrar' : 'Entrar'}
+              {status === 'sending' ? 'Enviando…' : mode === 'link' ? 'Enviarme un código para entrar' : 'Entrar'}
             </button>
             <button
               type="button"
               onClick={() => setMode(mode === 'link' ? 'password' : 'link')}
               className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline"
             >
-              {mode === 'link' ? 'Prefiero usar contraseña' : 'Prefiero recibir un link por email'}
+              {mode === 'link' ? 'Prefiero usar contraseña' : 'Prefiero recibir un código por email'}
             </button>
           </form>
         )}

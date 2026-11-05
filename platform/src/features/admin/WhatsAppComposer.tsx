@@ -1,9 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ArrowLeft, Check, MessageCircle, Send, X } from 'lucide-react'
-import { MESSAGE_TEMPLATES, fillMessage, whatsappLink } from './whatsapp'
+import { ArrowLeft, BookmarkPlus, Check, Loader2, MessageCircle, Send, X } from 'lucide-react'
+import { MESSAGE_TEMPLATES, fillMessage, whatsappLink, type ClassVars, type MessageTemplate } from './whatsapp'
 import { logWhatsappMessage } from './message-actions'
+import { quickSaveTemplate } from './template-actions'
 import { InfoTip } from '@/components/InfoTip'
 
 export interface ComposerStudent {
@@ -11,41 +12,70 @@ export interface ComposerStudent {
   name: string
   /** Ya normalizado (549…) o null si no tiene / no es válido */
   phone: string | null
-  /** Hace más de 7 días que no entrena (o nunca) */
-  stale: boolean
-  hasProgram: boolean
+  /** Etiquetas para los filtros (ej. 'stale', 'vencido', 'espera') */
+  tags: string[]
 }
 
-type Filter = 'all' | 'stale' | 'noProgram'
+export interface ComposerFilter {
+  /** 'all' = todos; si no, se muestran los alumnos que tienen esa etiqueta */
+  key: string
+  label: string
+}
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'Todos' },
-  { key: 'stale', label: 'No entrenan hace +7 días' },
-  { key: 'noProgram', label: 'Sin rutina' },
-]
+const DEFAULT_FILTERS: ComposerFilter[] = [{ key: 'all', label: 'Todos' }]
 
-export function WhatsAppComposer({ slug, senderName, students }: { slug: string; senderName: string; students: ComposerStudent[] }) {
+export function WhatsAppComposer({
+  slug,
+  senderName,
+  students,
+  templates = MESSAGE_TEMPLATES,
+  filters = DEFAULT_FILTERS,
+  classInfo,
+  buttonLabel = 'Mensaje por WhatsApp',
+  preselect,
+}: {
+  slug: string
+  senderName: string
+  students: ComposerStudent[]
+  /** Mensajes predefinidos (del gimnasio + del profe) */
+  templates?: MessageTemplate[]
+  filters?: ComposerFilter[]
+  /** Si se abre desde una clase: completa {clase} {dia} {hora} */
+  classInfo?: ClassVars
+  buttonLabel?: string
+  /** Etiqueta a marcar al abrir ('all' = todos los que tienen teléfono) */
+  preselect?: string
+}) {
   const [open, setOpen] = useState(false)
+  const [list, setList] = useState<MessageTemplate[]>(templates)
   const [templateKey, setTemplateKey] = useState<string | null>(null)
   const [body, setBody] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState(filters[0]?.key ?? 'all')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [step, setStep] = useState<'compose' | 'send'>('compose')
   const [sent, setSent] = useState<Set<string>>(new Set())
+  // Guardar el texto como mensaje predefinido
+  const [saving, setSaving] = useState<'closed' | 'open' | 'busy'>('closed')
+  const [saveLabel, setSaveLabel] = useState('')
+  const [saveMsg, setSaveMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   const reachable = students.filter((s) => s.phone)
-  const visible = useMemo(
-    () => students.filter((s) => (filter === 'stale' ? s.stale : filter === 'noProgram' ? !s.hasProgram : true)),
-    [students, filter],
-  )
+  const matches = (s: ComposerStudent, key: string) => key === 'all' || s.tags.includes(key)
+  const visible = useMemo(() => students.filter((s) => matches(s, filter)), [students, filter])
   const recipients = students.filter((s) => s.phone && selected.has(s.id))
   const preview = recipients[0] ?? reachable[0]
+  const vars = (name: string) => ({ nombre: name, profe: senderName, ...classInfo })
 
+  const openComposer = () => {
+    setOpen(true)
+    if (preselect) setSelected(new Set(students.filter((s) => s.phone && matches(s, preselect)).map((s) => s.id)))
+  }
   const pickTemplate = (key: string) => {
-    const t = MESSAGE_TEMPLATES.find((x) => x.key === key)
+    const t = list.find((x) => x.key === key)
     if (!t) return
     setTemplateKey(key)
     setBody(t.body)
+    setSaveMsg(null)
   }
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -62,21 +92,40 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
 
   const markSent = (s: ComposerStudent, text: string) => {
     setSent((prev) => new Set(prev).add(s.id))
-    void logWhatsappMessage(slug, { memberId: s.id, phone: s.phone!, body: text, templateKey })
+    // Solo se guarda el id si es un mensaje de la base (la columna admite 40 caracteres)
+    void logWhatsappMessage(slug, { memberId: s.id, phone: s.phone!, body: text, templateKey: templateKey && templateKey.length <= 40 ? templateKey : null })
+  }
+
+  const saveTemplate = async () => {
+    setSaving('busy')
+    const res = await quickSaveTemplate(slug, { label: saveLabel, body })
+    if (res.ok) {
+      setList((prev) => [res.template, ...prev])
+      setTemplateKey(res.template.key)
+      setSaving('closed')
+      setSaveLabel('')
+      setSaveMsg({ ok: true, text: `Guardado en tus mensajes como «${res.template.label}».` })
+    } else {
+      setSaving('open')
+      setSaveMsg({ ok: false, text: res.message })
+    }
   }
 
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openComposer}
         className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#25D366]/60 bg-[#25D366]/10 px-4 text-sm font-bold text-[#7ee2a8] hover:bg-[#25D366]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
       >
         <MessageCircle className="h-4 w-4" aria-hidden="true" />
-        Mensaje por WhatsApp
+        {buttonLabel}
       </button>
     )
   }
+
+  const editedTemplate = templateKey !== null && list.find((t) => t.key === templateKey)?.body !== body
+  const canSave = body.trim().length > 0 && (templateKey === null || editedTemplate)
 
   return (
     <section aria-label="Mensaje por WhatsApp" className="space-y-4 rounded-2xl border border-[#25D366]/40 bg-zinc-950 p-4">
@@ -101,16 +150,21 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
         <>
           {/* 1 · Mensaje */}
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">1 · Elegí o escribí el mensaje</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">1 · Elegí un mensaje predefinido o escribí uno</p>
             <div className="flex flex-wrap gap-2">
-              {MESSAGE_TEMPLATES.map((t) => (
+              {list.map((t) => (
                 <button
                   key={t.key}
                   type="button"
                   onClick={() => pickTemplate(t.key)}
                   aria-pressed={templateKey === t.key}
+                  title={t.mine ? 'Mensaje tuyo' : 'Mensaje del gimnasio'}
                   className={`min-h-[40px] rounded-xl border px-3 text-sm ${
-                    templateKey === t.key ? 'border-[#edcc36] bg-[#edcc36] font-semibold text-black' : 'border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                    templateKey === t.key
+                      ? 'border-[#edcc36] bg-[#edcc36] font-semibold text-black'
+                      : t.mine
+                        ? 'border-[#edcc36]/40 text-zinc-200 hover:border-[#edcc36]'
+                        : 'border-zinc-800 text-zinc-300 hover:border-zinc-600'
                   }`}
                 >
                   {t.label}
@@ -121,6 +175,7 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
                 onClick={() => {
                   setTemplateKey(null)
                   setBody('¡Hola {nombre}! ')
+                  setSaveMsg(null)
                 }}
                 aria-pressed={templateKey === null && body !== ''}
                 className="min-h-[40px] rounded-xl border border-dashed border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500"
@@ -139,12 +194,65 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
               className="w-full rounded-xl border border-zinc-800 bg-black p-3 text-sm text-white placeholder:text-zinc-600 focus:border-[#edcc36] focus:outline-none"
             />
             <p className="text-xs text-zinc-500">
-              <strong className="text-zinc-300">{'{nombre}'}</strong> se cambia por el nombre de cada alumno. Completá lo que esté entre [corchetes].
+              <strong className="text-zinc-300">{'{nombre}'}</strong> se cambia por el nombre de cada uno
+              {classInfo ? (
+                <>
+                  ; <strong className="text-zinc-300">{'{clase}'}</strong>, <strong className="text-zinc-300">{'{dia}'}</strong> y{' '}
+                  <strong className="text-zinc-300">{'{hora}'}</strong> por los de esta clase
+                </>
+              ) : null}
+              . Completá lo que esté entre [corchetes].
             </p>
+
+            {/* Guardar como predefinido */}
+            {canSave && saving === 'closed' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSaving('open')
+                  setSaveMsg(null)
+                }}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-zinc-700 px-3 text-xs font-semibold text-zinc-200 hover:border-[#edcc36]/60"
+              >
+                <BookmarkPlus className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Guardar como mensaje predefinido
+              </button>
+            )}
+            {saving !== 'closed' && (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#edcc36]/30 p-2">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">Nombre del mensaje</span>
+                  <input
+                    value={saveLabel}
+                    onChange={(e) => setSaveLabel(e.target.value)}
+                    maxLength={40}
+                    autoFocus
+                    placeholder="Nombre corto, ej. «Recordatorio sábado»"
+                    className="min-h-[40px] w-full rounded-lg border border-zinc-800 bg-black px-3 text-sm text-white placeholder:text-zinc-600 focus:border-[#edcc36] focus:outline-none"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={saving === 'busy' || !saveLabel.trim()}
+                  onClick={saveTemplate}
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-[#edcc36] px-3 text-sm font-bold text-black disabled:opacity-50"
+                >
+                  {saving === 'busy' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />} Guardar
+                </button>
+                <button type="button" onClick={() => setSaving('closed')} className="min-h-[40px] px-2 text-xs text-zinc-400 hover:text-white">
+                  Cancelar
+                </button>
+              </div>
+            )}
+            {saveMsg && (
+              <p role={saveMsg.ok ? 'status' : 'alert'} className={`text-xs ${saveMsg.ok ? 'text-emerald-300' : 'text-red-300'}`}>
+                {saveMsg.text}
+              </p>
+            )}
+
             {body && preview && (
               <div className="rounded-xl bg-[#0b3d2a]/50 p-3 text-sm text-zinc-100">
                 <p className="mb-1 text-[11px] uppercase tracking-wide text-[#7ee2a8]">Así le llega a {preview.name.split(' ')[0]}</p>
-                <p className="whitespace-pre-line">{fillMessage(body, { nombre: preview.name, profe: senderName })}</p>
+                <p className="whitespace-pre-line">{fillMessage(body, vars(preview.name))}</p>
               </div>
             )}
           </div>
@@ -153,20 +261,21 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">2 · ¿A quién se lo mandás?</p>
             <div className="flex flex-wrap items-center gap-2">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setFilter(f.key)}
-                  aria-pressed={filter === f.key}
-                  className={`min-h-[36px] rounded-full border px-3 text-xs font-semibold ${
-                    filter === f.key ? 'border-[#edcc36] text-[#edcc36]' : 'border-zinc-800 text-zinc-400'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-              <span className="mx-1 h-5 w-px bg-zinc-800" aria-hidden="true" />
+              {filters.length > 1 &&
+                filters.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFilter(f.key)}
+                    aria-pressed={filter === f.key}
+                    className={`min-h-[36px] rounded-full border px-3 text-xs font-semibold ${
+                      filter === f.key ? 'border-[#edcc36] text-[#edcc36]' : 'border-zinc-800 text-zinc-400'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              {filters.length > 1 && <span className="mx-1 h-5 w-px bg-zinc-800" aria-hidden="true" />}
               <button type="button" onClick={selectVisible} className="min-h-[36px] px-2 text-xs font-semibold text-zinc-300 underline-offset-2 hover:underline">
                 Marcar todos
               </button>
@@ -200,18 +309,18 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
           </div>
 
           <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={!body.trim() || recipients.length === 0}
-            onClick={() => setStep('send')}
-            className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-base font-extrabold text-black disabled:opacity-40"
-          >
-            <Send className="h-5 w-5" aria-hidden="true" /> Preparar envío ({recipients.length})
-          </button>
-          <InfoTip label="Preparar envío">
-            <p><strong>Todavía no manda nada.</strong> Arma la lista de las personas que marcaste, cada una con el mensaje personalizado con su nombre.</p>
-            <p>Después tocás cada nombre: se abre tu WhatsApp con el mensaje escrito, lo enviás vos y volvés para el siguiente. Sale desde tu número.</p>
-          </InfoTip>
+            <button
+              type="button"
+              disabled={!body.trim() || recipients.length === 0}
+              onClick={() => setStep('send')}
+              className="flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-base font-extrabold text-black disabled:opacity-40"
+            >
+              <Send className="h-5 w-5" aria-hidden="true" /> Preparar envío ({recipients.length})
+            </button>
+            <InfoTip label="Preparar envío">
+              <p><strong>Todavía no manda nada.</strong> Arma la lista de las personas que marcaste, cada una con el mensaje personalizado con su nombre.</p>
+              <p>Después tocás cada nombre: se abre tu WhatsApp con el mensaje escrito, lo enviás vos y volvés para el siguiente. Sale desde tu número.</p>
+            </InfoTip>
           </div>
         </>
       ) : (
@@ -229,7 +338,7 @@ export function WhatsAppComposer({ slug, senderName, students }: { slug: string;
           </p>
           <ul className="divide-y divide-zinc-900 rounded-xl border border-zinc-800">
             {recipients.map((s) => {
-              const text = fillMessage(body, { nombre: s.name, profe: senderName })
+              const text = fillMessage(body, vars(s.name))
               const done = sent.has(s.id)
               return (
                 <li key={s.id} className="flex items-center gap-3 px-3 py-2">

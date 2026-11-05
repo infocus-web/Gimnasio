@@ -56,8 +56,12 @@ export function CancelSessionForm({ action }: { action: Action }) {
   )
 }
 
-/** Buscador de socios + reservar en su nombre (recepción) */
-export function BookForMemberForm({ action, orgId }: { action: Action; orgId: string }) {
+/**
+ * Buscador de socios + reservar en su nombre.
+ * Recepción busca en el padrón (member_directory); el profe, que no ve el padrón,
+ * busca con class_member_search (pasar sessionId).
+ */
+export function BookForMemberForm({ action, orgId, sessionId }: { action: Action; orgId: string; sessionId?: string }) {
   const supabase = useMemo(() => createClient(), [])
   const [state, formAction] = useActionForm(action, {})
   const [q, setQ] = useState('')
@@ -84,6 +88,20 @@ export function BookForMemberForm({ action, orgId }: { action: Action; orgId: st
     const digits = term.replace(/[.\s-]/g, '')
     setSearching(true)
     setSearchError(null)
+    if (sessionId) {
+      const { data, error } = await supabase.rpc('class_member_search', { p_session: sessionId, p_q: term })
+      setSearching(false)
+      setSearched(true)
+      if (error) {
+        setResults([])
+        setSearchError('No se pudo buscar. Probá de nuevo.')
+        return
+      }
+      setResults(
+        (data ?? []).map((m) => ({ id: m.id, name: m.name, plan: m.plan_ok ? m.plan_name : m.plan_name ? `${m.plan_name} (vencido)` : null, number: m.member_number })),
+      )
+      return
+    }
     let query = supabase
       .from('member_directory')
       .select('id, first_name, last_name, plan_name, member_number')

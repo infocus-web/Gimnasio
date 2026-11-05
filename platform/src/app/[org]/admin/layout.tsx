@@ -70,7 +70,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
     ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: pendingRequests ? `Equipo (${pendingRequests})` : 'Equipo', icon: 'team' } as const] : []),
     ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Pagos', icon: 'billing' } as const] : []),
     ...(ctx.can('schedule.manage') || ctx.can('bookings.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar' } as const] : []),
-    ...(ctx.staff.role === 'trainer' ? [{ href: `${base}/mis-clases`, label: 'Mis clases', icon: 'mine' } as const] : []),
+    ...(ctx.staff.role === 'trainer' || ctx.can('schedule.own') ? [{ href: `${base}/mis-clases`, label: 'Mis clases', icon: 'mine' } as const] : []),
     ...(ctx.staff.role === 'trainer' || ctx.can('training.manage_all')
       ? ([
           { href: `${base}/alumnos`, label: ctx.staff.role === 'trainer' ? 'Mis alumnos' : 'Alumnos', icon: 'list' },

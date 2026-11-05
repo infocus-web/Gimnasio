@@ -46,6 +46,18 @@ export const ERRORS: Record<string, string> = {
   BOOKING_CLOSED: 'La reserva para esta clase ya cerró.',
   BOOKING_NOT_CANCELABLE: 'Esa reserva ya no se puede cancelar.',
   MEMBER_FROZEN: 'La membresía está congelada.',
+  SESSION_NOT_EDITABLE: 'La clase ya terminó o fue cancelada.',
+  INVALID_DURATION: 'La duración tiene que estar entre 5 y 480 minutos.',
+  INVALID_START: 'Revisá el día y la hora.',
+  INVALID_WEEKDAY: 'Elegí el día de la semana.',
+  INVALID_CAPACITY: 'El cupo tiene que ser de al menos 1 lugar.',
+  CAPACITY_BELOW_BOOKED: 'Ya hay más anotados que ese cupo.',
+  ROOM_NOT_FOUND: 'Esa sala no existe o está desactivada.',
+  ROOM_BUSY: 'La sala ya está ocupada en ese horario.',
+  INSTRUCTOR_BUSY: 'El profe ya tiene otra clase en ese horario.',
+  SLOT_TAKEN: 'Ya hay otra clase de este horario fijo en esa fecha y hora.',
+  EQUIPMENT_TAKEN: 'Ese equipo ya está reservado en ese horario.',
+  CLASS_TYPE_NOT_FOUND: 'Esa actividad no existe o está desactivada.',
 }
 
 export function dbMessage(error: { message: string; code?: string; hint?: string | null }) {
