@@ -84,8 +84,11 @@ export function MemberPasswordForm({ next, email }: { next: string; email: strin
         )}
         <button type="submit" disabled={busy} className="btn-tac flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] font-bold text-black disabled:opacity-60">
           {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-          Guardar y entrar
+          Guardar
         </button>
+        <a href={next} className="block min-h-[44px] pt-2 text-center text-sm text-zinc-400 hover:text-white">
+          Cancelar
+        </a>
       </form>
     </main>
   )

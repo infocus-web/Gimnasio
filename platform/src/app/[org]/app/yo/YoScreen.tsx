@@ -11,6 +11,7 @@ import {
   Copy,
   Flame,
   Gift,
+  KeyRound,
   Loader2,
   MessageCircle,
   Snowflake,
@@ -124,6 +125,7 @@ export function YoScreen() {
           { href: `/${org.slug}/app/horarios`, label: 'Concurrencia', sub: '¿Hay mucha gente?', Icon: Users },
           { href: `/${org.slug}/app/invitados`, label: 'Invitados', sub: 'Traé a alguien', Icon: Ticket },
           { href: `/${org.slug}/app/retos`, label: 'Retos', sub: 'Desafíos del mes', Icon: Trophy },
+          { href: `/cuenta/clave?next=${encodeURIComponent(`/${org.slug}/app/yo`)}`, label: 'Contraseña', sub: 'Cambiar mi contraseña', Icon: KeyRound },
         ].map(({ href, label, sub, Icon }) => (
           <Link
             key={href}

@@ -84,7 +84,9 @@ export function LoginForm() {
           setMessage(
             rateLimited(error)
               ? 'Ya te mandamos el email hace un momento. Revisá tu correo (también Spam) o probá en un minuto.'
-              : /weak|pwned|leaked/i.test(error.message)
+              : error.code === 'signup_disabled'
+                ? 'Por ahora no se pueden crear cuentas nuevas desde acá. Acercate a recepción o escribinos por WhatsApp.'
+                : /weak|pwned|leaked/i.test(error.message)
                 ? 'Esa contraseña es muy fácil o apareció en filtraciones. Elegí otra.'
                 : /already|registered|exists/i.test(error.message)
                   ? 'Ese email ya tiene cuenta. Ingresá, o tocá "Olvidé mi contraseña" para elegir una.'
