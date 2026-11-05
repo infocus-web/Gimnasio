@@ -512,6 +512,13 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </div>
             <p className="mt-2 text-sm text-white/45">© {new Date().getFullYear()} {gym.name}{shortAddress ? `, ${shortAddress}` : ''}</p>
           </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/35">
+          <Link href={'/privacidad' as Route} className={`rounded-md px-2 py-1 transition-colors hover:text-white/80 ${focus}`}>
+            Privacidad
+          </Link>
+          <Link href={'/terminos' as Route} className={`rounded-md px-2 py-1 transition-colors hover:text-white/80 ${focus}`}>
+            Términos
+          </Link>
           <Link
             href={`/equipo?next=${encodeURIComponent(`/${gym.slug}/admin`)}` as Route}
             rel="nofollow"
@@ -519,6 +526,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           >
             Acceso equipo
           </Link>
+          </div>
         </div>
       </footer>
     </div>
