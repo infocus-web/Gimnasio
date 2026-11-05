@@ -4,335 +4,250 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { Route } from 'next'
 import Image from 'next/image'
-import { Mail, KeyRound, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, MailCheck } from 'lucide-react'
 import { BRAND } from '@/features/public/media'
 import { createClient } from '@/lib/supabase/client'
 import { safeInternalPath } from '@/lib/safe-path'
-import { emailForDniLogin, resetPasswordWithCode, sendPasswordResetCode } from './actions'
 
 /** Solo rutas internas: evita redirecciones abiertas a otros sitios. */
 function safeNext(value: string | null) {
   return safeInternalPath(value, '/evolution/app/pase')
 }
 
+type Mode = 'login' | 'signup' | 'reset'
+const MIN = 8
+
 /**
- * Ingreso de socios:
- *  · password (por defecto): DNI o email + contraseña.
- *  · code: código de 6 números por email (sin contraseña).
- *  · reset: "Olvidé mi contraseña" → código por email + contraseña nueva, todo sin salir de la app.
- *  · newpass: ya tiene sesión (entró por el botón del email de recuperación) y elige la contraseña nueva.
- * Todo pasa dentro de la app: en iPhone, abrir un link del email lleva a Safari y la sesión quedaba allá.
+ * Acceso simple para todos (socios y quien se quiere inscribir):
+ *  · Crear cuenta: email + contraseña → llega UN email "Confirmá tu cuenta" → al tocarlo queda adentro.
+ *  · Ingresar: email + contraseña. La sesión queda guardada (no hay que volver a entrar).
+ *  · Olvidé mi contraseña: llega un link para elegir una nueva (/cuenta/clave).
  */
-type Mode = 'password' | 'code' | 'reset' | 'newpass'
-
-const inputCls =
-  'min-h-[48px] w-full rounded-xl border border-zinc-800 bg-black px-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
-const codeCls =
-  'min-h-[56px] w-full rounded-xl border border-zinc-800 bg-black px-4 text-center text-2xl tracking-[0.4em] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
-const primaryCls =
-  'btn-tac relative flex min-h-[54px] w-full items-center justify-center gap-2 border border-brand bg-brand text-xs font-bold uppercase tracking-[0.18em] text-black transition-colors hover:border-white hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white'
-const linkCls = 'min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline'
-
-const isEmail = (s: string) => s.includes('@')
-
 export function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const next = safeNext(params.get('next'))
-  const [mode, setMode] = useState<Mode>(params.get('nueva') ? 'newpass' : 'password')
-  const [user, setUser] = useState('') // DNI o email
+  const [mode, setMode] = useState<Mode>(params.get('modo') === 'crear' ? 'signup' : 'login')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [password2, setPassword2] = useState('')
-  const [code, setCode] = useState('')
-  const [codeSent, setCodeSent] = useState(false)
+  const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<string | null>(params.get('error') ? 'El link venció o ya se usó. Pedí uno nuevo.' : null)
+  const [sent, setSent] = useState<null | 'signup' | 'reset'>(null)
+  const [message, setMessage] = useState<string | null>(
+    params.get('error') ? 'El link venció o ya se usó. Ingresá con tu email y contraseña, o pedí uno nuevo.' : null,
+  )
 
   const go = (m: Mode) => {
     setMode(m)
     setMessage(null)
-    setCode('')
-    setCodeSent(false)
-    setPassword('')
-    setPassword2('')
-  }
-  const done = () => {
-    router.replace(next as Route)
-    router.refresh()
+    setSent(null)
   }
 
-  /** DNI o email + contraseña */
-  const loginWithPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setBusy(true)
-    setMessage(null)
-    let email = user.trim().toLowerCase()
-    if (!isEmail(email)) {
-      const r = await emailForDniLogin(email, password)
-      if (!r.ok) {
-        setBusy(false)
-        setMessage(r.error)
-        return
-      }
-      email = r.email
-    }
-    const { error } = await createClient().auth.signInWithPassword({ email, password })
-    if (error) {
-      setBusy(false)
-      setMessage(
-        error.code === 'email_not_confirmed'
-          ? 'Tu cuenta todavía no está activada. Tocá "Olvidé mi contraseña" para elegir una y entrar.'
-          : error.status === 429
-            ? 'Demasiados intentos. Esperá un minuto y probá de nuevo.'
-            : isEmail(user)
-              ? 'Email o contraseña incorrectos.'
-              : 'DNI o contraseña incorrectos.',
-      )
-      return
-    }
-    done()
-  }
+  const callback = (path: string) => `${window.location.origin}/auth/callback?next=${encodeURIComponent(path)}`
+  const rateLimited = (e: { status?: number; code?: string }) => e.status === 429 || (e.code ?? '').includes('rate_limit')
 
-  /** Entrar con un código por email (sin contraseña) */
-  const sendLoginCode = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBusy(true)
     setMessage(null)
-    const { error } = await createClient().auth.signInWithOtp({
-      email: user.trim().toLowerCase(),
-      options: {
-        shouldCreateUser: false, // solo socios/staff ya cargados por el gimnasio
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
-    })
-    setBusy(false)
-    if (error) {
-      const c = error.code ?? ''
-      setMessage(
-        c.includes('rate_limit') || error.status === 429
-          ? 'Ya te mandamos un código hace un momento. Revisá tu correo (también Spam) o probá de nuevo en un minuto.'
-          : c === 'otp_disabled' || c === 'signup_disabled' || c === 'user_not_found' || error.status === 422
-            ? 'No encontramos ese email. Pedile a recepción que lo cargue en tu ficha.'
-            : 'No pudimos enviar el código. Probá de nuevo en un minuto.',
-      )
+    const mail = email.trim().toLowerCase()
+    if (mode !== 'reset' && password.length < MIN) {
+      setMessage(`La contraseña tiene que tener al menos ${MIN} caracteres.`)
       return
     }
-    setCode('')
-    setCodeSent(true)
-  }
-  const verifyLoginCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const token = code.replace(/\D/g, '')
-    if (token.length < 6) return setMessage('El código tiene 6 números.')
     setBusy(true)
-    setMessage(null)
-    const { error } = await createClient().auth.verifyOtp({ email: user.trim().toLowerCase(), token, type: 'email' })
-    if (error) {
-      setBusy(false)
-      setMessage(error.status === 429 ? 'Demasiados intentos. Esperá un minuto y probá de nuevo.' : 'El código no es correcto o ya venció. Revisalo o pedí uno nuevo.')
-      return
-    }
-    done()
-  }
-
-  /** Olvidé mi contraseña */
-  const sendResetCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setBusy(true)
-    setMessage(null)
-    const r = await sendPasswordResetCode(user)
-    setBusy(false)
-    if (!r.ok) return setMessage(r.error)
-    setCode('')
-    setCodeSent(true)
-  }
-  const saveNewPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (password.length < 8) return setMessage('La contraseña tiene que tener al menos 8 caracteres.')
-    if (password !== password2) return setMessage('Las dos contraseñas no coinciden.')
-    setBusy(true)
-    setMessage(null)
-    if (mode === 'reset') {
-      const r = await resetPasswordWithCode(user, code, password)
-      if (!r.ok) {
-        setBusy(false)
-        setMessage(r.error)
-        if (r.loggedIn) {
-          setMode('newpass') // el código ya se usó: solo falta la contraseña
-          setPassword('')
-          setPassword2('')
+    const supabase = createClient()
+    try {
+      if (mode === 'login') {
+        const { error } = await supabase.auth.signInWithPassword({ email: mail, password })
+        if (error) {
+          setMessage(
+            error.code === 'email_not_confirmed'
+              ? 'Todavía no confirmaste tu email. Abrí el mail "Confirmá tu cuenta" que te mandamos (mirá también en Spam).'
+              : rateLimited(error)
+                ? 'Demasiados intentos. Esperá un minuto y probá de nuevo.'
+                : 'Email o contraseña incorrectos. Si nunca elegiste una contraseña, tocá "Olvidé mi contraseña".',
+          )
+          return
         }
+        router.replace(next as Route)
+        router.refresh()
         return
       }
-      return done()
-    }
-    // newpass: ya tiene sesión
-    const { error } = await createClient().auth.updateUser({ password })
-    if (error && error.code !== 'same_password') {
+
+      if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email: mail,
+          password,
+          options: { emailRedirectTo: callback(next) },
+        })
+        if (error) {
+          setMessage(
+            rateLimited(error)
+              ? 'Ya te mandamos el email hace un momento. Revisá tu correo (también Spam) o probá en un minuto.'
+              : /weak|pwned|leaked/i.test(error.message)
+                ? 'Esa contraseña es muy fácil o apareció en filtraciones. Elegí otra.'
+                : /already|registered|exists/i.test(error.message)
+                  ? 'Ese email ya tiene cuenta. Ingresá, o tocá "Olvidé mi contraseña" para elegir una.'
+                  : 'No pudimos crear la cuenta. Probá de nuevo en un minuto.',
+          )
+          return
+        }
+        // Si el email ya existe, Supabase no da error: devuelve el usuario sin identidades.
+        if (data.user && (data.user.identities?.length ?? 0) === 0) {
+          setMode('login')
+          setMessage('Ese email ya tiene cuenta. Ingresá con tu contraseña, o tocá "Olvidé mi contraseña" para elegir una nueva.')
+          return
+        }
+        // Si la confirmación de email estuviera apagada, ya queda adentro.
+        if (data.session) {
+          router.replace(next as Route)
+          router.refresh()
+          return
+        }
+        setSent('signup')
+        return
+      }
+
+      // Olvidé mi contraseña
+      const { error } = await supabase.auth.resetPasswordForEmail(mail, {
+        redirectTo: callback(`/cuenta/clave?next=${encodeURIComponent(next)}`),
+      })
+      if (error && rateLimited(error)) {
+        setMessage('Ya te mandamos el link hace un momento. Revisá tu correo (también Spam) o probá en un minuto.')
+        return
+      }
+      setSent('reset') // por seguridad no se dice si el email existe o no
+    } finally {
       setBusy(false)
-      setMessage(
-        error.code === 'weak_password'
-          ? 'Esa contraseña es muy fácil. Probá con otra más larga o con números.'
-          : error.status === 401 || error.code === 'session_not_found'
-            ? 'Tu sesión venció. Pedí un código nuevo con "Olvidé mi contraseña".'
-            : 'No pudimos guardar la contraseña nueva. Probá de nuevo.',
-      )
-      return
     }
-    done()
   }
 
-  const alert = message && (
-    <p role="alert" className="text-sm text-red-300">
-      {message}
-    </p>
-  )
-  const newPasswordFields = (
-    <>
-      <label className="block space-y-1">
-        <span className="text-sm text-zinc-300">Contraseña nueva</span>
-        <input type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
-        <span className="block text-xs text-zinc-500">Mínimo 8 caracteres.</span>
-      </label>
-      <label className="block space-y-1">
-        <span className="text-sm text-zinc-300">Repetí la contraseña</span>
-        <input type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={password2} onChange={(e) => setPassword2(e.target.value)} className={inputCls} />
-      </label>
-    </>
-  )
-  const codeField = (
-    <label className="block space-y-1">
-      <span className="text-sm text-zinc-300">Código del email</span>
-      <input
-        type="text"
-        required
-        autoFocus
-        autoComplete="one-time-code"
-        inputMode="numeric"
-        pattern="[0-9 ]*"
-        maxLength={12}
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        className={codeCls}
-      />
-    </label>
-  )
-
-  const title = { password: 'Ingresá a tu cuenta de socio', code: 'Entrar con un código por email', reset: 'Recuperar tu contraseña', newpass: 'Elegí tu contraseña nueva' }[mode]
+  const input =
+    'min-h-[52px] w-full rounded-xl border border-zinc-800 bg-black px-4 text-base text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
+  const title = mode === 'signup' ? 'Crear cuenta' : mode === 'reset' ? 'Olvidé mi contraseña' : 'Ingresar'
 
   return (
     <main className="grid min-h-dvh place-items-center p-4">
       <div className="w-full max-w-sm space-y-6 rounded-lg border border-white/10 bg-[#141414] p-6 sm:p-8">
         <div>
-          <h1>
-            <Image src={BRAND.logo} alt="Evolution Fitness Gym" width={BRAND.logoWidth} height={BRAND.logoHeight} priority sizes="240px" className="h-10 w-auto" />
-          </h1>
-          <p className="mt-2 text-sm text-zinc-400">{title}</p>
+          <Image src={BRAND.logo} alt="Evolution Fitness Gym" width={BRAND.logoWidth} height={BRAND.logoHeight} priority sizes="240px" className="h-10 w-auto" />
+          <h1 className="mt-4 text-2xl font-extrabold text-white">{title}</h1>
         </div>
 
-        {mode === 'password' && (
-          <form onSubmit={loginWithPassword} className="space-y-3">
-            <label className="block space-y-1">
-              <span className="text-sm text-zinc-300">DNI o email</span>
-              <input type="text" required autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={user} onChange={(e) => setUser(e.target.value)} className={inputCls} />
-            </label>
-            <label className="block space-y-1">
-              <span className="text-sm text-zinc-300">Contraseña</span>
-              <input type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
-            </label>
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <KeyRound className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Entrando…' : 'Entrar'}
-            </button>
-            <button type="button" onClick={() => go('reset')} className={linkCls}>
-              Olvidé mi contraseña
-            </button>
-            <button type="button" onClick={() => go('code')} className={linkCls}>
-              Prefiero entrar con un código por email
-            </button>
-          </form>
+        {mode !== 'reset' && !sent && (
+          <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl bg-black p-1">
+            {(['login', 'signup'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                onClick={() => go(m)}
+                className={`min-h-[44px] rounded-lg text-sm font-bold transition-colors ${
+                  mode === m ? 'bg-[#edcc36] text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {m === 'login' ? 'Ingresar' : 'Crear cuenta'}
+              </button>
+            ))}
+          </div>
         )}
 
-        {mode === 'code' && !codeSent && (
-          <form onSubmit={sendLoginCode} className="space-y-3">
+        {sent ? (
+          <div className="space-y-4">
+            <div role="status" className="space-y-2 rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
+              <MailCheck className="h-6 w-6 text-[#edcc36]" aria-hidden="true" />
+              {sent === 'signup' ? (
+                <p>
+                  Listo. Te mandamos un email a <strong>{email}</strong>. Abrilo y tocá <strong>“Confirmar cuenta”</strong>. Es una sola
+                  vez: después entrás siempre con tu email y tu contraseña.
+                </p>
+              ) : (
+                <p>
+                  Si <strong>{email}</strong> tiene cuenta, te llega un email con el botón <strong>“Elegir contraseña nueva”</strong>.
+                </p>
+              )}
+              <p className="text-zinc-400">Si no lo ves en un par de minutos, mirá en Spam o Promociones.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => go('login')}
+              className="btn-tac min-h-[52px] w-full rounded-xl border border-zinc-700 font-bold text-white hover:border-white"
+            >
+              Ya lo confirmé · Ingresar
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
             <label className="block space-y-1">
               <span className="text-sm text-zinc-300">Email</span>
-              <input type="email" required autoComplete="email" inputMode="email" value={user} onChange={(e) => setUser(e.target.value)} className={inputCls} />
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={input}
+              />
             </label>
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <Mail className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Enviando…' : 'Enviarme un código'}
-            </button>
-          </form>
-        )}
 
-        {mode === 'code' && codeSent && (
-          <form onSubmit={verifyLoginCode} className="space-y-3">
-            <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
-              Te mandamos un código a <strong>{user}</strong>. Escribilo acá abajo. Si no llega en un par de minutos, revisá Spam o Promociones.
-            </p>
-            {codeField}
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <KeyRound className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Verificando…' : 'Entrar'}
-            </button>
-            <button type="button" onClick={() => go('code')} className={linkCls}>
-              Usar otro email o pedir otro código
-            </button>
-          </form>
-        )}
+            {mode !== 'reset' && (
+              <label className="block space-y-1">
+                <span className="text-sm text-zinc-300">{mode === 'signup' ? 'Elegí una contraseña' : 'Contraseña'}</span>
+                <span className="relative block">
+                  <input
+                    type={show ? 'text' : 'password'}
+                    required
+                    minLength={MIN}
+                    maxLength={72}
+                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={`${input} pr-14`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow(!show)}
+                    aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    className="absolute inset-y-0 right-0 grid w-12 place-items-center text-zinc-400 hover:text-white"
+                  >
+                    {show ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+                  </button>
+                </span>
+                {mode === 'signup' && <span className="block text-xs text-zinc-500">Mínimo {MIN} caracteres.</span>}
+              </label>
+            )}
 
-        {mode === 'reset' && !codeSent && (
-          <form onSubmit={sendResetCode} className="space-y-3">
-            <p className="text-sm text-zinc-400">Te mandamos un código al email de tu cuenta para que elijas una contraseña nueva.</p>
-            <label className="block space-y-1">
-              <span className="text-sm text-zinc-300">DNI o email</span>
-              <input type="text" required autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={user} onChange={(e) => setUser(e.target.value)} className={inputCls} />
-            </label>
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <Mail className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Enviando…' : 'Enviarme el código'}
-            </button>
-          </form>
-        )}
+            {mode === 'reset' && <p className="text-sm text-zinc-400">Escribí tu email y te mandamos un link para elegir una contraseña nueva.</p>}
 
-        {mode === 'reset' && codeSent && (
-          <form onSubmit={saveNewPassword} className="space-y-3">
-            <p role="status" className="rounded-2xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-4 text-sm text-zinc-100">
-              Si hay una cuenta con ese dato, te mandamos un código al email. Escribilo acá y elegí tu contraseña nueva. Si no llega en un par de minutos, revisá Spam o Promociones.
-            </p>
-            {codeField}
-            {newPasswordFields}
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <KeyRound className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Guardando…' : 'Guardar y entrar'}
-            </button>
-            <button type="button" onClick={() => go('reset')} className={linkCls}>
-              No me llegó: pedir otro código
-            </button>
-          </form>
-        )}
+            {message && (
+              <p role="alert" className="text-sm text-red-300">
+                {message}
+              </p>
+            )}
 
-        {mode === 'newpass' && (
-          <form onSubmit={saveNewPassword} className="space-y-3">
-            {newPasswordFields}
-            {alert}
-            <button type="submit" disabled={busy} className={primaryCls}>
-              <KeyRound className="h-5 w-5" aria-hidden="true" />
-              {busy ? 'Guardando…' : 'Guardar y entrar'}
+            <button
+              type="submit"
+              disabled={busy}
+              className="btn-tac relative flex min-h-[54px] w-full items-center justify-center gap-2 border border-brand bg-brand text-sm font-bold uppercase tracking-[0.14em] text-black transition-colors hover:border-white hover:bg-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              {busy && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+              {mode === 'login' ? 'Ingresar' : mode === 'signup' ? 'Crear cuenta' : 'Enviarme el link'}
             </button>
-          </form>
-        )}
 
-        {mode !== 'password' && (
-          <button type="button" onClick={() => go('password')} className={`${linkCls} flex items-center justify-center gap-1.5`}>
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver a entrar con contraseña
-          </button>
+            {mode === 'login' && (
+              <button type="button" onClick={() => go('reset')} className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+                Olvidé mi contraseña
+              </button>
+            )}
+            {mode === 'reset' && (
+              <button type="button" onClick={() => go('login')} className="min-h-[44px] w-full text-sm text-zinc-400 underline-offset-4 hover:text-white hover:underline">
+                ← Volver a ingresar
+              </button>
+            )}
+          </form>
         )}
       </div>
     </main>

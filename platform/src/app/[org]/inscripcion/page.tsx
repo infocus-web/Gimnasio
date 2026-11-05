@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react'
+import type { Route } from 'next'
+import { ArrowLeft, MessageCircle, ShieldCheck, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getPublicGym } from '@/features/public/profile'
 import { BRAND } from '@/features/public/media'
@@ -23,7 +24,12 @@ export async function generateMetadata({ params }: PageProps<'/[org]/inscripcion
   }
 }
 
-/** Inscripción online: datos + plan + pago con Mercado Pago. La ficha se crea al aprobarse el pago (0038). */
+/**
+ * Inscripción online: cuenta primero, pago después.
+ *  1. Sin sesión → "Creá tu cuenta" (email + contraseña, confirma por email y vuelve acá).
+ *  2. Con sesión → plan + datos + pago con Mercado Pago. La ficha se crea al aprobarse el pago (0038)
+ *     y queda vinculada a esta cuenta.
+ */
 export default async function SignupPage({ params, searchParams }: PageProps<'/[org]/inscripcion'>) {
   const { org } = await params
   const sp = await searchParams
@@ -31,6 +37,10 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
   if (!gym) notFound()
 
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const accountEmail = user?.email_confirmed_at ? (user.email ?? null) : null
   const { data } = await supabase.rpc('public_signup_plans', { p_slug: org })
   const plans = (((data ?? null) as { plans?: SignupPlan[] } | null)?.plans ?? []) as SignupPlan[]
   const wanted = typeof sp.plan === 'string' ? sp.plan.toLowerCase() : null
@@ -39,6 +49,11 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
   const referral = ref ? ((await supabase.rpc('public_referral_lookup', { p_slug: org, p_code: ref })).data as ReferralInfo | null) : null
   const whatsapp = gym.profile.whatsapp ? `https://wa.me/${gym.profile.whatsapp.replace(/\D/g, '')}` : null
   const available = mpConfigured() && !!process.env.SUPABASE_SECRET_KEY && plans.length > 0
+  // Al volver de crear la cuenta / ingresar, cae de nuevo acá con el mismo plan y código de amigo/a
+  const back = new URLSearchParams()
+  if (typeof sp.plan === 'string') back.set('plan', sp.plan)
+  if (ref) back.set('ref', ref)
+  const here = `/${gym.slug}/inscripcion${back.size ? `?${back}` : ''}`
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -54,16 +69,40 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
       <main className="mx-auto max-w-3xl px-4 pb-20 pt-6 sm:px-8">
         <h1 className="font-display text-[clamp(2.2rem,6vw,3.5rem)] font-bold leading-[1.02] tracking-[-0.03em] text-white">Inscribite online</h1>
         <p className="mt-3 max-w-xl text-lg text-white/70">
-          Elegí tu plan, completá tus datos, creá tu contraseña y pagá con Mercado Pago. Después entrás a la app con tu DNI y tu contraseña.
+          {accountEmail
+            ? 'Elegí tu plan, completá tus datos y pagá con Mercado Pago. Apenas se acredita, ya podés usar la app.'
+            : 'Primero creá tu cuenta con tu email y una contraseña. Después elegís tu plan y pagás con Mercado Pago.'}
         </p>
 
-        {available ? (
+        {available && !accountEmail ? (
+          <div className="mt-10 space-y-4 rounded-lg border border-white/10 bg-[#141414] p-6">
+            <p className="flex items-center gap-2 font-display text-2xl font-bold text-white">
+              <UserPlus className="h-6 w-6 text-brand" aria-hidden="true" /> 1. Creá tu cuenta
+            </p>
+            <p className="text-white/65">
+              Te llega un email para confirmarla (una sola vez). Al confirmarla volvés acá para elegir tu plan y pagar.
+            </p>
+            <Link
+              href={`/login?modo=crear&next=${encodeURIComponent(here)}` as Route}
+              className="flex min-h-[54px] w-full items-center justify-center rounded-md bg-brand px-5 text-lg font-bold text-black hover:bg-[#f5db5c]"
+            >
+              Crear mi cuenta
+            </Link>
+            <Link
+              href={`/login?next=${encodeURIComponent(here)}` as Route}
+              className="flex min-h-[48px] w-full items-center justify-center rounded-md border border-white/20 font-semibold text-white hover:border-white"
+            >
+              Ya tengo cuenta · Ingresar
+            </Link>
+          </div>
+        ) : available && accountEmail ? (
           <SignupForm
             action={startSignup.bind(null, gym.slug)}
             plans={plans}
             initialPlan={initialPlan}
             slug={gym.slug}
             initialReferral={referral}
+            accountEmail={accountEmail}
           />
         ) : (
           <div className="mt-10 rounded-lg border border-white/10 bg-[#141414] p-6">

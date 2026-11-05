@@ -26,8 +26,16 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
           <p className="text-sm text-zinc-400">
             {ctx.error === 'NO_ORG'
               ? 'Revisá el link que te pasaron.'
-              : 'Esta cuenta no tiene una ficha de socio activa. Pedile a recepción que vincule tu email a tu ficha, o entrá con otro email.'}
+              : 'Tu cuenta ya está creada, pero todavía no tiene un plan en el gimnasio. Inscribite online o acercate a recepción con este mismo email.'}
           </p>
+          {ctx.error !== 'NO_ORG' && (
+            <Link
+              href={`/${slug}/inscripcion` as Route}
+              className="btn-tac flex min-h-[52px] w-full items-center justify-center rounded-xl bg-[#edcc36] font-bold text-black"
+            >
+              Inscribirme online
+            </Link>
+          )}
           <SignOutButton />
         </div>
       </main>

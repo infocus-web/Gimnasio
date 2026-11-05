@@ -36,6 +36,7 @@ export async function signupInfo(intentId: string): Promise<SignupInfo | null> {
 
 /**
  * Después de pagar la inscripción: deja lista la cuenta para entrar a la app (UNA vez).
+ *  · Ya tiene cuenta (lo normal ahora: se inscribe logueado): no se manda nada.
  *  · Eligió contraseña en el formulario (0041): se crea la cuenta con esa contraseña, sin email.
  *  · Sin cuenta ni contraseña guardada: invitación de Supabase (al crear el usuario se vincula solo con la ficha por email).
  *  · Con cuenta (por ejemplo de otro gimnasio): link para entrar sin contraseña.
@@ -54,6 +55,10 @@ export async function sendSignupAccessOnce(intentId: string): Promise<'sent' | '
     .is('email_sent_at', null)
     .select('id')
   if (!claimed?.length) return 'already'
+
+  // Cuenta primero, pago después: ya tiene cuenta con contraseña y la ficha quedó vinculada al aprobarse
+  // el pago (0038 → link_user_by_email). No hace falta mandarle ningún email: entra con su email y contraseña.
+  if (info.hasAccount) return 'sent'
 
   // Eligió contraseña al inscribirse: se crea la cuenta con esa contraseña y no hace falta mandar ningún link
   if (!info.hasAccount) {

@@ -14,7 +14,7 @@ export default function LoginPage() {
         <Image src={WEB_MEDIA.app} alt="" fill priority sizes="50vw" className="-z-20 object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/40 to-black/10" aria-hidden="true" />
         <p className="max-w-md font-display text-5xl font-bold leading-[1.02] tracking-[-0.035em] text-white">Tu rutina, tus clases y tu plan</p>
-        <p className="mt-4 max-w-sm text-white/70">Entrá con tu DNI o email y tu contraseña.</p>
+        <p className="mt-4 max-w-sm text-white/70">Entrá con tu email y tu contraseña. ¿Primera vez? Creá tu cuenta.</p>
       </aside>
       <Suspense>
         <LoginForm />

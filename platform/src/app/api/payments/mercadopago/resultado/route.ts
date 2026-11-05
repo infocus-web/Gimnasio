@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     } : signup ? {
       color: '#34d399',
       title: '¡Bienvenido a Evolution!',
-      text: `Ya sos socio${until ? ` y tu plan está activo hasta el ${esc(until)}` : ''}. Entrá a la app con tu DNI (o email) y la contraseña que elegiste: ahí tenés tu QR para pasar por el molinete, tus clases y tu rutina.`,
+      text: `Ya sos socio${until ? ` y tu plan está activo hasta el ${esc(until)}` : ''}. Entrá a la app con tu email y tu contraseña: ahí tenés tu QR para pasar por el molinete, tus clases y tu rutina.`,
     } : {
       color: '#34d399',
       title: '¡Pago aprobado!',
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     pending: {
       color: '#edcc36',
       title: 'Pago en proceso',
-      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo y vas a poder entrar a la app con tu DNI y tu contraseña. No hace falta que pagues de nuevo.',
+      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo y vas a poder entrar a la app con tu email y tu contraseña. No hace falta que pagues de nuevo.',
     },
     fail: {
       color: '#f87171',

@@ -8,7 +8,7 @@ import { createPreference, mpConfigured, publicSiteUrl } from '@/features/paymen
 
 export interface SignupState {
   error?: string
-  fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'password' | 'password2' | 'terms', string>>
+  fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'terms', string>>
 }
 
 const DB_ERRORS: Record<string, { field?: keyof NonNullable<SignupState['fieldErrors']>; text: string }> = {
@@ -20,7 +20,7 @@ const DB_ERRORS: Record<string, { field?: keyof NonNullable<SignupState['fieldEr
   PHONE_INVALID: { field: 'phone', text: 'Escribí tu celular con código de área.' },
   BIRTH_DATE_INVALID: { field: 'birthDate', text: 'Revisá la fecha de nacimiento.' },
   ALREADY_MEMBER: {
-    text: 'Ya sos socio y tenés un plan vigente. Entrá a la app con "Soy socio" y renovalo desde "Pagar", o consultá en recepción.',
+    text: 'Ya sos socio y tenés un plan vigente. Entrá a la app con tu email y contraseña y renovalo desde "Pagar", o consultá en recepción.',
   },
   FRIEND_NOT_NEW: {
     field: 'promo',
@@ -44,14 +44,20 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     lastName: str('lastName'),
     document: str('document').replace(/\D/g, ''),
     phone: str('phone'),
-    email: str('email').toLowerCase(),
     birthDate: str('birthDate'),
     refCode: str('refCode').toUpperCase().replace(/[^A-Z0-9]/g, ''),
     promo: str('promo'),
   }
-  // La contraseña no se recorta: los espacios cuentan
-  const password = String(form.get('password') ?? '')
-  const password2 = String(form.get('password2') ?? '')
+
+  // Cuenta primero, pago después: la inscripción queda a nombre de la cuenta con la que entró
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !user.email_confirmed_at) {
+    return { error: 'Para inscribirte primero creá tu cuenta o ingresá. Recargá la página.' }
+  }
+  const email = user.email.toLowerCase()
 
   const fieldErrors: SignupState['fieldErrors'] = {}
   if (!UUID.test(v.plan)) fieldErrors.plan = 'Elegí un plan.'
@@ -59,10 +65,6 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   if (v.lastName.length < 2) fieldErrors.lastName = 'Escribí tu apellido.'
   if (v.document.length < 6 || v.document.length > 10) fieldErrors.document = 'Escribí tu DNI, solo números.'
   if (v.phone.replace(/\D/g, '').length < 8) fieldErrors.phone = 'Escribí tu celular con código de área.'
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) fieldErrors.email = 'Revisá tu email: lo vas a usar para entrar a la app.'
-  if (password.length < 8) fieldErrors.password = 'La contraseña tiene que tener al menos 8 caracteres.'
-  else if (password.length > 72) fieldErrors.password = 'La contraseña es demasiado larga (máximo 72 caracteres).'
-  else if (password !== password2) fieldErrors.password2 = 'Las dos contraseñas no coinciden.'
   if (v.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(v.birthDate)) fieldErrors.birthDate = 'Revisá la fecha de nacimiento.'
   if (form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
   if (Object.keys(fieldErrors).length) return { fieldErrors }
@@ -71,13 +73,12 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     return { error: 'Por ahora la inscripción online no está disponible. Escribinos por WhatsApp o acercate a recepción.' }
   }
 
-  const supabase = await createClient()
   const { data, error } = await supabase.rpc('payment_intent_create_signup', {
     p_slug: slug,
     p_plan: v.plan,
     p_first_name: v.firstName,
     p_last_name: v.lastName,
-    p_email: v.email,
+    p_email: email,
     p_phone: v.phone,
     p_document: v.document,
     p_birth_date: v.birthDate || undefined,
@@ -95,13 +96,6 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   }
 
   const info = data as { intent_id: string; amount_cents: number; currency: string; plan_name: string; org_name: string }
-
-  // Se guarda solo el hash: la cuenta se crea con esta contraseña cuando se aprueba el pago (ver payments/signup.ts)
-  const { error: ePass } = await createAdminClient().rpc('signup_set_password', { p_intent: info.intent_id, p_password: password })
-  if (ePass) {
-    console.error('[inscripción] contraseña', ePass.message)
-    return { error: 'No pudimos iniciar la inscripción. Probá de nuevo.' }
-  }
   let initPoint: string
   try {
     const pref = await createPreference({
@@ -109,7 +103,7 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
       title: `${info.plan_name} · ${info.org_name}`,
       amountCents: Number(info.amount_cents),
       currency: info.currency,
-      payer: { email: v.email, name: v.firstName, surname: v.lastName },
+      payer: { email, name: v.firstName, surname: v.lastName },
       backUrl: `${publicSiteUrl()}/api/payments/mercadopago/resultado`,
       expiresInHours: 2,
     })
