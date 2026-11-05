@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     } : signup ? {
       color: '#34d399',
       title: '¡Bienvenido a Evolution!',
-      text: `Ya sos socio${until ? ` y tu plan está activo hasta el ${esc(until)}` : ''}. Te mandamos un email para entrar a la app: ahí tenés tu QR para pasar por el molinete, tus clases y tu rutina.`,
+      text: `Ya sos socio${until ? ` y tu plan está activo hasta el ${esc(until)}` : ''}. Entrá a la app con tu DNI (o email) y la contraseña que elegiste: ahí tenés tu QR para pasar por el molinete, tus clases y tu rutina.`,
     } : {
       color: '#34d399',
       title: '¡Pago aprobado!',
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     pending: {
       color: '#edcc36',
       title: 'Pago en proceso',
-      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo (el plan se activa o te llega el email para entrar). No hace falta que pagues de nuevo.',
+      text: 'Mercado Pago todavía está procesando el pago. Apenas se acredite queda listo solo y vas a poder entrar a la app con tu DNI y tu contraseña. No hace falta que pagues de nuevo.',
     },
     fail: {
       color: '#f87171',
@@ -85,6 +85,6 @@ h1{font-size:22px;margin:0 0 8px}p{color:#a1a1aa;line-height:1.5;margin:0 0 20px
 a{display:inline-flex;min-height:44px;align-items:center;justify-content:center;padding:0 20px;border-radius:12px;background:#edcc36;color:#000;font-weight:700;text-decoration:none}
 a:focus-visible{outline:2px solid #fff;outline-offset:2px}</style></head>
 <body><main class="c"><div class="d" aria-hidden="true">${kind === 'ok' ? '✓' : kind === 'pending' ? '…' : '!'}</div>
-<h1>${esc(ui.title)}</h1><p>${ui.text}</p>${passUrl ? `<a href="${esc(passUrl)}">Abrir mi pase</a>` : '<a href="/">Ir a Evolution Fitness GYM</a>'}</main></body></html>`
+<h1>${esc(ui.title)}</h1><p>${ui.text}</p>${passUrl ? `<a href="${esc(passUrl)}">Abrir mi pase</a>` : signup && kind === 'ok' ? '<a href="/login">Entrar a la app</a>' : '<a href="/">Ir a Evolution Fitness GYM</a>'}</main></body></html>`
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } })
 }

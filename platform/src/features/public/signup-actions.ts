@@ -8,14 +8,14 @@ import { createPreference, mpConfigured, publicSiteUrl } from '@/features/paymen
 
 export interface SignupState {
   error?: string
-  fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'terms', string>>
+  fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'password' | 'password2' | 'terms', string>>
 }
 
 const DB_ERRORS: Record<string, { field?: keyof NonNullable<SignupState['fieldErrors']>; text: string }> = {
   PLAN_NOT_FOUND: { field: 'plan', text: 'Elegí un plan.' },
   FIRST_NAME_REQUIRED: { field: 'firstName', text: 'Escribí tu nombre.' },
   LAST_NAME_REQUIRED: { field: 'lastName', text: 'Escribí tu apellido.' },
-  EMAIL_INVALID: { field: 'email', text: 'Revisá tu email: ahí te llega el acceso a la app.' },
+  EMAIL_INVALID: { field: 'email', text: 'Revisá tu email: lo vas a usar para entrar a la app.' },
   DOCUMENT_INVALID: { field: 'document', text: 'Escribí tu DNI, solo números.' },
   PHONE_INVALID: { field: 'phone', text: 'Escribí tu celular con código de área.' },
   BIRTH_DATE_INVALID: { field: 'birthDate', text: 'Revisá la fecha de nacimiento.' },
@@ -49,6 +49,9 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     refCode: str('refCode').toUpperCase().replace(/[^A-Z0-9]/g, ''),
     promo: str('promo'),
   }
+  // La contraseña no se recorta: los espacios cuentan
+  const password = String(form.get('password') ?? '')
+  const password2 = String(form.get('password2') ?? '')
 
   const fieldErrors: SignupState['fieldErrors'] = {}
   if (!UUID.test(v.plan)) fieldErrors.plan = 'Elegí un plan.'
@@ -56,7 +59,10 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   if (v.lastName.length < 2) fieldErrors.lastName = 'Escribí tu apellido.'
   if (v.document.length < 6 || v.document.length > 10) fieldErrors.document = 'Escribí tu DNI, solo números.'
   if (v.phone.replace(/\D/g, '').length < 8) fieldErrors.phone = 'Escribí tu celular con código de área.'
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) fieldErrors.email = 'Revisá tu email: ahí te llega el acceso a la app.'
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email)) fieldErrors.email = 'Revisá tu email: lo vas a usar para entrar a la app.'
+  if (password.length < 8) fieldErrors.password = 'La contraseña tiene que tener al menos 8 caracteres.'
+  else if (password.length > 72) fieldErrors.password = 'La contraseña es demasiado larga (máximo 72 caracteres).'
+  else if (password !== password2) fieldErrors.password2 = 'Las dos contraseñas no coinciden.'
   if (v.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(v.birthDate)) fieldErrors.birthDate = 'Revisá la fecha de nacimiento.'
   if (form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
   if (Object.keys(fieldErrors).length) return { fieldErrors }
@@ -89,6 +95,13 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   }
 
   const info = data as { intent_id: string; amount_cents: number; currency: string; plan_name: string; org_name: string }
+
+  // Se guarda solo el hash: la cuenta se crea con esta contraseña cuando se aprueba el pago (ver payments/signup.ts)
+  const { error: ePass } = await createAdminClient().rpc('signup_set_password', { p_intent: info.intent_id, p_password: password })
+  if (ePass) {
+    console.error('[inscripción] contraseña', ePass.message)
+    return { error: 'No pudimos iniciar la inscripción. Probá de nuevo.' }
+  }
   let initPoint: string
   try {
     const pref = await createPreference({

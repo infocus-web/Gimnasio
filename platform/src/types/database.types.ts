@@ -3372,6 +3372,17 @@ export type Database = {
       }
       friend_pair_end: { Args: { p_pair: string }; Returns: undefined }
       member_payment_options: { Args: { p_member: string }; Returns: Json }
+      signup_set_password: {
+        Args: { p_intent: string; p_password: string }
+        Returns: undefined
+      }
+      signup_password_hash: { Args: { p_intent: string }; Returns: string }
+      signup_clear_password: { Args: { p_intent: string }; Returns: undefined }
+      member_email_by_document: { Args: { p_document: string }; Returns: string }
+      member_login_email: {
+        Args: { p_document: string; p_password: string }
+        Returns: string
+      }
       payment_intent_set_preference: {
         Args: { p_init_point: string; p_intent: string; p_preference_id: string }
         Returns: undefined

@@ -302,7 +302,16 @@ export function SignupForm({
           <Field label="DNI" name="document" inputMode="numeric" maxLength={12} required error={fe.document} hint="Solo números. Con el DNI te identificamos en recepción." />
           <Field label="Fecha de nacimiento (opcional)" name="birthDate" type="date" error={fe.birthDate} />
           <Field label="Celular" name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={40} required placeholder="11 2345-6789" error={fe.phone} />
-          <Field label="Email" name="email" type="email" autoComplete="email" maxLength={200} required error={fe.email} hint="Acá te llega el acceso a la app." />
+          <Field label="Email" name="email" type="email" autoComplete="email" maxLength={200} required error={fe.email} hint="Sirve para entrar a la app y para recuperar tu contraseña." />
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-4">
+        <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">3. Tu contraseña</legend>
+        <p className="text-white/65">Para entrar a la app vas a usar tu DNI (o tu email) y esta contraseña.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Contraseña" name="password" type="password" autoComplete="new-password" minLength={8} maxLength={72} required error={fe.password} hint="Mínimo 8 caracteres." />
+          <Field label="Repetí la contraseña" name="password2" type="password" autoComplete="new-password" minLength={8} maxLength={72} required error={fe.password2} />
         </div>
       </fieldset>
 

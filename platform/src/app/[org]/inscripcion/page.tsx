@@ -54,7 +54,7 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
       <main className="mx-auto max-w-3xl px-4 pb-20 pt-6 sm:px-8">
         <h1 className="font-display text-[clamp(2.2rem,6vw,3.5rem)] font-bold leading-[1.02] tracking-[-0.03em] text-white">Inscribite online</h1>
         <p className="mt-3 max-w-xl text-lg text-white/70">
-          Elegí tu plan, completá tus datos y pagá con Mercado Pago. Al toque te llega un email para entrar a la app con tu QR de acceso.
+          Elegí tu plan, completá tus datos, creá tu contraseña y pagá con Mercado Pago. Después entrás a la app con tu DNI y tu contraseña.
         </p>
 
         {available ? (

@@ -92,7 +92,9 @@ async function linkOrInvite(orgId: string, slug: string, email: string, next: st
     }
   }
   const admin = createAdminClient()
-  const redirectTo = `${await origin()}/auth/callback?next=${encodeURIComponent(next)}`
+  // Al activar la invitación elige su contraseña: después entra siempre con email + contraseña.
+  const choosePassword = `/cuenta/clave?next=${encodeURIComponent(next)}`
+  const redirectTo = `${await origin()}/auth/callback?next=${encodeURIComponent(choosePassword)}`
   const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo })
   if (inviteError) {
     console.error('[admin] invite error', inviteError)
