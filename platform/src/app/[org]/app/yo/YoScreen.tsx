@@ -246,8 +246,8 @@ function ReferralCard({ eng, orgSlug, orgName }: { eng: MemberEngagement; orgSlu
     if (!origin) setOrigin(window.location.origin)
   }, [origin])
   if (!r.code) return null
-  const link = `${origin}/${orgSlug}/padron?ref=${r.code}`
-  const shareText = `¡Sumate a entrenar conmigo en ${orgName}! Anotate con mi código ${r.code} y los dos ganamos ${r.reward_days} días gratis: ${link}`
+  const link = `${origin}/${orgSlug}/inscripcion?ref=${r.code}`
+  const shareText = `¡Sumate a entrenar conmigo en ${orgName}! Inscribite con mi link y tenemos beneficios los dos (actividades cruzadas, descuento de a dos o tu primer mes con descuento): ${link}`
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link)
@@ -263,7 +263,9 @@ function ReferralCard({ eng, orgSlug, orgName }: { eng: MemberEngagement; orgSlu
         <Gift className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Invitá a un amigo
       </h2>
       <p className="mb-4 text-sm text-zinc-400">
-        Si se inscribe con tu código y paga su primer mes, <strong className="text-white">los dos suman {r.reward_days} días gratis</strong>.
+        Si alguien nuevo se inscribe con tu link, elige un beneficio para los dos: <strong className="text-white">actividades cruzadas</strong> (cada uno
+        puede ir a la actividad del otro), <strong className="text-white">descuento de a dos</strong> todos los meses, o{' '}
+        <strong className="text-white">su primer mes con descuento y {r.reward_days} días gratis para cada uno</strong>.
       </p>
       <div className="mb-3 rounded-2xl border border-dashed border-[#edcc36]/50 bg-[#edcc36]/5 p-4 text-center">
         <p className="text-[11px] uppercase tracking-wider text-zinc-400">Tu código</p>

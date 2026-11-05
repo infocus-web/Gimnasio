@@ -3269,9 +3269,18 @@ export type Database = {
           p_phone?: string
           p_document?: string
           p_birth_date?: string
+          p_ref_code?: string
+          p_promo?: string
         }
         Returns: Json
       }
+      public_referral_lookup: { Args: { p_slug: string; p_code: string }; Returns: Json }
+      friend_promo_admin: { Args: { p_org: string }; Returns: Json }
+      friend_promo_save: {
+        Args: { p_org: string; p_cross: boolean; p_duo: boolean; p_duo_pct: number; p_welcome: boolean; p_welcome_pct: number }
+        Returns: undefined
+      }
+      friend_pair_end: { Args: { p_pair: string }; Returns: undefined }
       member_payment_options: { Args: { p_member: string }; Returns: Json }
       payment_intent_set_preference: {
         Args: { p_init_point: string; p_intent: string; p_preference_id: string }

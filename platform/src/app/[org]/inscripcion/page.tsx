@@ -10,6 +10,7 @@ import { display, text } from '@/features/public/fonts'
 import { mpConfigured } from '@/features/payments/mercadopago'
 import { SignupForm, type SignupPlan } from '@/features/public/SignupForm'
 import { startSignup } from '@/features/public/signup-actions'
+import type { ReferralInfo } from '@/features/public/referral-types'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,8 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
   const plans = (((data ?? null) as { plans?: SignupPlan[] } | null)?.plans ?? []) as SignupPlan[]
   const wanted = typeof sp.plan === 'string' ? sp.plan.toLowerCase() : null
   const initialPlan = plans.find((p) => p.id === wanted || p.name.toLowerCase() === wanted)?.id ?? plans[0]?.id ?? null
+  const ref = typeof sp.ref === 'string' ? sp.ref.slice(0, 30) : null
+  const referral = ref ? ((await supabase.rpc('public_referral_lookup', { p_slug: org, p_code: ref })).data as ReferralInfo | null) : null
   const whatsapp = gym.profile.whatsapp ? `https://wa.me/${gym.profile.whatsapp.replace(/\D/g, '')}` : null
   const available = mpConfigured() && !!process.env.SUPABASE_SECRET_KEY && plans.length > 0
 
@@ -55,7 +58,13 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
         </p>
 
         {available ? (
-          <SignupForm action={startSignup.bind(null, gym.slug)} plans={plans} initialPlan={initialPlan} />
+          <SignupForm
+            action={startSignup.bind(null, gym.slug)}
+            plans={plans}
+            initialPlan={initialPlan}
+            slug={gym.slug}
+            initialReferral={referral}
+          />
         ) : (
           <div className="mt-10 rounded-lg border border-white/10 bg-[#141414] p-6">
             <p className="text-lg font-semibold text-white">Por ahora la inscripción online no está disponible.</p>

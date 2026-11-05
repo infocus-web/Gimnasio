@@ -140,3 +140,43 @@ export async function applyReferral(slug: string, _prev: ActionState, form: Form
       : `Referido registrado (lo recomendó ${r.referrer}). Cuando registre su primer pago, los dos reciben los días gratis.`,
   }
 }
+
+// ---------------------------------------------------------------------
+// "Traé a un amigo/a" (0039): las 3 promos
+// ---------------------------------------------------------------------
+export async function saveFriendPromo(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await ctxFor(slug, true)
+  if (!ctx) return FORBIDDEN
+  const pct = (k: string, min: number, max: number) => {
+    const n = Number(String(form.get(k) ?? '').trim())
+    return Number.isInteger(n) && n >= min && n <= max ? n : null
+  }
+  const duoPct = pct('duoPct', 1, 90)
+  const welcomePct = pct('welcomePct', 0, 100)
+  const fieldErrors: Record<string, string> = {}
+  if (duoPct === null) fieldErrors.duoPct = 'Entre 1 y 90'
+  if (welcomePct === null) fieldErrors.welcomePct = 'Entre 0 y 100'
+  if (Object.keys(fieldErrors).length) return { message: 'Revisá los porcentajes.', fieldErrors }
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('friend_promo_save', {
+    p_org: ctx.org.id,
+    p_cross: form.get('cross') === 'on',
+    p_duo: form.get('duo') === 'on',
+    p_duo_pct: duoPct!,
+    p_welcome: form.get('welcome') === 'on',
+    p_welcome_pct: welcomePct!,
+  })
+  if (error) return { message: errorText(error) }
+  revalidatePath(`/${slug}/admin/comunicacion/referidos`)
+  return { ok: true, message: 'Promos guardadas. Ya se aplican en la inscripción online.' }
+}
+
+export async function endFriendPair(slug: string, pairId: string): Promise<ActionState> {
+  const ctx = await ctxFor(slug, true)
+  if (!ctx) return FORBIDDEN
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('friend_pair_end', { p_pair: pairId })
+  if (error) return { message: errorText(error) }
+  revalidatePath(`/${slug}/admin/comunicacion/referidos`)
+  return { ok: true, message: 'Promo terminada para esta pareja.' }
+}

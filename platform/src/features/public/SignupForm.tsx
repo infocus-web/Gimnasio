@@ -1,8 +1,9 @@
 'use client'
 
 import { startTransition, useActionState, useState } from 'react'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Gift, Loader2 } from 'lucide-react'
 import type { SignupState } from './signup-actions'
+import type { FriendPromo, ReferralInfo } from './referral-types'
 
 export interface SignupPlan {
   id: string
@@ -77,19 +78,175 @@ function Submit({ label, pending }: { label: string; pending: boolean }) {
   )
 }
 
+/** "Traé a un amigo/a": código del socio que te invitó + qué beneficio elegís. */
+function FriendBox({
+  slug,
+  referral,
+  setReferral,
+  promo,
+  setPromo,
+  error,
+}: {
+  slug: string
+  referral: ReferralInfo | null
+  setReferral: (r: ReferralInfo | null) => void
+  promo: FriendPromo | null
+  setPromo: (p: FriendPromo | null) => void
+  error?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [code, setCode] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [bad, setBad] = useState(false)
+
+  const check = async () => {
+    const c = code.trim()
+    if (!c) return
+    setChecking(true)
+    setBad(false)
+    try {
+      const res = await fetch(`/${slug}/referido?code=${encodeURIComponent(c)}`, { cache: 'no-store' })
+      const r = (await res.json()) as ReferralInfo
+      if (r.valid) {
+        setReferral(r)
+        setPromo(null)
+      } else setBad(true)
+    } catch {
+      setBad(true)
+    }
+    setChecking(false)
+  }
+
+  if (!referral?.valid) {
+    return (
+      <div className="rounded-lg border border-white/12 bg-[#141414] p-4">
+        {!open ? (
+          <button type="button" onClick={() => setOpen(true)} className="flex min-h-[44px] items-center gap-2 text-left font-semibold text-brand">
+            <Gift className="h-5 w-5 shrink-0" aria-hidden="true" /> ¿Te invitó un amigo/a que ya entrena acá? Ingresá su código
+          </button>
+        ) : (
+          <div>
+            <label htmlFor="ref-code" className="text-sm font-semibold text-white/80">Código de tu amigo/a</label>
+            <div className="mt-1.5 flex gap-2">
+              <input
+                id="ref-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    void check()
+                  }
+                }}
+                placeholder="Ej. JUAN4821"
+                maxLength={20}
+                className={input.replace('mt-1.5 ', '') + ' uppercase'}
+              />
+              <button
+                type="button"
+                onClick={() => void check()}
+                disabled={checking}
+                className="min-h-[48px] shrink-0 rounded-md border border-brand px-4 font-bold text-brand hover:bg-brand/10 disabled:opacity-60"
+              >
+                {checking ? 'Buscando…' : 'Usar'}
+              </button>
+            </div>
+            {bad && <p className="mt-1.5 text-sm text-red-300">Ese código no existe o el socio no tiene el plan al día.</p>}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const p = referral.promos!
+  const acts = referral.referrer_activities ?? []
+  const options: { value: FriendPromo; title: string; text: string }[] = []
+  if (p.cross)
+    options.push({
+      value: 'cross',
+      title: 'Actividades cruzadas',
+      text: `Cada uno paga su plan y además pueden ir a las clases de la actividad del otro${acts.length ? ` (vos sumás ${acts.join(', ')})` : ''}, mientras los dos tengan el plan al día.`,
+    })
+  if (p.duo)
+    options.push({
+      value: 'duo',
+      title: `De a dos: ${p.duo}% off para los dos`,
+      text: `Vos y ${referral.referrer} pagan su plan con ${p.duo}% de descuento todos los meses, mientras los dos sigan entrenando.`,
+    })
+  if (p.welcome)
+    options.push({
+      value: 'welcome',
+      title: `Bienvenida: ${p.welcome.pct}% off tu primer mes`,
+      text: `Pagás tu primer mes con ${p.welcome.pct}% de descuento y los dos suman ${p.welcome.days} días gratis.`,
+    })
+
+  return (
+    <fieldset className="rounded-lg border border-brand/50 bg-brand/5 p-5">
+      <input type="hidden" name="refCode" value={referral.code} />
+      <legend className="sr-only">Promo Traé a un amigo/a</legend>
+      <p className="flex items-center gap-2 font-display text-xl font-bold text-white">
+        <Gift className="h-5 w-5 text-brand" aria-hidden="true" /> Te invitó {referral.referrer}
+      </p>
+      <p className="mt-1 text-sm text-white/60">Elegí tu beneficio (uno). La promo es para personas que nunca estuvieron inscriptas en el gimnasio.</p>
+      {options.length === 0 ? (
+        <p className="mt-3 text-white/70">Ahora no hay promos activas. Podés inscribirte igual.</p>
+      ) : (
+        <div className="mt-4 grid gap-3">
+          {options.map((o) => {
+            const on = promo === o.value
+            return (
+              <label
+                key={o.value}
+                className={`flex cursor-pointer gap-3 rounded-lg border p-4 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand ${
+                  on ? 'border-brand bg-brand/10' : 'border-white/12 bg-black/40 hover:border-white/30'
+                }`}
+              >
+                <input type="radio" name="promo" value={o.value} checked={on} onChange={() => setPromo(o.value)} className="mt-1 h-5 w-5 shrink-0 accent-[#edcc36]" />
+                <span>
+                  <span className="block font-bold text-white">{o.title}</span>
+                  <span className="mt-0.5 block text-sm text-white/65">{o.text}</span>
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      )}
+      {error && <p className="mt-2 text-sm text-red-300">{error}</p>}
+      <button
+        type="button"
+        onClick={() => {
+          setReferral(null)
+          setPromo(null)
+        }}
+        className="mt-3 min-h-[40px] text-sm font-semibold text-white/50 underline-offset-4 hover:text-white hover:underline"
+      >
+        Inscribirme sin promo
+      </button>
+    </fieldset>
+  )
+}
+
 export function SignupForm({
   action,
   plans,
   initialPlan,
+  slug,
+  initialReferral,
 }: {
   action: (prev: SignupState, form: FormData) => Promise<SignupState>
   plans: SignupPlan[]
   initialPlan: string | null
+  slug: string
+  initialReferral: ReferralInfo | null
 }) {
   const [state, submit, pending] = useActionState(action, {})
   const [plan, setPlan] = useState(initialPlan)
   const fe = state.fieldErrors ?? {}
   const chosen = plans.find((p) => p.id === plan)
+  const [referral, setReferral] = useState<ReferralInfo | null>(initialReferral?.valid ? initialReferral : null)
+  const [promo, setPromo] = useState<FriendPromo | null>(null)
+  const pct = promo === 'duo' ? (referral?.promos?.duo ?? 0) : promo === 'welcome' ? (referral?.promos?.welcome?.pct ?? 0) : 0
+  const final = (cents: number) => Math.max(Math.round((cents * (100 - pct)) / 100), 1)
 
   return (
     <form
@@ -102,6 +259,8 @@ export function SignupForm({
       className="mt-10 space-y-10"
       noValidate
     >
+      <FriendBox slug={slug} referral={referral} setReferral={setReferral} promo={promo} setPromo={setPromo} error={fe.promo} />
+
       <fieldset>
         <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">1. Elegí tu plan</legend>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -118,7 +277,8 @@ export function SignupForm({
                 <span className="pr-8 font-display text-xl font-bold leading-tight text-white">{p.name}</span>
                 {p.description && <span className="mt-1 text-sm text-white/55">{p.description}</span>}
                 <span className="mt-4 flex items-baseline gap-1.5">
-                  <span className="font-display text-3xl font-bold tabular-nums text-white">{money(p.price_cents, p.currency)}</span>
+                  {pct > 0 && <span className="text-base font-semibold tabular-nums text-white/40 line-through">{money(p.price_cents, p.currency)}</span>}
+                  <span className="font-display text-3xl font-bold tabular-nums text-white">{money(final(p.price_cents), p.currency)}</span>
                   <span className="text-sm font-semibold text-white/50">{period(p)}</span>
                 </span>
                 <span
@@ -160,7 +320,7 @@ export function SignupForm({
         </p>
       )}
 
-      <Submit pending={pending} label={chosen ? `Pagar ${money(chosen.price_cents, chosen.currency)} con Mercado Pago` : 'Pagar con Mercado Pago'} />
+      <Submit pending={pending} label={chosen ? `Pagar ${money(final(chosen.price_cents), chosen.currency)} con Mercado Pago` : 'Pagar con Mercado Pago'} />
     </form>
   )
 }

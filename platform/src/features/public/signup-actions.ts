@@ -8,7 +8,7 @@ import { createPreference, mpConfigured, publicSiteUrl } from '@/features/paymen
 
 export interface SignupState {
   error?: string
-  fieldErrors?: Partial<Record<'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'terms', string>>
+  fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'terms', string>>
 }
 
 const DB_ERRORS: Record<string, { field?: keyof NonNullable<SignupState['fieldErrors']>; text: string }> = {
@@ -22,7 +22,14 @@ const DB_ERRORS: Record<string, { field?: keyof NonNullable<SignupState['fieldEr
   ALREADY_MEMBER: {
     text: 'Ya sos socio y tenés un plan vigente. Entrá a la app con "Soy socio" y renovalo desde "Pagar", o consultá en recepción.',
   },
-  TOO_MANY_ATTEMPTS: { text: 'Hiciste muchos intentos seguidos. Probá de nuevo en un rato.' },
+  FRIEND_NOT_NEW: {
+    field: 'promo',
+    text: 'La promo "Traé a un amigo/a" es para personas nuevas en el gimnasio, y ese DNI o email ya está registrado. Podés inscribirte sin la promo.',
+  },
+  PROMO_REQUIRED: { field: 'promo', text: 'Elegí qué beneficio querés con el código de tu amigo/a.' },
+  PROMO_NOT_AVAILABLE: { field: 'promo', text: 'Ese beneficio ya no está disponible. Elegí otro.' },
+  REFERRAL_CODE_NOT_FOUND: { field: 'promo', text: 'Ese código no es válido o el socio no tiene el plan al día.' },
+    TOO_MANY_ATTEMPTS: { text: 'Hiciste muchos intentos seguidos. Probá de nuevo en un rato.' },
   SIGNUP_BUSY: { text: 'Hay muchas inscripciones en curso en este momento. Probá de nuevo en unos minutos.' },
   ORG_NOT_FOUND: { text: 'No encontramos el gimnasio.' },
 }
@@ -39,6 +46,8 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     phone: str('phone'),
     email: str('email').toLowerCase(),
     birthDate: str('birthDate'),
+    refCode: str('refCode').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    promo: str('promo'),
   }
 
   const fieldErrors: SignupState['fieldErrors'] = {}
@@ -66,6 +75,8 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
     p_phone: v.phone,
     p_document: v.document,
     p_birth_date: v.birthDate || undefined,
+    p_ref_code: v.refCode || undefined,
+    p_promo: v.refCode ? v.promo || undefined : undefined,
   })
   if (error) {
     const code = error.message.trim()

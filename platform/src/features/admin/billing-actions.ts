@@ -192,7 +192,19 @@ export async function saveRates(slug: string, _prev: ActionState, form: FormData
     if (cents > 0) inserts.push({ typeId: m[1]!, perWeek: freq(`${base}freq`), period: period(`${base}period`), cents })
     else fe[key] = 'Poné el precio de la opción nueva'
   }
-  if (Object.keys(fe).length) return { fieldErrors: fe, message: 'Revisá los precios marcados.' }
+  // Combos nuevos: varias actividades en un plan (con Musculación = entra a la sala)
+  const combos: { types: string[]; perWeek: number | null; cents: number }[] = []
+  for (const key of form.keys()) {
+    const m = /^combo__(\d+)__price$/.exec(key)
+    if (!m) continue
+    const base = `combo__${m[1]}__`
+    const types = [...new Set(form.getAll(`${base}types`).map(String))].filter((t) => typeName.has(t))
+    const cents = price(key)
+    if (types.length < 2) fe[`${base}types`] = 'Tildá al menos dos actividades'
+    if (cents <= 0) fe[key] = 'Poné el precio del combo'
+    if (types.length >= 2 && cents > 0) combos.push({ types, perWeek: freq(`${base}freq`), cents })
+  }
+  if (Object.keys(fe).length) return { fieldErrors: fe, message: 'Revisá los campos marcados.' }
 
   for (const u of updates) {
     const { error } = await supabase.from('membership_plans').update(u.row).eq('id', u.id).eq('org_id', ctx.org.id)
@@ -223,6 +235,40 @@ export async function saveRates(slug: string, _prev: ActionState, form: FormData
       .single()
     if (error) return { message: dbMessage(error) }
     const { error: e2 } = await supabase.from('plan_class_types').insert({ plan_id: data.id, class_type_id: n.typeId, org_id: ctx.org.id })
+    if (e2) return { message: dbMessage(e2) }
+  }
+  for (const c of combos) {
+    const names = c.types.map((t) => typeName.get(t)!)
+    // Musculación al final: "Híbrido + Funcional + Musculación"
+    names.sort((a, b) => Number(a === 'Musculación') - Number(b === 'Musculación') || a.localeCompare(b))
+    const gym = names.includes('Musculación')
+    const classes = names.filter((n) => n !== 'Musculación')
+    const limit = c.perWeek ? `, hasta ${c.perWeek === 1 ? '1 clase' : `${c.perWeek} clases`} por semana` : ''
+    const { data, error } = await supabase
+      .from('membership_plans')
+      .insert({
+        org_id: ctx.org.id,
+        name: names.join(' + ') + (c.perWeek ? ` (${c.perWeek}x semana)` : ''),
+        description: `Clases de ${classes.join(', ')}${gym ? ' + sala de musculación libre' : ''}${limit}`,
+        kind: 'recurring',
+        price_cents: c.cents,
+        currency: 'ARS',
+        billing_interval: 'month',
+        interval_count: 1,
+        max_members: 1,
+        max_bookings_per_week: c.perWeek,
+        booking_window_days: 14,
+        includes_open_gym: gym,
+        is_public: true,
+        active: true,
+        sort: 200,
+      })
+      .select('id')
+      .single()
+    if (error) return { message: dbMessage(error) }
+    const { error: e2 } = await supabase
+      .from('plan_class_types')
+      .insert(c.types.map((t) => ({ plan_id: data.id, class_type_id: t, org_id: ctx.org.id })))
     if (e2) return { message: dbMessage(e2) }
   }
   revalidatePath(`/${slug}/admin/pagos`, 'layout')
