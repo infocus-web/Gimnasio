@@ -34,8 +34,25 @@ async function isExclusiveStaffAccount(userId: string, orgId: string) {
   return (m.count ?? 0) === 0 && (s.count ?? 0) === 0
 }
 
-const SHARED_ACCOUNT =
-  'Esta persona usa la misma cuenta como socio o en otro gimnasio: por seguridad no se puede cambiar desde acá. Pedile que use "Olvidé mi contraseña" en /equipo.'
+/**
+ * ¿La cuenta se usa SOLO en este gimnasio (como equipo y/o como socio)?
+ * Para la contraseña alcanza con esto: si además es socio de ESTE gimnasio, la
+ * contraseña nueva le sirve igual para la app de socio. Lo que no se toca es una
+ * cuenta que también usa otro gimnasio.
+ */
+async function isThisGymOnlyAccount(userId: string, orgId: string) {
+  const admin = createAdminClient()
+  const [m, s] = await Promise.all([
+    admin.from('members').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('org_id', orgId),
+    admin.from('staff').select('id', { count: 'exact', head: true }).eq('user_id', userId).neq('org_id', orgId),
+  ])
+  if (m.error || s.error) return false
+  return (m.count ?? 0) === 0 && (s.count ?? 0) === 0
+}
+
+const OTHER_GYM_ACCOUNT =
+  'Esta persona usa la misma cuenta en otro gimnasio: por seguridad no se puede cambiar desde acá. Pedile que use "Olvidé mi contraseña" en /equipo.'
+
 
 /** Quién puede tocar a quién: nadie toca al dueño ni a sí mismo; a los admins solo el dueño */
 async function loadTarget(slug: string, staffId: string) {
@@ -127,7 +144,7 @@ export async function resetStaffPassword(slug: string, staffId: string, _prev: A
   const t = await loadTarget(slug, staffId)
   if ('error' in t) return { message: t.error }
   if (!process.env.SUPABASE_SECRET_KEY) return { message: NO_KEY }
-  if (!(await isExclusiveStaffAccount(t.target.user_id, t.ctx.org.id))) return { message: SHARED_ACCOUNT }
+  if (!(await isThisGymOnlyAccount(t.target.user_id, t.ctx.org.id))) return { message: OTHER_GYM_ACCOUNT }
   const password = generatePassword()
   const admin = createAdminClient()
   const { error } = await admin.auth.admin.updateUserById(t.target.user_id, {
