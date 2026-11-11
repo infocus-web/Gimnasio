@@ -1,6 +1,7 @@
 /**
  * Videos explicativos del panel (public/ayuda/video-N.mp4).
  * Cada pantalla abre el video que le corresponde, desde el segundo en que se explica esa parte.
+ * Los videos están acelerados 1,15× (los segundos de abajo ya están ajustados).
  */
 export interface HelpVideo {
   n: number
@@ -26,40 +27,40 @@ export const HELP_VIDEOS: Record<number, HelpVideo> = {
 const ROUTES: Record<string, [number, number]> = {
   '': [4, 0],
   '/socios': [5, 0],
-  '/socios/nuevo': [5, 22.4],
+  '/socios/nuevo': [5, 19.5],
   '/recepcion': [6, 0],
-  '/accesos': [6, 27.6],
+  '/accesos': [6, 24],
   '/pagos': [7, 0],
-  '/pagos/vender': [7, 13.8],
-  '/pagos/productos': [7, 26.8],
-  '/pagos/cierre': [7, 37.2],
-  '/pagos/ganancias': [7, 63.3],
-  '/pagos/planes': [8, 5],
-  '/pagos/deudores': [8, 30.3],
-  '/pagos/online': [8, 37.3],
+  '/pagos/vender': [7, 12],
+  '/pagos/productos': [7, 23.3],
+  '/pagos/cierre': [7, 32.3],
+  '/pagos/ganancias': [7, 55],
+  '/pagos/planes': [8, 4.3],
+  '/pagos/deudores': [8, 26.3],
+  '/pagos/online': [8, 32.4],
   '/agenda': [9, 0],
-  '/agenda/grilla': [9, 14.7],
-  '/agenda/actividades': [9, 38],
-  '/agenda/salas': [9, 46.4],
+  '/agenda/grilla': [9, 12.8],
+  '/agenda/actividades': [9, 33],
+  '/agenda/salas': [9, 40.3],
   '/mis-clases': [1, 0],
-  '/mis-clases/horarios': [2, 6.6],
-  '/mis-clases/socios': [2, 43.9],
-  '/mis-clases/mensajes': [2, 75.3],
-  '/alumnos': [3, 4],
-  '/rutinas': [3, 15.9],
-  '/maquinas': [3, 41.3],
+  '/mis-clases/horarios': [2, 5.7],
+  '/mis-clases/socios': [2, 38.2],
+  '/mis-clases/mensajes': [2, 65.5],
+  '/alumnos': [3, 3.5],
+  '/rutinas': [3, 13.8],
+  '/maquinas': [3, 35.9],
   '/comunicacion': [10, 0],
-  '/comunicacion/riesgo': [10, 27.1],
-  '/comunicacion/encuestas': [10, 38.5],
-  '/comunicacion/retos': [10, 45.1],
-  '/comunicacion/referidos': [10, 52.4],
-  '/comunicacion/reglas': [10, 52.4],
+  '/comunicacion/riesgo': [10, 23.6],
+  '/comunicacion/encuestas': [10, 33.5],
+  '/comunicacion/retos': [10, 39.2],
+  '/comunicacion/referidos': [10, 45.6],
+  '/comunicacion/reglas': [10, 45.6],
   '/comunicacion/historial': [10, 0],
   '/equipo': [11, 0],
-  '/negocio': [11, 26.1],
-  '/reportes': [11, 26.1],
-  '/web': [11, 42.2],
-  '/pases': [11, 49.5],
+  '/negocio': [11, 22.7],
+  '/reportes': [11, 22.7],
+  '/web': [11, 36.7],
+  '/pases': [11, 43],
 }
 
 const UUID = /^\/agenda\/[0-9a-f-]{36}$/i
@@ -69,7 +70,7 @@ export function helpVideoFor(pathname: string): { video: HelpVideo; start: numbe
   const m = pathname.match(/^\/[^/]+\/admin(\/.*)?$/)
   if (!m) return null
   const rest = (m[1] ?? '').replace(/\/$/, '')
-  const hit = ROUTES[rest] ?? (UUID.test(rest) ? ([1, 26.4] as [number, number]) : null)
+  const hit = ROUTES[rest] ?? (UUID.test(rest) ? ([1, 23] as [number, number]) : null)
   const video = hit ? HELP_VIDEOS[hit[0]] : undefined
   return hit && video ? { video, start: hit[1] } : null
 }
