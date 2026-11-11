@@ -24,8 +24,14 @@ export function HelpVideoButton() {
   if (!match) return null
 
   const open = () => {
+    const same = current && current.video.n === match.video.n && current.start === match.start
     setCurrent(match)
     dialog.current?.showModal()
+    // Mismo video ya cargado: vuelve a la parte de esta pantalla y sigue reproduciendo
+    if (same && player.current) {
+      player.current.currentTime = match.start
+      void player.current.play().catch(() => {})
+    }
   }
   const play = (video: HelpVideo, start: number) => setCurrent({ video, start })
 
