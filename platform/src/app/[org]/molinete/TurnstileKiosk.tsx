@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle, AlertTriangle, QrCode, SwitchCamera, Wifi, WifiO
 import { sound } from '@/utils/audio'
 import { OCCUPANCY, PASS_DENIED, type Occupancy } from '@/features/access-plus/labels'
 import { formatWindowsShort } from '@/features/access-plus/windows'
+import { BRAND } from '@/features/public/media'
 
 type Result = {
   allowed: boolean
@@ -313,7 +314,8 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   if (!started) {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
-        <p className="text-sm uppercase tracking-widest text-zinc-500">{gymName}</p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-auto w-72 max-w-[80vw]" />
         <h1 className="text-3xl font-extrabold">Entrada a musculación</h1>
         <button
           type="button"
@@ -337,7 +339,8 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   return (
     <main className="relative flex min-h-dvh flex-col bg-black text-white">
       <header className="flex items-center justify-between px-5 py-3 text-sm text-zinc-400">
-        <span className="font-semibold text-white">{gymName}</span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-9 w-auto" />
         <span className="flex items-center gap-4">
           {occupancy && occupancy.level !== 'closed' && (
             <span className="hidden items-center gap-1.5 sm:flex" aria-label="Personas en el gimnasio ahora">
