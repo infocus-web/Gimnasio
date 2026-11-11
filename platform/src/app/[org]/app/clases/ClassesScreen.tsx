@@ -24,6 +24,12 @@ export function ClassesScreen() {
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set())
   const [lateCancelMinutes, setLateCancelMinutes] = useState(DEFAULT_LATE_CANCEL_MINUTES)
   const topRef = useRef<HTMLDivElement>(null)
+  // ?clase=<id>: viene de "Anotarme" en la web → abrir esa clase
+  const [focusId, setFocusId] = useState<string | null>(null)
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('clase')
+    if (id && /^[0-9a-f-]{36}$/i.test(id)) setFocusId(id)
+  }, [])
   // Evita dobles toques sobre la misma clase mientras responde el servidor
   const pendingRef = useRef(new Set<string>())
 
@@ -206,6 +212,7 @@ export function ClassesScreen() {
         onDismissError={() => setErrorCode(null)}
         pendingSessionIds={pendingIds}
         lateCancelMinutes={lateCancelMinutes}
+        focusSessionId={focusId}
       />
     </div>
   )

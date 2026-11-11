@@ -1,4 +1,6 @@
 export interface PublicTodayClass {
+  /** id de la clase (para abrirla directo en la app) */
+  id?: string
   starts_at: string
   ends_at: string
   name: string

@@ -1,5 +1,8 @@
 import { Suspense } from 'react'
-import type { Metadata } from 'next'
+import type { Metadata, Route } from 'next'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { safeInternalPath } from '@/lib/safe-path'
 import Image from 'next/image'
 import { LoginForm } from './LoginForm'
 import { display, text } from '@/features/public/fonts'
@@ -7,7 +10,16 @@ import { WEB_MEDIA } from '@/features/public/media'
 
 export const metadata: Metadata = { title: 'Ingresar' }
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
+  // Si ya tiene la sesión abierta (ej. tocó "Anotarme" en la web), va directo a donde iba.
+  const sp = await searchParams
+  const rawNext = typeof sp.next === 'string' ? sp.next : null
+  if (rawNext) {
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getUser()
+    if (data.user) redirect(safeInternalPath(rawNext, '/evolution/app/pase') as Route)
+  }
+
   return (
     <div className={`${display.variable} ${text.variable} grid min-h-dvh bg-black font-text lg:grid-cols-2`}>
       <aside className="relative isolate hidden overflow-hidden lg:flex lg:flex-col lg:justify-end lg:p-12">

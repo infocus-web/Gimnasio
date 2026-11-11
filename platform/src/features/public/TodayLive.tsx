@@ -17,6 +17,17 @@ const LEVEL: Record<string, { label: string; dot: string }> = {
 const hhmm = (iso: string, tz: string) =>
   new Intl.DateTimeFormat('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso))
 
+/** "Anotarme" abre esa clase en la app (el login la conserva en ?next=). */
+function classHref(bookHref: string, id?: string) {
+  if (!id) return bookHref
+  const [path, query = ''] = bookHref.split('?')
+  const qs = new URLSearchParams(query)
+  const next = qs.get('next')
+  if (next === null) return `${bookHref}${query ? '&' : '?'}clase=${encodeURIComponent(id)}`
+  qs.set('next', `${next}${next.includes('?') ? '&' : '?'}clase=${encodeURIComponent(id)}`)
+  return `${path}?${qs.toString()}`
+}
+
 function spotsLabel(c: PublicTodayClass) {
   if (c.spots <= 0) return { text: 'Completa', tone: 'text-white/45' }
   if (c.spots <= Math.max(2, Math.ceil(c.capacity * 0.2))) return { text: `¡Últimos ${c.spots} lugares!`, tone: 'text-orange-400' }
@@ -145,7 +156,7 @@ export function TodayLive({
                   {!live && <p className={`mt-4 text-sm font-bold ${s.tone}`}>{s.text}</p>}
                   {!full && !live && (
                     <a
-                      href={bookHref}
+                      href={classHref(bookHref, c.id)}
                       className="mt-4 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-brand px-4 text-[15px] font-bold text-black transition-colors hover:bg-[#f5db5c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                     >
                       Anotarme <ArrowUpRight className="h-4 w-4" aria-hidden="true" />

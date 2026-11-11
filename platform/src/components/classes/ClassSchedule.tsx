@@ -46,6 +46,8 @@ export interface ClassScheduleProps {
   pendingSessionIds?: ReadonlySet<string>;
   /** Ventana de cancelación tardía del gimnasio (organizations.late_cancel_minutes). */
   lateCancelMinutes?: number;
+  /** Clase a mostrar al abrir (ej. desde "Anotarme" en la web): se elige su día, se resalta y se scrollea. */
+  focusSessionId?: string | null;
 }
 
 /** Nombre genérico del equipo a partir de las etiquetas ("Bici 12" → "bici"); si no hay patrón común, "lugar". */
@@ -101,8 +103,10 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
   onDismissError,
   pendingSessionIds,
   lateCancelMinutes = 120,
+  focusSessionId = null,
 }) => {
   const [selectedDayOffset, setSelectedDayOffset] = useState<number>(0);
+  const [focusDone, setFocusDone] = useState(false);
   const [equipmentModalSession, setEquipmentModalSession] = useState<ClassSession | null>(null);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
 
@@ -121,6 +125,20 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
   });
 
   const activeDay = days[selectedDayOffset] ?? days[0]!;
+
+  // Clase pedida por link: elegir su día una sola vez y llevar la vista hasta ella
+  const focusSession = focusSessionId ? sessions.find((s) => s.id === focusSessionId) : undefined;
+  useEffect(() => {
+    if (focusDone || !focusSession) return;
+    const key = localDateKey(new Date(focusSession.startsAt));
+    const idx = days.findIndex((d) => d.fullDateStr === key);
+    if (idx >= 0) setSelectedDayOffset(idx);
+    setFocusDone(true);
+    requestAnimationFrame(() =>
+      document.getElementById(`clase-${focusSession.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusSession, focusDone]);
 
   // Filtrar sesiones del día seleccionado
   const filteredSessions = sessions.filter((s) => {
@@ -321,7 +339,10 @@ export const ClassSchedule: React.FC<ClassScheduleProps> = ({
             return (
               <div
                 key={session.id}
-                className={`p-4 sm:p-5 rounded-3xl border transition-all ${
+                id={`clase-${session.id}`}
+                className={`scroll-mt-24 p-4 sm:p-5 rounded-3xl border transition-all ${
+                  session.id === focusSessionId && !session.myBooking ? 'ring-2 ring-[#edcc36] ring-offset-2 ring-offset-black ' : ''
+                }${
                   isBooked
                     ? 'bg-zinc-950 border-[#edcc36] shadow-[0_0_20px_rgba(237,204,54,0.15)]'
                     : isWaitlisted
