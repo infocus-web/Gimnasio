@@ -6,6 +6,7 @@ import { ExternalLink, KeyRound, Search, CalendarDays, ScanLine, UserPlus } from
 import { Wordmark } from '@/components/Wordmark'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
+import { HelpVideoButton } from '@/features/admin/HelpVideoButton'
 import { SignOutButton } from '@/features/member/SignOutButton'
 import { getStaffContext } from '@/lib/member-context'
 import { createClient } from '@/lib/supabase/server'
@@ -212,6 +213,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
           </div>
         </div>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <HelpVideoButton />
       </div>
     </div>
   )
