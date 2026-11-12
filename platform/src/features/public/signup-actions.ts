@@ -5,6 +5,131 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createPreference, mpConfigured, publicSiteUrl } from '@/features/payments/mercadopago'
+import { saveMemberPhoto } from '@/features/admin/member-files'
+import { getSignupProfile } from './signup-profile'
+
+export interface ProfileState {
+  error?: string
+  fieldErrors?: Partial<Record<'firstName' | 'lastName' | 'document' | 'phone' | 'birthDate' | 'photo' | 'terms', string>>
+}
+
+const DOC_TAKEN = 'Ese DNI ya está registrado en el gimnasio con otro email. Escribinos o acercate a recepción y lo resolvemos.'
+
+/**
+ * Paso 1 de la inscripción online: datos personales + foto de socio.
+ * Crea la ficha (estado "lead": todavía sin plan) vinculada a la cuenta logueada,
+ * o completa la que ya tenía. El plan y el pago vienen en el paso 2.
+ * Usa la clave secreta porque el socio no puede crear su ficha ni cargar su foto
+ * (ver 0027); todo queda atado a la cuenta logueada con email confirmado.
+ */
+export async function saveSignupProfile(slug: string, next: string, _prev: ProfileState, form: FormData): Promise<ProfileState> {
+  const str = (k: string) => String(form.get(k) ?? '').trim()
+  const v = {
+    firstName: str('firstName').replace(/\s+/g, ' '),
+    lastName: str('lastName').replace(/\s+/g, ' '),
+    document: str('document').replace(/\D/g, ''),
+    phone: str('phone'),
+    birthDate: str('birthDate'),
+    photo: str('photo'),
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !user.email_confirmed_at) {
+    return { error: 'Para inscribirte primero creá tu cuenta o ingresá. Recargá la página.' }
+  }
+  const email = user.email.toLowerCase()
+  const current = await getSignupProfile(slug, user.id)
+
+  const fieldErrors: ProfileState['fieldErrors'] = {}
+  if (v.firstName.length < 2 || v.firstName.length > 60) fieldErrors.firstName = 'Escribí tu nombre.'
+  if (v.lastName.length < 2 || v.lastName.length > 60) fieldErrors.lastName = 'Escribí tu apellido.'
+  if (v.document.length < 6 || v.document.length > 10) fieldErrors.document = 'Escribí tu DNI, solo números.'
+  if (v.phone.replace(/\D/g, '').length < 8 || v.phone.length > 40) fieldErrors.phone = 'Escribí tu celular con código de área.'
+  if (v.birthDate) {
+    const age = (Date.now() - new Date(`${v.birthDate}T12:00:00`).getTime()) / (365.25 * 24 * 3600 * 1000)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.birthDate) || Number.isNaN(age) || age < 12 || age > 106) {
+      fieldErrors.birthDate = 'Revisá la fecha de nacimiento.'
+    }
+  }
+  if (!v.photo && !current?.photoPath) fieldErrors.photo = 'Sacate una foto: la usamos para reconocerte en la entrada.'
+  if (form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
+  if (Object.keys(fieldErrors).length) return { fieldErrors }
+
+  if (!process.env.SUPABASE_SECRET_KEY) {
+    return { error: 'Por ahora la inscripción online no está disponible. Escribinos por WhatsApp o acercate a recepción.' }
+  }
+  const admin = createAdminClient()
+  const { data: org } = await admin.from('organizations').select('id').eq('slug', slug).maybeSingle()
+  if (!org) return { error: 'No encontramos el gimnasio.' }
+
+  const data = {
+    first_name: v.firstName,
+    last_name: v.lastName,
+    document_id: v.document,
+    phone: v.phone,
+    birth_date: v.birthDate || null,
+  }
+  let memberId = current?.memberId ?? null
+
+  if (!memberId) {
+    // ¿Recepción ya le había cargado una ficha (mismo email o DNI) sin cuenta vinculada?
+    const base = () => admin.from('members').select('id, email, document_id, user_id').eq('org_id', org.id).neq('status', 'archived')
+    const [byEmail, byDoc] = await Promise.all([
+      base().ilike('email', email.replace(/[\\%_]/g, (c) => `\\${c}`)).is('user_id', null).limit(1).maybeSingle(),
+      base().eq('document_id', v.document).limit(1).maybeSingle(),
+    ])
+    const sameEmail = byEmail.data
+    const sameDoc = byDoc.data
+    if (sameDoc && sameDoc.id !== sameEmail?.id && (sameDoc.user_id || (sameDoc.email ?? '').toLowerCase() !== email)) {
+      return { fieldErrors: { document: DOC_TAKEN } }
+    }
+    const existing = sameEmail ?? sameDoc
+    if (existing) {
+      // Ficha del gimnasio sin cuenta: se vincula a esta cuenta y se actualizan los datos
+      const { error } = await admin.from('members').update({ ...data, user_id: user.id, email }).eq('id', existing.id)
+      if (error) {
+        console.error('[inscripción · datos] vincular', error.message)
+        return error.code === '23505' ? { fieldErrors: { document: DOC_TAKEN } } : { error: 'No pudimos guardar tus datos. Probá de nuevo.' }
+      }
+      memberId = existing.id
+    } else {
+      const { data: loc } = await admin
+        .from('locations')
+        .select('id')
+        .eq('org_id', org.id)
+        .eq('active', true)
+        .order('created_at')
+        .limit(1)
+        .maybeSingle()
+      const { data: created, error } = await admin
+        .from('members')
+        .insert({ org_id: org.id, ...data, email, user_id: user.id, status: 'lead', home_location_id: loc?.id ?? null, tags: ['web'] })
+        .select('id')
+        .single()
+      if (error || !created) {
+        console.error('[inscripción · datos] alta', error?.message)
+        return error?.code === '23505' ? { fieldErrors: { document: DOC_TAKEN } } : { error: 'No pudimos guardar tus datos. Probá de nuevo.' }
+      }
+      memberId = created.id
+    }
+  } else {
+    const { error } = await admin.from('members').update(data).eq('id', memberId)
+    if (error) {
+      console.error('[inscripción · datos] actualizar', error.message)
+      return error.code === '23505' ? { fieldErrors: { document: DOC_TAKEN } } : { error: 'No pudimos guardar tus datos. Probá de nuevo.' }
+    }
+  }
+
+  if (v.photo) {
+    const photoError = await saveMemberPhoto(admin, org.id, memberId, v.photo)
+    if (photoError) return { fieldErrors: { photo: `${photoError} Probá sacarla de nuevo.` } }
+  }
+
+  redirect((next.startsWith(`/${slug}/inscripcion`) ? next : `/${slug}/inscripcion`) as Route)
+}
 
 export interface SignupState {
   error?: string
@@ -59,6 +184,16 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   }
   const email = user.email.toLowerCase()
 
+  // Paso 1 hecho: los datos salen de la ficha (el formulario del paso 2 solo trae el plan)
+  const profile = await getSignupProfile(slug, user.id)
+  if (profile?.complete) {
+    v.firstName = profile.firstName
+    v.lastName = profile.lastName
+    v.document = profile.document ?? ''
+    v.phone = profile.phone ?? ''
+    v.birthDate = profile.birthDate ?? ''
+  }
+
   const fieldErrors: SignupState['fieldErrors'] = {}
   if (!UUID.test(v.plan)) fieldErrors.plan = 'Elegí un plan.'
   if (v.firstName.length < 2) fieldErrors.firstName = 'Escribí tu nombre.'
@@ -66,7 +201,7 @@ export async function startSignup(slug: string, _prev: SignupState, form: FormDa
   if (v.document.length < 6 || v.document.length > 10) fieldErrors.document = 'Escribí tu DNI, solo números.'
   if (v.phone.replace(/\D/g, '').length < 8) fieldErrors.phone = 'Escribí tu celular con código de área.'
   if (v.birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(v.birthDate)) fieldErrors.birthDate = 'Revisá la fecha de nacimiento.'
-  if (form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
+  if (!profile?.complete && form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
   if (Object.keys(fieldErrors).length) return { fieldErrors }
 
   if (!mpConfigured() || !process.env.SUPABASE_SECRET_KEY) {

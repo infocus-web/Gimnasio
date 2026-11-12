@@ -17,6 +17,8 @@ export default async function MemberAppLayout({ children, params }: LayoutProps<
     if (ctx.error === 'NOT_A_MEMBER' && (await getStaffContext(slug))) {
       redirect(`/${slug}/admin` as Route)
     }
+    // Cuenta nueva sin ficha: directo a completar sus datos y su foto (paso 1 de la inscripción)
+    if (ctx.error === 'NOT_A_MEMBER') redirect(`/${slug}/inscripcion` as Route)
     return (
       <main className="grid min-h-dvh place-items-center p-6 text-center">
         <div className="max-w-sm space-y-3">

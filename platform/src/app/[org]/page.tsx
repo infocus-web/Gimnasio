@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
-  ArrowUpRight, AtSign, Download, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, Users, X,
+  ArrowUpRight, AtSign, Download, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, UserPlus, Users, X,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
 import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
@@ -98,7 +98,12 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <TacticalButton href={loginHref} variant="solid" size="sm" icon={QrCode}>
+            <span className="hidden sm:block">
+              <TacticalButton href={signupHref} variant="solid" size="sm" icon={UserPlus}>
+                Hacete socio
+              </TacticalButton>
+            </span>
+            <TacticalButton href={loginHref} size="sm" icon={QrCode}>
               Soy socio
             </TacticalButton>
             <details className="group relative lg:hidden">
@@ -110,6 +115,9 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                 <X className="hidden h-5 w-5 group-open:block" aria-hidden="true" />
               </summary>
               <nav aria-label="Secciones" className="absolute right-0 mt-2 w-56 rounded-lg border border-white/10 bg-[#141414] p-2 shadow-2xl">
+                <Link href={signupHref as Route} className="mb-1 block rounded-md bg-brand px-3 py-3 text-[15px] font-bold text-black">
+                  Hacete socio
+                </Link>
                 {NAV.map(([href, label]) => (
                   <a key={href} href={href} className="block rounded-md px-3 py-3 text-[15px] font-semibold text-white hover:bg-white/5 hover:text-brand">
                     {label}
@@ -152,9 +160,10 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             <div className="hero-fade mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               {p.hero_text && <p className="max-w-md text-lg leading-relaxed text-white/80">{p.hero_text}</p>}
               <div className="flex flex-col gap-3 sm:flex-row">
-                <TacticalButton href="#planes" variant="solid">
-                  Ver planes y precios
+                <TacticalButton href={signupHref} variant="solid" icon={UserPlus}>
+                  Hacete socio
                 </TacticalButton>
+                <TacticalButton href="#planes">Ver planes y precios</TacticalButton>
                 <TacticalButton href={contactHref} newTab={!!whatsapp} icon={MessageCircle}>
                   Consultar
                 </TacticalButton>

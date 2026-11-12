@@ -233,6 +233,7 @@ export function SignupForm({
   slug,
   initialReferral,
   accountEmail,
+  profileDone = false,
 }: {
   action: (prev: SignupState, form: FormData) => Promise<SignupState>
   plans: SignupPlan[]
@@ -241,6 +242,8 @@ export function SignupForm({
   initialReferral: ReferralInfo | null
   /** Email de la cuenta con la que entró (la inscripción queda a nombre de esa cuenta) */
   accountEmail: string
+  /** Ya completó sus datos y su foto (paso 1): acá solo elige el plan y paga */
+  profileDone?: boolean
 }) {
   const [state, submit, pending] = useActionState(action, {})
   const [plan, setPlan] = useState(initialPlan)
@@ -265,7 +268,7 @@ export function SignupForm({
       <FriendBox slug={slug} referral={referral} setReferral={setReferral} promo={promo} setPromo={setPromo} error={fe.promo} />
 
       <fieldset>
-        <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">1. Elegí tu plan</legend>
+        <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">{profileDone ? 'Elegí tu plan' : '1. Elegí tu plan'}</legend>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {plans.map((p) => {
             const on = p.id === plan
@@ -297,28 +300,41 @@ export function SignupForm({
         {fe.plan && <p className="mt-2 text-sm text-red-300">{fe.plan}</p>}
       </fieldset>
 
-      <fieldset className="space-y-4">
-        <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">2. Tus datos</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nombre" name="firstName" autoComplete="given-name" maxLength={60} required error={fe.firstName} />
-          <Field label="Apellido" name="lastName" autoComplete="family-name" maxLength={60} required error={fe.lastName} />
-          <Field label="DNI" name="document" inputMode="numeric" maxLength={12} required error={fe.document} hint="Solo números. Con el DNI te identificamos en recepción." />
-          <Field label="Fecha de nacimiento (opcional)" name="birthDate" type="date" error={fe.birthDate} />
-          <Field label="Celular" name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={40} required placeholder="11 2345-6789" error={fe.phone} />
-        </div>
-        <p className="text-sm text-white/55">
-          Tu cuenta: <strong className="text-white/85">{accountEmail}</strong>. Con este email y tu contraseña entrás a la app.
-        </p>
-        {fe.email && <p className="text-sm text-red-300">{fe.email}</p>}
-      </fieldset>
+      {!profileDone && (
+        <>
+        <fieldset className="space-y-4">
+          <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">2. Tus datos</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nombre" name="firstName" autoComplete="given-name" maxLength={60} required error={fe.firstName} />
+            <Field label="Apellido" name="lastName" autoComplete="family-name" maxLength={60} required error={fe.lastName} />
+            <Field label="DNI" name="document" inputMode="numeric" maxLength={12} required error={fe.document} hint="Solo números. Con el DNI te identificamos en recepción." />
+            <Field label="Fecha de nacimiento (opcional)" name="birthDate" type="date" error={fe.birthDate} />
+            <Field label="Celular" name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength={40} required placeholder="11 2345-6789" error={fe.phone} />
+          </div>
+          <p className="text-sm text-white/55">
+            Tu cuenta: <strong className="text-white/85">{accountEmail}</strong>. Con este email y tu contraseña entrás a la app.
+          </p>
+          {fe.email && <p className="text-sm text-red-300">{fe.email}</p>}
+        </fieldset>
 
-      <div>
-        <label className="flex cursor-pointer items-start gap-3 text-[15px] text-white/75">
-          <input type="checkbox" name="terms" className="mt-0.5 h-5 w-5 shrink-0 accent-[#edcc36]" />
-          Declaro estar en condiciones de salud para hacer actividad física y me comprometo a presentar el apto médico en recepción.
-        </label>
-        {fe.terms && <p className="mt-1.5 pl-8 text-sm text-red-300">{fe.terms}</p>}
-      </div>
+        <div>
+          <label className="flex cursor-pointer items-start gap-3 text-[15px] text-white/75">
+            <input type="checkbox" name="terms" className="mt-0.5 h-5 w-5 shrink-0 accent-[#edcc36]" />
+            Declaro estar en condiciones de salud para hacer actividad física y me comprometo a presentar el apto médico en recepción.
+          </label>
+          {fe.terms && <p className="mt-1.5 pl-8 text-sm text-red-300">{fe.terms}</p>}
+        </div>
+        </>
+      )}
+
+      {profileDone && (fe.firstName || fe.lastName || fe.document || fe.phone || fe.birthDate || fe.email) && (
+        <p role="alert" className="rounded-md border border-red-400/40 bg-red-950/60 px-4 py-3 text-red-100">
+          {fe.document ?? fe.phone ?? fe.firstName ?? fe.lastName ?? fe.birthDate ?? fe.email}{' '}
+          <a href="?datos=1" className="font-semibold underline">
+            Corregir mis datos
+          </a>
+        </p>
+      )}
 
       {state.error && (
         <p role="alert" className="rounded-md border border-red-400/40 bg-red-950/60 px-4 py-3 text-red-100">

@@ -25,10 +25,13 @@ export function WebcamCapture({
   name = 'photo',
   current,
   autoStart = true,
+  selfie = false,
 }: {
   name?: string
   current?: string | null
   autoStart?: boolean
+  /** El propio socio desde su celular (textos en segunda persona) */
+  selfie?: boolean
 }) {
   const video = useRef<HTMLVideoElement | null>(null)
   const stream = useRef<MediaStream | null>(null)
@@ -61,10 +64,14 @@ export function WebcamCapture({
       setOn(true)
       setPhoto(null)
     } catch {
-      setError('No se pudo abrir la cámara. Revisá que esté conectada y que el navegador tenga permiso (ícono de cámara en la barra de direcciones). También podés subir una foto.')
+      setError(
+        selfie
+          ? 'No pudimos abrir la cámara. Tocá "Permitir" cuando el navegador te pregunte, o elegí una foto de tu galería.'
+          : 'No se pudo abrir la cámara. Revisá que esté conectada y que el navegador tenga permiso (ícono de cámara en la barra de direcciones). También podés subir una foto.',
+      )
       setOn(false)
     }
-  }, [])
+  }, [selfie])
 
   // El <video> aparece después de setOn(true): ahí se le conecta la cámara
   useEffect(() => {
@@ -116,7 +123,7 @@ export function WebcamCapture({
           <video ref={video} playsInline muted className="h-full w-full scale-x-[-1] object-cover" />
         ) : shown ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={shown} alt="Foto del socio" className="h-full w-full object-cover" />
+          <img src={shown} alt={selfie ? 'Tu foto' : 'Foto del socio'} className="h-full w-full object-cover" />
         ) : (
           <div className="grid h-full w-full place-items-center text-zinc-600">
             <VideoOff className="h-10 w-10" aria-hidden="true" />
@@ -139,15 +146,17 @@ export function WebcamCapture({
             className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200"
           >
             {photo || current ? <RefreshCw className="h-4 w-4" aria-hidden="true" /> : <Camera className="h-4 w-4" aria-hidden="true" />}
-            {photo || current ? 'Sacar otra' : 'Abrir cámara'}
+            {photo || current ? 'Sacar otra' : selfie ? 'Sacarme la foto' : 'Abrir cámara'}
           </button>
         )}
         <label className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200">
-          <Upload className="h-4 w-4" aria-hidden="true" /> Subir foto
+          <Upload className="h-4 w-4" aria-hidden="true" /> {selfie ? 'Elegir de la galería' : 'Subir foto'}
           <input type="file" accept="image/*" className="sr-only" onChange={(e) => fromFile(e.target.files?.[0])} />
         </label>
       </div>
-      {photo && <p className="text-center text-xs text-emerald-300">Foto lista: se guarda con el socio.</p>}
+      {photo && (
+        <p className="text-center text-xs text-emerald-300">{selfie ? '¡Buena foto! Si no te convence, sacá otra.' : 'Foto lista: se guarda con el socio.'}</p>
+      )}
       {error && <p role="alert" className="text-center text-xs text-amber-300">{error}</p>}
     </div>
   )
