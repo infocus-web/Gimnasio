@@ -1645,6 +1645,33 @@ export type Database = {
           },
         ]
       }
+      kiosk_slides: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_path: string
+          org_id: string
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path: string
+          org_id: string
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_path?: string
+          org_id?: string
+          sort?: number
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           active: boolean

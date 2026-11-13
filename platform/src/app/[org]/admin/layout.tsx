@@ -86,6 +86,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
     ...(ctx.can('checkins.manage') ? [{ href: `${base}/pases`, label: 'Pases e invitados', icon: 'ticket' } as const] : []),
     ...(ctx.staff.role === 'trainer' || ctx.can('training.manage_all') ? [{ href: `${base}/maquinas`, label: 'Máquinas', icon: 'qr' } as const] : []),
     ...(ctx.can('org.manage') ? [{ href: `${base}/accesos`, label: 'Accesos', icon: 'door' } as const] : []),
+    ...(ctx.can('org.manage') ? [{ href: `${base}/pantalla-molinete`, label: 'Pantalla del molinete', icon: 'images' } as const] : []),
     ...(ctx.can('org.manage') ? [{ href: `${base}/web`, label: 'Web', icon: 'web' } as const] : []),
   ]
 

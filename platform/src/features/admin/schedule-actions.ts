@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminContext } from './context'
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
+import { WEEKDAYS } from './format'
 
 async function guard(slug: string, perm: 'schedule.manage' | 'bookings.manage' = 'schedule.manage') {
   const ctx = await getAdminContext(slug)
@@ -25,6 +26,15 @@ function done(slug: string, message: string): ActionState {
   revalidatePath(`/${slug}/admin/mis-clases`, 'layout')
   revalidatePath(`/${slug}`)
   return { ok: true, message }
+}
+
+/** Días tildados en el formulario (1 = lunes … 7 = domingo), sin repetir y en orden */
+function weekdaysOf(form: FormData): number[] {
+  const days = form
+    .getAll('weekday')
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n >= 1 && n <= 7)
+  return [...new Set(days)].sort((a, b) => a - b)
 }
 
 function issues(err: z.ZodError): ActionState {
@@ -107,26 +117,32 @@ const seriesSchema = z.object({
 export async function createSeries(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await guard(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
-  const parsed = seriesSchema.safeParse(formObject(form))
+  const days = weekdaysOf(form)
+  if (!days.length) return { fieldErrors: { weekday: 'Elegí al menos un día' } }
+  const parsed = seriesSchema.safeParse({ ...formObject(form), weekday: days[0] })
   if (!parsed.success) return issues(parsed.error)
   const s = parsed.data
   const supabase = await createClient()
-  const { error } = await supabase.from('class_series').insert({
-    org_id: ctx.org.id,
-    class_type_id: s.classTypeId,
-    room_id: s.roomId,
-    instructor_id: s.instructorId,
-    weekday: s.weekday,
-    start_time: s.startTime,
-    duration_min: s.durationMin,
-    capacity: s.capacity,
-    ...(s.validFrom ? { valid_from: s.validFrom } : {}),
-  })
+  // Misma clase en varios días: un horario fijo por cada día tildado
+  const { error } = await supabase.from('class_series').insert(
+    days.map((weekday) => ({
+      org_id: ctx.org.id,
+      class_type_id: s.classTypeId,
+      room_id: s.roomId,
+      instructor_id: s.instructorId,
+      weekday,
+      start_time: s.startTime,
+      duration_min: s.durationMin,
+      capacity: s.capacity,
+      ...(s.validFrom ? { valid_from: s.validFrom } : {}),
+    })),
+  )
   if (error) return { message: dbMessage(error) }
   const gen = await supabase.rpc('generate_sessions', { p_org: ctx.org.id, p_weeks: 4 })
   const r = (gen.data ?? { created: 0, skipped: 0 }) as { created: number; skipped: number }
   const warn = r.skipped ? ` Atención: ${r.skipped} fechas chocan con otra clase (misma sala o profe) y no se crearon.` : ''
-  return done(slug, `Horario agregado. Se crearon ${r.created} clases.${warn}`)
+  const label = days.length > 1 ? `${days.length} horarios agregados (${days.map((d) => WEEKDAYS[d - 1]).join(', ')})` : 'Horario agregado'
+  return done(slug, `${label}. Se crearon ${r.created} clases.${warn}`)
 }
 
 export async function updateSeries(slug: string, seriesId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
@@ -304,24 +320,40 @@ const ownSeriesSchema = z.object({
 export async function createSeriesRpc(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await classGuard(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
-  const parsed = ownSeriesSchema.safeParse(formObject(form))
+  const days = weekdaysOf(form)
+  if (!days.length) return { fieldErrors: { weekday: 'Elegí al menos un día' } }
+  const parsed = ownSeriesSchema.safeParse({ ...formObject(form), weekday: days[0] })
   if (!parsed.success) return issues(parsed.error)
   const s = parsed.data
   const supabase = await createClient()
-  const { data, error } = await supabase.rpc('create_series', {
-    p_org: ctx.org.id,
-    p_class_type: s.classTypeId,
-    p_room: s.roomId,
-    p_weekday: s.weekday,
-    p_start_time: s.startTime,
-    p_duration_min: s.durationMin,
-    p_capacity: s.capacity,
-    ...(s.validFrom ? { p_valid_from: s.validFrom } : {}),
-    ...(s.instructorId && ctx.can('schedule.manage') ? { p_instructor: s.instructorId } : {}),
-  })
-  if (error) return { message: dbMessage(error) }
-  const r = (data ?? {}) as { created?: number }
-  return done(slug, `Horario agregado. Se crearon ${r.created ?? 0} clases de las próximas 4 semanas.`)
+  // Misma clase en varios días: se crea un horario fijo por cada día tildado.
+  // Cada día se valida por separado (sala o profe ocupados): los que chocan se informan y el resto se crea igual.
+  let created = 0
+  const ok: string[] = []
+  const failed: string[] = []
+  for (const weekday of days) {
+    const { data, error } = await supabase.rpc('create_series', {
+      p_org: ctx.org.id,
+      p_class_type: s.classTypeId,
+      p_room: s.roomId,
+      p_weekday: weekday,
+      p_start_time: s.startTime,
+      p_duration_min: s.durationMin,
+      p_capacity: s.capacity,
+      ...(s.validFrom ? { p_valid_from: s.validFrom } : {}),
+      ...(s.instructorId && ctx.can('schedule.manage') ? { p_instructor: s.instructorId } : {}),
+    })
+    if (error) {
+      failed.push(`${WEEKDAYS[weekday - 1]}: ${dbMessage(error) ?? 'no se pudo agregar'}`)
+      continue
+    }
+    ok.push(WEEKDAYS[weekday - 1]!)
+    created += (data as { created?: number } | null)?.created ?? 0
+  }
+  if (!ok.length) return { message: failed.join(' · ') }
+  const label = ok.length > 1 ? `Horarios agregados: ${ok.join(', ')}` : `Horario agregado (${ok[0]})`
+  const warn = failed.length ? ` No se agregaron: ${failed.join(' · ')}.` : ''
+  return done(slug, `${label}. Se crearon ${created} clases de las próximas 4 semanas.${warn}`)
 }
 
 const seriesEditSchema = z.object({

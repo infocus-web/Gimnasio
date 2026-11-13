@@ -15,5 +15,5 @@ export default async function TurnstilePage({ params }: PageProps<'/[org]/moline
   const { org: slug } = await params
   const gym = await getPublicGym(slug)
   if (!gym) notFound()
-  return <TurnstileKiosk gymName={gym.name} storageKey={`molinete:${slug}`} />
+  return <TurnstileKiosk gymName={gym.name} storageKey={`molinete:${slug}`} slug={slug} />
 }

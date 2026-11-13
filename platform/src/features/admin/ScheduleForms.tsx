@@ -229,15 +229,27 @@ export function SeriesForm({
             ))}
           </select>
         </Field>
-        <Field label="Día" name="weekday">
-          <select id="weekday" name="weekday" defaultValue="1" className={inputClass}>
+        <fieldset className="sm:col-span-2 lg:col-span-4" aria-describedby={err.weekday ? 'weekday-error' : undefined}>
+          <legend className="mb-1.5 text-xs font-medium text-zinc-400">
+            Días <span className="text-zinc-500">(tildá todos los días en que se da esta clase)</span>
+          </legend>
+          <div className="flex flex-wrap gap-2">
             {WEEKDAYS.map((d, i) => (
-              <option key={d} value={i + 1}>
+              <label
+                key={d}
+                className="flex min-h-[44px] cursor-pointer select-none items-center gap-2 rounded-xl border border-zinc-700 px-3 text-sm text-zinc-200 has-[:checked]:border-[#edcc36] has-[:checked]:bg-[#edcc36]/10 has-[:checked]:text-white"
+              >
+                <input type="checkbox" name="weekday" value={i + 1} defaultChecked={i === 0} className="h-4 w-4 accent-[#edcc36]" />
                 {d}
-              </option>
+              </label>
             ))}
-          </select>
-        </Field>
+          </div>
+          {err.weekday && (
+            <p id="weekday-error" role="alert" className="mt-1 text-xs text-red-300">
+              {err.weekday}
+            </p>
+          )}
+        </fieldset>
         <Field label="Hora" name="startTime" error={err.startTime}>
           <input id="startTime" name="startTime" type="time" defaultValue="18:00" className={inputClass} />
         </Field>

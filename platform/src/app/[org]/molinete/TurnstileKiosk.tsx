@@ -57,7 +57,9 @@ const MOTION_W = 40
 const MOTION_H = 30
 const MOTION_PIXEL_DIFF = 28 // cuánto tiene que cambiar un punto para contar como movimiento (0-255)
 const MOTION_SHARE = 0.05 // qué parte de la imagen tiene que cambiar (5 %)
+/** Si el gimnasio no cargó publicidad (Panel → Pantalla del molinete), pasan las fotos de la web */
 const AD_SLIDES = [WEB_MEDIA.app, ...WEB_MEDIA.gallery, WEB_MEDIA.cta]
+const SLIDES_REFRESH_MS = 5 * 60_000
 const AD_SLIDE_MS = 7000
 
 // La clave de la tablet se guarda en DOS lugares (almacenamiento del navegador + cookie de 1 año):
@@ -156,7 +158,7 @@ async function call(k: string, qr: string | null, unlock?: number): Promise<Resp
   return (await res.json()) as Resp
 }
 
-export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; storageKey: string }) {
+export function TurnstileKiosk({ gymName, storageKey, slug }: { gymName: string; storageKey: string; slug: string }) {
   const [token, setToken] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [started, setStarted] = useState(false)
@@ -176,6 +178,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const camera = useRef<Promise<unknown>>(Promise.resolve())
   const scanSeq = useRef(0)
   const [idle, setIdle] = useState(false)
+  const [slides, setSlides] = useState<string[]>([])
   const lastActivity = useRef(Date.now())
   const wake = useCallback(() => {
     lastActivity.current = Date.now()
@@ -425,6 +428,30 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
     return () => clearInterval(t)
   }, [started, token, wake])
 
+  // Publicidad cargada desde el panel: se lee al abrir y cada 5 minutos (los cambios llegan solos)
+  useEffect(() => {
+    let stop = false
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/access/turnstile/slides?org=${encodeURIComponent(slug)}`, { cache: 'no-store' })
+        if (!r.ok) return
+        const j = (await r.json()) as { slides?: string[] }
+        if (stop || !Array.isArray(j.slides)) return
+        // Se precargan para que el cambio de imagen no muestre un hueco negro
+        for (const u of j.slides) new window.Image().src = u
+        setSlides((prev) => (prev.join('|') === j.slides!.join('|') ? prev : j.slides!))
+      } catch {
+        /* sin conexión: sigue con las que tenía */
+      }
+    }
+    load()
+    const t = setInterval(load, SLIDES_REFRESH_MS)
+    return () => {
+      stop = true
+      clearInterval(t)
+    }
+  }, [slug])
+
   // Sin movimiento ni uso durante un rato: vuelve la publicidad
   useEffect(() => {
     if (!started || !token) return
@@ -522,7 +549,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
         </div>
       </section>
 
-      {idle && !result && <IdleScreen gymName={gymName} />}
+      {idle && !result && <IdleScreen gymName={gymName} slides={slides.length ? slides : AD_SLIDES} />}
 
       {result && (
         <div
@@ -565,15 +592,17 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
  * Pantalla de espera: publicidad del gimnasio mientras nadie usa el molinete.
  * La cámara sigue prendida detrás: detecta movimiento y también lee un QR directo.
  */
-function IdleScreen({ gymName }: { gymName: string }) {
+function IdleScreen({ gymName, slides }: { gymName: string; slides: readonly string[] }) {
   const [i, setI] = useState(0)
   useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % AD_SLIDES.length), AD_SLIDE_MS)
+    setI(0)
+    if (slides.length < 2) return
+    const t = setInterval(() => setI((n) => (n + 1) % slides.length), AD_SLIDE_MS)
     return () => clearInterval(t)
-  }, [])
+  }, [slides])
   return (
     <div className="absolute inset-0 z-10 overflow-hidden bg-black">
-      {AD_SLIDES.map((src, n) => (
+      {slides.map((src, n) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={src}

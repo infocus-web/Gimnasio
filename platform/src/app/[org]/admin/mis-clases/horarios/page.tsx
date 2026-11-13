@@ -48,7 +48,7 @@ export default async function MyScheduleGridPage({ params }: PageProps<'/[org]/a
           <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-[#edcc36]">
             <Plus className="h-4 w-4" aria-hidden="true" /> Agregar un horario
             <InfoTip label="Agregar un horario">
-              <p>Crea una clase tuya que <strong>se repite todas las semanas</strong> el mismo día y hora (ej. Funcional, martes 19 h), con su sala y cupo.</p>
+              <p>Crea una clase tuya que <strong>se repite todas las semanas</strong> (ej. Funcional 19 h), con su sala y cupo. Si la das varios días, tildalos todos juntos (ej. lunes, miércoles y viernes).</p>
               <p>No deja cargarla si la sala o vos ya tienen otra clase en ese horario.</p>
             </InfoTip>
           </summary>
