@@ -11,7 +11,7 @@ export interface MembershipBannerProps {
   isLoading?: boolean;
 }
 
-/** Resumen del plan del socio. Pago en recepción, u online si el gimnasio conectó Mercado Pago (PayPlanButton). */
+/** Resumen del plan del socio. Pago principal online con Mercado Pago; alternativa: recepción (PayPlanButton). */
 export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, isLoading = false }) => {
   if (isLoading) {
     return <div className="w-full max-w-2xl mx-auto h-20 rounded-3xl bg-zinc-950 border border-zinc-800 animate-pulse" />;
@@ -29,7 +29,7 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, 
         <div className="space-y-0.5">
           <h3 className="font-cyber font-bold text-white text-base">Sin plan activo</h3>
           <p className="text-sm text-zinc-400 leading-snug">{status.message}</p>
-          <PayPlanButton label="Elegir y pagar un plan" />
+          <PayPlanButton label="Elegir mi plan y pagar con Mercado Pago" />
         </div>
       </div>
     );
@@ -92,8 +92,7 @@ export const MembershipBanner: React.FC<MembershipBannerProps> = ({ membership, 
             </span>
           )}
         </div>
-        <p className="text-[11px] text-zinc-500 mt-1">Las cuotas se abonan en recepción: efectivo, transferencia o tarjeta.</p>
-        <PayPlanButton label="Renovar online" />
+        <PayPlanButton label="Renovar con Mercado Pago" />
       </div>
     </div>
   );

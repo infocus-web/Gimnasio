@@ -21,15 +21,13 @@ export interface PassStatus {
   message: string;
 }
 
-const RECEPTION_PAYMENT = 'Se abona en recepción: efectivo, transferencia o tarjeta.';
-
 /** Única fuente de verdad: estado de la membresía → lo que ve el socio en el pase y el banner. */
 export function getPassStatus(m: MembershipSummary | null | undefined): PassStatus {
   if (isNoMembership(m)) {
     return {
       kind: 'none',
       label: 'SIN PLAN',
-      message: 'No tenés un plan activo. Acercate a recepción para inscribirte.',
+      message: 'Todavía no tenés un plan activo. Elegí uno para empezar a entrenar.',
     };
   }
   switch (m!.status) {
@@ -41,7 +39,7 @@ export function getPassStatus(m: MembershipSummary | null | undefined): PassStat
       return {
         kind: 'blocked',
         label: 'PAGO PENDIENTE',
-        message: `Tenés una cuota pendiente. Regularizala para volver a ingresar y reservar clases. ${RECEPTION_PAYMENT}`,
+        message: 'Tenés una cuota pendiente. Regularizala para volver a ingresar y reservar clases.',
       };
     case 'paused':
       return {
@@ -55,7 +53,7 @@ export function getPassStatus(m: MembershipSummary | null | undefined): PassStat
       return {
         kind: 'blocked',
         label: 'VENCIDO',
-        message: `Tu plan venció. Renovalo para volver a ingresar. ${RECEPTION_PAYMENT}`,
+        message: 'Tu plan venció. Renovalo para volver a ingresar.',
       };
   }
 }

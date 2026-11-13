@@ -88,9 +88,14 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
       .select('access_pin, biometric_consent_at, photo_url, medical_cert_path, medical_cert_uploaded_at, medical_cert_expires_on')
       .eq('id', memberId)
       .maybeSingle(),
-    supabase.from('access_devices').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('created_at'),
+    supabase.from('access_devices').select('id, name, info').eq('org_id', ctx.org.id).eq('active', true).order('created_at'),
   ])
   const accessPin = pinRow?.access_pin ?? null
+  // Lectores manejados por el intermediario de la PC (ej. MB360): no aceptan el registro de cara a distancia
+  const agentMode = (d: { info: unknown }) =>
+    ((d.info as { agent?: { mode?: string } } | null)?.agent?.mode ?? null) as 'lectura' | 'sincronizar' | null
+  const localDevices = (accessDevices ?? []).filter((d) => agentMode(d))
+  const remoteDevices = (accessDevices ?? []).filter((d) => !agentMode(d))
   // Foto y apto físico: archivos privados, se muestran con links que vencen en 10 minutos
   const [photoSrc, certUrl] = await Promise.all([
     signedUrl(supabase, pinRow?.photo_url),
@@ -98,7 +103,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   ])
   const certExpires = pinRow?.medical_cert_expires_on ?? null
   const certExpired = !!certExpires && certExpires < todayYMD(ctx.org.timezone)
-  const [{ data: onDevices }, { data: lastEnroll }] =
+  const [{ data: onDevices }, { data: lastEnroll }, { data: pendingPuts }] =
     accessPin && accessDevices?.length
       ? await Promise.all([
           supabase.from('access_device_users').select('device_id, state, has_bio').eq('org_id', ctx.org.id).eq('pin', accessPin),
@@ -110,8 +115,10 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
+          // Altas que el intermediario todavía no hizo (en modo "lectura" no las hace nunca)
+          supabase.from('access_commands').select('device_id').eq('member_id', memberId).eq('kind', 'user_put').eq('status', 'pending'),
         ])
-      : [{ data: [] as { device_id: string; state: string; has_bio: boolean }[] }, { data: null }]
+      : [{ data: [] as { device_id: string; state: string; has_bio: boolean }[] }, { data: null }, { data: [] as { device_id: string }[] }]
 
   const st = PLAN_STATE_UI[planState(m as { membership_status: string | null; current_period_end: string | null; status: string })]
   const payer = (family.data ?? []).find((f) => f.is_payer)
@@ -338,7 +345,11 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                 {accessDevices.map((d) => {
                   const u = (onDevices ?? []).find((x) => x.device_id === d.id)
                   const label =
-                    !u || u.state === 'absent'
+                    agentMode(d) && (!u || u.state !== 'present' || (pendingPuts ?? []).some((x) => x.device_id === d.id))
+                      ? ['Falta darlo de alta en el lector', 'text-amber-300']
+                      : agentMode(d)
+                        ? ['Está en el lector (la cara se registra en el equipo)', 'text-emerald-300']
+                        : !u || u.state === 'absent'
                       ? ['No cargado (no está al día)', 'text-zinc-500']
                       : u.state === 'error'
                         ? ['El lector rechazó el alta', 'text-red-300']
@@ -358,9 +369,39 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                   El lector no aceptó el registro a distancia: registralo desde el lector (Menú → Usuarios → buscar {accessPin} → Cara).
                 </p>
               )}
-              {ctx.can('checkins.manage') && (
+              {localDevices.length > 0 && (
+                <div className="mt-3 space-y-2 border-t border-zinc-900 pt-3 text-sm text-zinc-300">
+                  <p className="font-semibold text-white">Registrar la cara en el lector ({localDevices.map((d) => d.name).join(', ')})</p>
+                  <p className="text-xs text-zinc-400">Este lector registra la cara en el propio equipo (no se puede hacer a distancia):</p>
+                  <ol className="list-decimal space-y-1 pl-5">
+                    {localDevices.some(
+                      (d) =>
+                        !(onDevices ?? []).some((x) => x.device_id === d.id && x.state === 'present') ||
+                        (pendingPuts ?? []).some((x) => x.device_id === d.id),
+                    ) ? (
+                      <>
+                        <li>
+                          En el lector: <strong>Menú → Usuarios → Nuevo usuario</strong>.
+                        </li>
+                        <li>
+                          N° de usuario (ID): <strong className="font-mono text-white">{accessPin}</strong> · Nombre: {m.first_name} {m.last_name}.
+                        </li>
+                      </>
+                    ) : (
+                      <li>
+                        En el lector: <strong>Menú → Usuarios</strong> → buscar <strong className="font-mono text-white">{accessPin}</strong>.
+                      </li>
+                    )}
+                    <li>
+                      Tocá <strong>Cara</strong>, que el socio mire la pantalla del lector, y <strong>Guardar</strong>.
+                    </li>
+                  </ol>
+                  <p className="text-xs text-zinc-500">En 1 o 2 minutos el intermediario lo informa y acá pasa a “Cargado · puede entrar”.</p>
+                </div>
+              )}
+              {ctx.can('checkins.manage') && remoteDevices.length > 0 && (
                 <div className="mt-3 border-t border-zinc-900 pt-3">
-                  <EnrollForm action={enrollMember.bind(null, slug, memberId)} devices={accessDevices} />
+                  <EnrollForm action={enrollMember.bind(null, slug, memberId)} devices={remoteDevices} />
                 </div>
               )}
             </Card>
