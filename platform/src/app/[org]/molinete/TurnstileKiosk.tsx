@@ -51,7 +51,7 @@ function deniedText(r: Result) {
 const SAME_QR_IGNORE_MS = 60_000
 
 // Modo espera: sin movimiento frente a la cámara durante este tiempo se muestra la publicidad
-const IDLE_MS = 20_000
+const IDLE_MS = 10_000
 // Sensibilidad del detector de movimiento (la cámara hace de sensor: compara imágenes chiquitas)
 const MOTION_W = 40
 const MOTION_H = 30
