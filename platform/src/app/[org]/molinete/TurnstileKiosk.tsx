@@ -48,19 +48,45 @@ function deniedText(r: Result) {
 }
 const SAME_QR_IGNORE_MS = 60_000
 
+// La clave de la tablet se guarda en DOS lugares (almacenamiento del navegador + cookie de 1 año):
+// si Chrome limpia uno de los dos (ahorro de espacio, actualización), la tablet sigue vinculada.
+const cookieName = (key: string) => `k_${key.replace(/[^a-z0-9]/gi, '_')}`
+function readCookie(key: string) {
+  const m = document.cookie.match(new RegExp(`(?:^|; )${cookieName(key)}=([^;]*)`))
+  return m ? decodeURIComponent(m[1]) : null
+}
+function writeCookie(key: string, value: string | null) {
+  const base = `${cookieName(key)}=${value ? encodeURIComponent(value) : ''}; path=/; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`
+  document.cookie = value ? `${base}; max-age=31536000` : `${base}; max-age=0`
+}
 function load(key: string) {
+  let v: string | null = null
   try {
-    return window.localStorage.getItem(key)
+    v = window.localStorage.getItem(key)
   } catch {
-    return null
+    /* sin almacenamiento */
   }
+  if (!v) {
+    try {
+      v = readCookie(key)
+      if (v) window.localStorage.setItem(key, v) // se recupera del respaldo
+    } catch {
+      /* nada */
+    }
+  }
+  return v
 }
 function save(key: string, value: string | null) {
   try {
     if (value) window.localStorage.setItem(key, value)
     else window.localStorage.removeItem(key)
   } catch {
-    /* sin almacenamiento: la tablet tendrá que abrir el link otra vez */
+    /* sin almacenamiento: queda la cookie */
+  }
+  try {
+    writeCookie(key, value)
+  } catch {
+    /* sin cookies */
   }
 }
 
@@ -105,7 +131,10 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
       save(storageKey, fromHash)
       window.history.replaceState(null, '', window.location.pathname)
     }
-    setToken(fromHash ?? load(storageKey))
+    const k = fromHash ?? load(storageKey)
+    if (k) save(storageKey, k) // deja también el respaldo en cookie
+    if (load(`${storageKey}:started`)) save(`${storageKey}:started`, '1')
+    setToken(k)
     // Tablet fija: si ya se inició alguna vez, después de un corte de luz o reinicio arranca sola
     if (load(`${storageKey}:started`)) setStarted(true)
     setReady(true)
@@ -300,14 +329,13 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
 
   if (!token) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-black p-6 text-center text-white">
-        <QrCode className="h-16 w-16 text-[#edcc36]" aria-hidden="true" />
-        <h1 className="text-2xl font-extrabold">Tablet sin vincular</h1>
-        <p className="max-w-md text-zinc-400">
-          En una computadora entrá a Panel → Accesos → ficha del lector → <strong className="text-white">Vincular tablet del molinete</strong> y
-          abrí en esta tablet el link (o escaneá el código) que aparece.
-        </p>
-      </main>
+      <PairScreen
+        slug={storageKey.replace(/^molinete:/, '')}
+        onPaired={(k) => {
+          save(storageKey, k)
+          setToken(k)
+        }}
+      />
     )
   }
 
@@ -413,6 +441,83 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
           </p>
         </div>
       )}
+    </main>
+  )
+}
+
+/** Tablet sin vincular: se vincula escribiendo el código de 6 números que muestra el panel (Accesos). */
+function PairScreen({ slug, onPaired }: { slug: string; onPaired: (token: string) => void }) {
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const submit = async () => {
+    if (code.length !== 6 || busy) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      const res = await fetch('/api/access/turnstile/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, code }),
+        cache: 'no-store',
+      })
+      const r = (await res.json()) as { status?: string; token?: string }
+      if (r.status === 'ok' && r.token) return onPaired(r.token)
+      setMsg('Ese código no sirve o ya venció. Generá uno nuevo en el panel.')
+      setCode('')
+    } catch {
+      setMsg('Sin conexión a internet. Revisá el wifi de la tablet y probá de nuevo.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const press = (d: string) => setCode((c) => (d === '<' ? c.slice(0, -1) : c.length < 6 ? c + d : c))
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-black p-6 text-center text-white">
+      <QrCode className="h-14 w-14 text-[#edcc36]" aria-hidden="true" />
+      <h1 className="text-2xl font-extrabold">Vincular la tablet del molinete</h1>
+      <p className="max-w-md text-zinc-400">
+        En una computadora entrá a Panel → Accesos → ficha del lector → <strong className="text-white">Vincular tablet del molinete</strong> y
+        escribí acá el código de 6 números.
+      </p>
+      <p aria-live="polite" className="flex gap-2 font-mono text-4xl font-extrabold">
+        {Array.from({ length: 6 }, (_, i) => (
+          <span key={i} className={`grid h-14 w-11 place-items-center rounded-lg border ${code[i] ? 'border-[#edcc36] text-white' : 'border-zinc-700 text-zinc-700'}`}>
+            {code[i] ?? '·'}
+          </span>
+        ))}
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '<', '0', 'ok'].map((d) =>
+          d === 'ok' ? (
+            <button
+              key={d}
+              type="button"
+              disabled={code.length !== 6 || busy}
+              onClick={submit}
+              className="btn-tac h-16 w-20 rounded-xl bg-[#edcc36] text-lg font-extrabold text-black disabled:opacity-40"
+            >
+              {busy ? '…' : 'Listo'}
+            </button>
+          ) : (
+            <button
+              key={d}
+              type="button"
+              onClick={() => press(d)}
+              aria-label={d === '<' ? 'Borrar' : d}
+              className="btn-tac h-16 w-20 rounded-xl border border-zinc-700 text-2xl font-bold text-white active:bg-zinc-800"
+            >
+              {d === '<' ? '⌫' : d}
+            </button>
+          ),
+        )}
+      </div>
+      {msg && (
+        <p role="alert" className="max-w-sm text-amber-300">
+          {msg}
+        </p>
+      )}
+      <p className="max-w-sm text-sm text-zinc-500">También podés abrir en esta tablet el link o escanear el QR que aparece en el panel.</p>
     </main>
   )
 }

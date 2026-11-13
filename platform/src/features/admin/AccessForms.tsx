@@ -303,7 +303,16 @@ export function KioskPanel({
         <div className="flex flex-wrap items-start gap-4 rounded-lg border border-[#edcc36]/30 bg-[#edcc36]/10 p-3 text-sm text-[#f5e38a]">
           {qr && <img src={qr} alt="Código para abrir el link en la tablet" width={160} height={160} className="rounded-lg bg-white p-1" />}
           <div className="min-w-0 flex-1 space-y-2">
-            <p>Escaneá este código con la cámara de la tablet, o abrí el link en su navegador:</p>
+            {typeof state.values?.pairCode === 'string' && (
+              <div>
+                <p>En la tablet tocá <strong className="text-white">“Tengo un código”</strong> y escribí:</p>
+                <p className="mt-1 font-mono text-3xl font-extrabold tracking-[0.3em] text-white">
+                  {state.values.pairCode.slice(0, 3)} {state.values.pairCode.slice(3)}
+                </p>
+                <p className="text-xs text-[#f5e38a]/70">Vale 15 minutos y una sola vez.</p>
+              </div>
+            )}
+            <p>O escaneá este código con la cámara de la tablet, o abrí el link en su navegador:</p>
             <p className="break-all font-mono text-xs text-white">{link}</p>
           </div>
         </div>

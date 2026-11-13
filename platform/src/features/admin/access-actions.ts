@@ -93,11 +93,14 @@ export async function createKioskToken(slug: string, deviceId: string, _prev: Ac
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('access_device_kiosk_token', { p_device: deviceId })
   if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
+  // Código de 6 números para escribir en la tablet (alternativa al link). Si la base todavía no lo tiene (0044), sigue sin código.
+  const code = await supabase.rpc('access_device_kiosk_code' as never, { p_device: deviceId } as never)
   refresh(slug)
   return {
     ok: true,
     secret: data,
-    message: 'Abrí este link en la tablet (o escaneá el código con su cámara). Se muestra una sola vez.',
+    values: typeof code.data === 'string' ? { pairCode: code.data } : undefined,
+    message: 'Abrí este link en la tablet, escaneá el código con su cámara o escribí el número en la tablet. Se muestra una sola vez.',
   }
 }
 
