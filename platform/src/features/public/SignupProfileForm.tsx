@@ -1,6 +1,6 @@
 'use client'
 
-import { startTransition, useActionState } from 'react'
+import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { WebcamCapture } from '@/features/admin/WebcamCapture'
 import type { ProfileState } from './signup-actions'
@@ -60,9 +60,20 @@ export function SignupProfileForm({
 }) {
   const [state, submit, pending] = useActionState(action, {})
   const fe = state.fieldErrors ?? {}
+  const formRef = useRef<HTMLFormElement>(null)
+  const errorList = Object.values(fe).filter(Boolean) as string[]
+
+  // Si algo no pasa la validación, llevar al socio al primer campo con error (si no, desde el botón parece que "no hace nada")
+  useEffect(() => {
+    if (!state.fieldErrors && !state.error) return
+    const first = formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"], [data-error="true"], [role="alert"]')
+    first?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (first instanceof HTMLInputElement) first.focus({ preventScroll: true })
+  }, [state])
 
   return (
     <form
+      ref={formRef}
       // Se envía a mano (no con action=) para que React no vacíe el formulario si hay un error
       onSubmit={(e) => {
         e.preventDefault()
@@ -116,7 +127,7 @@ export function SignupProfileForm({
             error={fe.phone}
             hint="Para avisarte de tus clases y tu plan."
           />
-          <Field label="Fecha de nacimiento (opcional)" name="birthDate" type="date" defaultValue={defaults?.birthDate} error={fe.birthDate} />
+          <BirthDateField defaultValue={defaults?.birthDate} error={fe.birthDate} />
         </div>
         <p className="text-sm text-white/55">
           Tu cuenta: <strong className="text-white/85">{accountEmail}</strong>
@@ -127,7 +138,11 @@ export function SignupProfileForm({
         <legend className="font-display text-2xl font-bold tracking-[-0.02em] text-white">Tu foto de socio</legend>
         <p className="text-white/65">Una foto de frente, con buena luz. Así te reconocemos en la entrada.</p>
         <WebcamCapture selfie autoStart={false} current={defaults?.photoSrc ?? null} />
-        {fe.photo && <p className="text-center text-sm text-red-300">{fe.photo}</p>}
+        {fe.photo && (
+          <p data-error="true" className="text-center text-sm text-red-300">
+            {fe.photo}
+          </p>
+        )}
       </fieldset>
 
       <div>
@@ -135,8 +150,23 @@ export function SignupProfileForm({
           <input type="checkbox" name="terms" className="mt-0.5 h-5 w-5 shrink-0 accent-[#edcc36]" />
           Declaro estar en condiciones de salud para hacer actividad física y me comprometo a presentar el apto médico en recepción.
         </label>
-        {fe.terms && <p className="mt-1.5 pl-8 text-sm text-red-300">{fe.terms}</p>}
+        {fe.terms && (
+          <p data-error="true" className="mt-1.5 pl-8 text-sm text-red-300">
+            {fe.terms}
+          </p>
+        )}
       </div>
+
+      {errorList.length > 0 && (
+        <div className="rounded-md border border-red-400/40 bg-red-950/60 px-4 py-3 text-red-100">
+          <p className="font-semibold">Revisá estos datos y volvé a tocar el botón:</p>
+          <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-[15px]">
+            {errorList.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {state.error && (
         <p role="alert" className="rounded-md border border-red-400/40 bg-red-950/60 px-4 py-3 text-red-100">
@@ -158,5 +188,64 @@ export function SignupProfileForm({
         )}
       </button>
     </form>
+  )
+}
+
+const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+/**
+ * Fecha de nacimiento con tres listas (día / mes / año): el calendario del celular obliga a
+ * retroceder mes por mes hasta el año de nacimiento. Manda "birthDate" como AAAA-MM-DD.
+ */
+function BirthDateField({ defaultValue, error }: { defaultValue?: string; error?: string }) {
+  const [y0, m0, d0] = (defaultValue ?? '').split('-')
+  const [day, setDay] = useState(d0 ? String(Number(d0)) : '')
+  const [month, setMonth] = useState(m0 ? String(Number(m0)) : '')
+  const [year, setYear] = useState(y0 ?? '')
+  const thisYear = new Date().getFullYear()
+  const years = Array.from({ length: 95 }, (_, i) => thisYear - 12 - i)
+  const daysInMonth = year && month ? new Date(Number(year), Number(month), 0).getDate() : 31
+  const value =
+    day && month && year && Number(day) <= daysInMonth ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}` : ''
+  const incomplete = (day || month || year) && !value
+  const select = `${input} pr-2`
+  return (
+    <div>
+      <p id="p-birthDate-l" className="text-sm font-semibold text-white/80">
+        Fecha de nacimiento (opcional)
+      </p>
+      <div className="grid grid-cols-[1fr_1.6fr_1.2fr] gap-2" role="group" aria-labelledby="p-birthDate-l">
+        <select aria-label="Día" value={day} onChange={(e) => setDay(e.target.value)} aria-invalid={!!error} className={select}>
+          <option value="">Día</option>
+          {Array.from({ length: daysInMonth }, (_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {i + 1}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Mes" value={month} onChange={(e) => setMonth(e.target.value)} aria-invalid={!!error} className={select}>
+          <option value="">Mes</option>
+          {MONTHS.map((m, i) => (
+            <option key={m} value={i + 1}>
+              {m}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Año" value={year} onChange={(e) => setYear(e.target.value)} aria-invalid={!!error} className={select}>
+          <option value="">Año</option>
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </div>
+      <input type="hidden" name="birthDate" value={value} />
+      {(error || incomplete) && (
+        <p data-error="true" className="mt-1.5 text-sm text-red-300">
+          {error ?? 'Completá día, mes y año (o dejalo vacío).'}
+        </p>
+      )}
+    </div>
   )
 }
