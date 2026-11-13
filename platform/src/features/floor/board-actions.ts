@@ -106,3 +106,45 @@ export async function boardTimer(slug: string, action: 'start' | 'pause' | 'rese
   revalidatePath(`/${slug}/admin/mis-clases/pizarra`)
   return { ok: true, state: data }
 }
+
+const QUICK_TITLE = 'Temporizador'
+
+/**
+ * Temporizador rápido: sin preparar una pizarra. Usa (o crea) la pizarra "Temporizador" del profe,
+ * le pone el temporizador elegido y la muestra en la TV. Después se maneja con Iniciar / Pausar.
+ */
+export async function quickTimer(slug: string, timer: BoardTimer, minutes: number): Promise<ActionState> {
+  const ctx = await boardCtx(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const t = cleanTimer(timer)
+  if (!t) return { message: 'Elegí el tipo de temporizador.' }
+  const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from('class_boards')
+    .select('id')
+    .eq('org_id', ctx.org.id)
+    .eq('staff_id', ctx.staff.id)
+    .eq('title', QUICK_TITLE)
+    .is('body', null)
+    .limit(1)
+    .maybeSingle()
+  let id = existing?.id ?? null
+  if (id) {
+    const { error } = await supabase
+      .from('class_boards')
+      .update({ timer: t as unknown as Json, media: [] as unknown as Json, updated_at: new Date().toISOString() })
+      .eq('id', id)
+    if (error) return { message: msg(error) }
+  } else {
+    const { data, error } = await supabase
+      .from('class_boards')
+      .insert({ org_id: ctx.org.id, staff_id: ctx.staff.id, title: QUICK_TITLE, body: null, media: [] as unknown as Json, timer: t as unknown as Json })
+      .select('id')
+      .single()
+    if (error || !data) return { message: error ? msg(error) : 'No se pudo crear.' }
+    id = data.id
+  }
+  const { error } = await supabase.rpc('tv_board_show', { p_board: id, p_minutes: Math.round(minutes) || 60 })
+  if (error) return { message: msg(error) }
+  return done(slug, 'Temporizador en la TV. Tocá Iniciar cuando arranquen.')
+}

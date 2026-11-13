@@ -43,6 +43,7 @@ export function BoardsPanel({
   show,
   hide,
   timer,
+  quick,
 }: {
   orgId: string
   staffId: string
@@ -54,6 +55,7 @@ export function BoardsPanel({
   show: (id: string, minutes: number) => Promise<ActionState>
   hide: () => Promise<ActionState>
   timer: (action: 'start' | 'pause' | 'reset') => Promise<ActionState & { state?: unknown }>
+  quick: (timer: BoardTimer, minutes: number) => Promise<ActionState>
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
@@ -76,6 +78,8 @@ export function BoardsPanel({
     })
 
   const liveBoard = live?.live ? boards.find((b) => b.id === live.live!.board_id) ?? null : null
+  const isQuick = (b: BoardItem) => b.title === 'Temporizador' && !b.body && !b.media.length
+  const listed = boards.filter((b) => !(b.mine && isQuick(b)))
   const liveIsMine = !!live?.live && live.live.staff_id === staffId
   const canControl = !!live?.live && (liveIsMine || isAdmin)
 
@@ -162,9 +166,11 @@ export function BoardsPanel({
         {msg?.text ?? ''}
       </p>
 
-      {boards.length ? (
+      <QuickTimer busy={pending} onShow={(t) => run(() => quick(t, minutes))} />
+
+      {listed.length ? (
         <ul className="grid gap-3 md:grid-cols-2">
-          {boards.map((b) => {
+          {listed.map((b) => {
             const isLive = live?.live?.board_id === b.id
             const imgs = b.media.filter((m) => m.type === 'image').length
             const vids = b.media.length - imgs
@@ -312,5 +318,77 @@ function LiveTimer({
         </button>
       </div>
     </div>
+  )
+}
+
+/** Temporizador rápido: elegir tipo y tiempos y ponerlo en la TV en un toque (sin preparar pizarra). */
+function QuickTimer({ busy, onShow }: { busy: boolean; onShow: (t: BoardTimer) => void }) {
+  const [mode, setMode] = useState<'interval' | 'countdown' | 'stopwatch'>('interval')
+  const [work, setWork] = useState(40)
+  const [rest, setRest] = useState(20)
+  const [rounds, setRounds] = useState(8)
+  const [min, setMin] = useState(10)
+  const field = (label: string, v: number, set: (n: number) => void, lo: number, hi: number, id: string) => (
+    <label htmlFor={id} className="space-y-1">
+      <span className="block text-xs text-zinc-400">{label}</span>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={lo}
+        max={hi}
+        value={v}
+        onChange={(e) => set(Math.min(hi, Math.max(lo, Number(e.target.value) || 0)))}
+        className="min-h-[44px] w-20 rounded-xl border border-zinc-700 bg-black px-2 text-center text-white"
+      />
+    </label>
+  )
+  const timer: BoardTimer =
+    mode === 'interval' ? { mode, work_s: work, rest_s: rest, rounds } : mode === 'countdown' ? { mode, total_s: min * 60 } : { mode }
+  return (
+    <section aria-labelledby="quick-timer-title" className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+      <h2 id="quick-timer-title" className="flex items-center gap-2 font-bold text-white">
+        <Clock className="h-4 w-4 text-[#edcc36]" aria-hidden="true" /> Temporizador rápido
+      </h2>
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de temporizador">
+        {(
+          [
+            ['interval', 'Intervalos'],
+            ['countdown', 'Cuenta regresiva'],
+            ['stopwatch', 'Cronómetro'],
+          ] as const
+        ).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            aria-checked={mode === v}
+            onClick={() => setMode(v)}
+            className={`min-h-[44px] rounded-xl border px-4 text-sm ${mode === v ? 'border-[#edcc36] bg-[#edcc36]/10 font-semibold text-white' : 'border-zinc-700 text-zinc-300'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        {mode === 'interval' && (
+          <>
+            {field('Trabajo (seg)', work, setWork, 5, 3600, 'qt-work')}
+            {field('Descanso (seg)', rest, setRest, 0, 3600, 'qt-rest')}
+            {field('Rondas', rounds, setRounds, 1, 99, 'qt-rounds')}
+          </>
+        )}
+        {mode === 'countdown' && field('Minutos', min, setMin, 1, 180, 'qt-min')}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onShow(timer)}
+          className="inline-flex min-h-[48px] items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-black disabled:opacity-50"
+        >
+          <Tv className="h-4 w-4" aria-hidden="true" /> Poner en la TV
+        </button>
+      </div>
+      <p className="text-xs text-zinc-500">Aparece arriba como «En la TV ahora»: ahí lo iniciás, pausás o reiniciás.</p>
+    </section>
   )
 }
