@@ -10,8 +10,10 @@ import { getSignupProfile } from './signup-profile'
 
 export interface ProfileState {
   error?: string
-  fieldErrors?: Partial<Record<'firstName' | 'lastName' | 'document' | 'phone' | 'birthDate' | 'photo' | 'terms', string>>
+  fieldErrors?: Partial<Record<'firstName' | 'lastName' | 'document' | 'phone' | 'birthDate' | 'gender' | 'photo' | 'terms', string>>
 }
+
+const GENDERS = ['male', 'female', 'other'] as const
 
 const DOC_TAKEN = 'Ese DNI ya está registrado en el gimnasio con otro email. Escribinos o acercate a recepción y lo resolvemos.'
 
@@ -30,6 +32,7 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
     document: str('document').replace(/\D/g, ''),
     phone: str('phone'),
     birthDate: str('birthDate'),
+    gender: str('gender'),
     photo: str('photo'),
   }
 
@@ -56,6 +59,7 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
       fieldErrors.birthDate = 'Revisá la fecha de nacimiento.'
     }
   }
+  if (!(GENDERS as readonly string[]).includes(v.gender)) fieldErrors.gender = 'Elegí una opción.'
   if (!v.photo && !current?.photoPath) fieldErrors.photo = 'Sacate una foto: la usamos para reconocerte en la entrada.'
   if (form.get('terms') !== 'on') fieldErrors.terms = 'Tenés que aceptar para seguir.'
   if (Object.keys(fieldErrors).length) return { fieldErrors }
@@ -73,6 +77,7 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
     document_id: v.document,
     phone: v.phone,
     birth_date: v.birthDate || null,
+    gender: v.gender,
   }
   let memberId = current?.memberId ?? null
 

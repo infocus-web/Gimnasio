@@ -18,6 +18,8 @@ type Result = {
   /** pase de un día / invitado */
   guest?: boolean
   entries_left?: number
+  /** 'male' | 'female' | 'other' | null: para el saludo por voz */
+  gender?: string | null
   /** franjas del plan cuando el motivo es OUTSIDE_PLAN_HOURS */
   access_windows?: unknown
 }
@@ -100,6 +102,46 @@ function save(key: string, value: string | null) {
   }
 }
 
+// Voz de la tablet: saluda al socio por su nombre (voz del navegador, en castellano)
+let voice: SpeechSynthesisVoice | null = null
+function pickVoice() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return
+  const all = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith('es'))
+  const pref = ['es-ar', 'es-us', 'es-mx', 'es-419', 'es-es']
+  voice = pref.map((l) => all.find((v) => v.lang.toLowerCase() === l)).find(Boolean) ?? all[0] ?? null
+}
+function say(text: string) {
+  // App del molinete (Android): usa la voz del sistema, porque su navegador interno no habla
+  const native = (window as Window & { MolineteVoz?: { speak: (t: string) => void } }).MolineteVoz
+  if (native) {
+    try {
+      native.speak(text)
+      return
+    } catch {
+      /* sigue con la voz del navegador */
+    }
+  }
+  try {
+    const synth = window.speechSynthesis
+    if (!synth) return
+    if (!voice) pickVoice()
+    synth.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = voice?.lang ?? 'es-AR'
+    if (voice) u.voice = voice
+    u.rate = 1
+    synth.speak(u)
+  } catch {
+    /* sin voz: queda el sonido */
+  }
+}
+function welcomeText(r: Result) {
+  const name = r.first_name?.trim().split(/\s+/)[0]
+  const word = r.gender === 'male' ? 'Bienvenido' : r.gender === 'female' ? 'Bienvenida' : null
+  if (word) return name ? `¡${word}, ${name}!` : `¡${word}!`
+  return name ? `¡Hola, ${name}! Te damos la bienvenida.` : '¡Te damos la bienvenida!'
+}
+
 type Resp = Partial<Result> & { status: string; device?: string; unlock?: Unlock | 'unknown'; occupancy?: Occupancy | null }
 
 async function call(k: string, qr: string | null, unlock?: number): Promise<Resp> {
@@ -155,6 +197,14 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
     if (load(`${storageKey}:started`)) setStarted(true)
     setReady(true)
   }, [storageKey])
+
+  // Voces del navegador (cargan un instante después de abrir la página)
+  useEffect(() => {
+    if (!window.speechSynthesis) return
+    pickVoice()
+    window.speechSynthesis.addEventListener('voiceschanged', pickVoice)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', pickVoice)
+  }, [])
 
   // Reloj
   useEffect(() => {
@@ -277,8 +327,10 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
         const seq = ++scanSeq.current
         setUnlock(null)
         show({ ...r, allowed: !!r.allowed }, r.allowed ? 4000 : 5000)
-        if (r.allowed) sound.playAccessGranted()
-        else sound.playAccessDenied()
+        if (r.allowed) {
+          sound.playAccessGranted()
+          if (!r.duplicate) setTimeout(() => say(welcomeText({ ...r, allowed: true })), 350)
+        } else sound.playAccessDenied()
         if (r.allowed && !r.duplicate && typeof r.unlock_id === 'number') void watchUnlock(token, r.unlock_id, seq)
       } catch {
         ++scanSeq.current

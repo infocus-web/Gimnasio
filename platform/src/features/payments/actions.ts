@@ -233,7 +233,7 @@ export async function saveProduct(slug: string, productId: string | null, _prev:
 // ---------------------------------------------------------------------
 export async function recordSaleAction(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await getAdminContext(slug)
-  if (!ctx?.can('billing.write')) return { message: ERRORS.FORBIDDEN }
+  if (!ctx?.can('billing.write') && !ctx?.can('sales.write')) return { message: ERRORS.FORBIDDEN }
   let items: { product_id: string; quantity: number }[] = []
   try {
     const parsed = JSON.parse(String(form.get('items') ?? '[]')) as unknown

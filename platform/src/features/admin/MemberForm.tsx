@@ -12,6 +12,7 @@ export interface MemberValues {
   phone: string | null
   documentId: string | null
   birthDate: string | null
+  gender: string | null
   medicalNotes: string | null
   status: string
 }
@@ -63,6 +64,14 @@ export function MemberForm(props: Props) {
         </Field>
         <Field label="Fecha de nacimiento" name="birthDate" error={err.birthDate}>
           <input id="birthDate" name="birthDate" type="date" defaultValue={v?.birthDate ?? ''} className={inputClass} />
+        </Field>
+        <Field label="Género" name="gender" hint="Para el saludo del molinete.">
+          <select id="gender" name="gender" defaultValue={v?.gender ?? ''} className={inputClass}>
+            <option value="">Sin cargar</option>
+            <option value="female">Mujer</option>
+            <option value="male">Hombre</option>
+            <option value="other">Prefiere no decirlo</option>
+          </select>
         </Field>
         <Field
           label="Email"

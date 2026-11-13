@@ -8,6 +8,7 @@ export type Permission =
   | 'schedule.manage' | 'bookings.manage' | 'checkins.manage' | 'training.manage_all'
   | 'automations.manage' | 'reports.read'
   | 'schedule.own'   // 0040: el profe maneja SUS clases
+  | 'sales.write'    // 0047: vender en el mostrador (sin ver caja ni pagos)
 
 /** Staff logueado + sus permisos en el gimnasio. null = no es staff activo. */
 export const getAdminContext = cache(async (slug: string) => {

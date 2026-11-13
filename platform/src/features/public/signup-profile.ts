@@ -11,6 +11,7 @@ export interface SignupProfile {
   document: string | null
   phone: string | null
   birthDate: string | null
+  gender: string | null
   photoPath: string | null
   /** Link firmado (1 hora) para mostrar la foto */
   photoSrc: string | null
@@ -29,7 +30,7 @@ export async function getSignupProfile(slug: string, userId: string): Promise<Si
   if (!org) return null
   const { data: m } = await admin
     .from('members')
-    .select('id, first_name, last_name, document_id, phone, birth_date, photo_url, status')
+    .select('id, first_name, last_name, document_id, phone, birth_date, gender, photo_url, status')
     .eq('org_id', org.id)
     .eq('user_id', userId)
     .neq('status', 'archived')
@@ -43,6 +44,7 @@ export async function getSignupProfile(slug: string, userId: string): Promise<Si
     document: m.document_id,
     phone: m.phone,
     birthDate: m.birth_date,
+    gender: m.gender,
     photoPath: m.photo_url,
     photoSrc: await signedUrl(admin, m.photo_url, 3600),
     complete:

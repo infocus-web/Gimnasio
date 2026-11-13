@@ -30,7 +30,8 @@ function SaleFormInner({
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   products: SaleProduct[]
-  search: (q: string) => Promise<MemberHit[]>
+  /** Sin buscador (profes sin acceso a socios): la venta queda sin socio */
+  search?: (q: string) => Promise<MemberHit[]>
   onDone: () => void
 }) {
   const [state, formAction] = useActionForm(action, {})
@@ -43,7 +44,7 @@ function SaleFormInner({
 
   useEffect(() => {
     const term = q.trim()
-    if (term.length < 2) {
+    if (term.length < 2 || !search) {
       setHits([])
       return
     }
@@ -157,6 +158,7 @@ function SaleFormInner({
         </p>
       </fieldset>
 
+      {search && (
       <div className="space-y-2">
         <span className="text-xs font-medium text-zinc-400">Socio (opcional)</span>
         {member ? (
@@ -194,6 +196,7 @@ function SaleFormInner({
           </div>
         )}
       </div>
+      )}
 
       <fieldset>
         <legend className="mb-2 text-xs font-medium text-zinc-400">Medio de pago</legend>
@@ -234,7 +237,8 @@ function SaleFormInner({
 export function SaleForm(props: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   products: SaleProduct[]
-  search: (q: string) => Promise<MemberHit[]>
+  /** Sin buscador (profes sin acceso a socios): la venta queda sin socio */
+  search?: (q: string) => Promise<MemberHit[]>
 }) {
   const [round, setRound] = useState(0)
   return <SaleFormInner key={round} {...props} onDone={() => setRound((r) => r + 1)} />

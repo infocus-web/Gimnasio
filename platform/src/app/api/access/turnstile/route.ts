@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
   const unlock =
     typeof body.unlock === 'number' && Number.isSafeInteger(body.unlock) && body.unlock > 0 ? body.unlock : undefined
 
-  const { data, error } = await createAdminClient().rpc('turnstile_scan', {
+  const admin = createAdminClient()
+  const { data, error } = await admin.rpc('turnstile_scan', {
     p_kiosk_token: k,
     p_qr: unlock ? null : qr,
     ...(unlock ? { p_unlock: unlock } : {}),
@@ -35,6 +36,14 @@ export async function POST(req: NextRequest) {
     console.error('[turnstile]', error.message)
     return json({ status: 'error' }, 500)
   }
-  const result = (data ?? {}) as { status?: string }
+  const result = (data ?? {}) as { status?: string; allowed?: boolean; guest?: boolean; gender?: string | null }
+  // Saludo: "¡Bienvenido!" / "¡Bienvenida!". El QR de la app es v1.<id del socio>.<paso>.<firma> (ya validado arriba)
+  if (result.allowed && !result.guest && qr) {
+    const memberId = qr.trim().split('.')[1]
+    if (memberId && /^[0-9a-f-]{36}$/.test(memberId)) {
+      const { data: m } = await admin.from('members').select('gender').eq('id', memberId).maybeSingle()
+      result.gender = m?.gender ?? null
+    }
+  }
   return json(result, result.status === 'unauthorized' ? 401 : 200)
 }

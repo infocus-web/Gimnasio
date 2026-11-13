@@ -85,7 +85,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
   const [{ data: pinRow }, { data: accessDevices }] = await Promise.all([
     supabase
       .from('members')
-      .select('access_pin, biometric_consent_at, photo_url, medical_cert_path, medical_cert_uploaded_at, medical_cert_expires_on')
+      .select('access_pin, gender, biometric_consent_at, photo_url, medical_cert_path, medical_cert_uploaded_at, medical_cert_expires_on')
       .eq('id', memberId)
       .maybeSingle(),
     supabase.from('access_devices').select('id, name, info').eq('org_id', ctx.org.id).eq('active', true).order('created_at'),
@@ -176,6 +176,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                 phone: m.phone,
                 documentId: m.document_id,
                 birthDate: m.birth_date,
+                gender: pinRow?.gender ?? null,
                 medicalNotes: m.medical_notes,
                 status: m.status ?? 'active',
               }}

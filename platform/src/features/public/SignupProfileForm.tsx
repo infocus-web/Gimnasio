@@ -42,6 +42,7 @@ export interface ProfileDefaults {
   document: string
   phone: string
   birthDate: string
+  gender: string
   photoSrc: string | null
 }
 
@@ -146,6 +147,7 @@ export function SignupProfileForm({
             onBlur={check('phone')}
           />
           <BirthDateField defaultValue={defaults?.birthDate} error={fe.birthDate} />
+          <GenderField defaultValue={defaults?.gender} error={fe.gender} />
         </div>
         {(['document', 'phone'] as const).map((k) =>
           notices[k] && !fe[k] ? (
@@ -278,5 +280,35 @@ function BirthDateField({ defaultValue, error }: { defaultValue?: string; error?
         </p>
       )}
     </div>
+  )
+}
+
+/** Género: se usa para saludarte en la entrada ("¡Bienvenido!" / "¡Bienvenida!"). */
+function GenderField({ defaultValue, error }: { defaultValue?: string; error?: string }) {
+  const options = [
+    { value: 'female', label: 'Mujer' },
+    { value: 'male', label: 'Hombre' },
+    { value: 'other', label: 'Prefiero no decirlo' },
+  ]
+  return (
+    <fieldset className="space-y-2 sm:col-span-2" aria-describedby={error ? 'p-gender-error' : undefined}>
+      <legend className="text-sm font-semibold text-white/80">Género</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((o) => (
+          <label
+            key={o.value}
+            className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-md border border-white/15 px-4 text-[15px] text-white has-[:checked]:border-brand has-[:checked]:bg-brand/10"
+          >
+            <input type="radio" name="gender" value={o.value} defaultChecked={defaultValue === o.value} className="accent-[#edcc36]" />
+            {o.label}
+          </label>
+        ))}
+      </div>
+      {error && (
+        <p id="p-gender-error" role="alert" className="text-sm text-red-300">
+          {error}
+        </p>
+      )}
+    </fieldset>
   )
 }

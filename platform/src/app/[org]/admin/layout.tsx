@@ -70,6 +70,8 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
     ...(ctx.can('checkins.manage') ? [{ href: `${base}/recepcion`, label: 'Recepción', icon: 'scan' } as const] : []),
     ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: pendingRequests ? `Equipo (${pendingRequests})` : 'Equipo', icon: 'team' } as const] : []),
     ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Pagos', icon: 'billing' } as const] : []),
+    // Profes: solo la pantalla de venta (no ven la caja ni los pagos)
+    ...(!ctx.can('billing.read') && ctx.can('sales.write') ? [{ href: `${base}/pagos/vender`, label: 'Vender', icon: 'billing' } as const] : []),
     ...(ctx.can('schedule.manage') || ctx.can('bookings.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar' } as const] : []),
     ...(ctx.staff.role === 'trainer' || ctx.can('schedule.own') ? [{ href: `${base}/mis-clases`, label: 'Mis clases', icon: 'mine' } as const] : []),
     ...(ctx.staff.role === 'trainer' || ctx.can('training.manage_all')

@@ -1818,6 +1818,7 @@ export type Database = {
           document_id: string | null
           email: string | null
           emergency_contact: Json | null
+          gender: string | null
           first_name: string
           home_location_id: string | null
           id: string
@@ -1844,6 +1845,7 @@ export type Database = {
           document_id?: string | null
           email?: string | null
           emergency_contact?: Json | null
+          gender?: string | null
           first_name: string
           home_location_id?: string | null
           id?: string
@@ -1870,6 +1872,7 @@ export type Database = {
           document_id?: string | null
           email?: string | null
           emergency_contact?: Json | null
+          gender?: string | null
           first_name?: string
           home_location_id?: string | null
           id?: string

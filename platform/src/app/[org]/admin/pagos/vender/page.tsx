@@ -12,7 +12,7 @@ export default async function VenderPage({ params }: { params: Promise<{ org: st
   const { org: slug } = await params
   const ctx = await getAdminContext(slug)
   if (!ctx) return null
-  if (!ctx.can('billing.write')) return <p className="text-sm text-zinc-400">No tenés permiso para vender.</p>
+  if (!ctx.can('billing.write') && !ctx.can('sales.write')) return <p className="text-sm text-zinc-400">No tenés permiso para vender.</p>
 
   const supabase = await createClient()
   const { data: products } = await supabase
@@ -27,7 +27,7 @@ export default async function VenderPage({ params }: { params: Promise<{ org: st
     <Card title="Venta en mostrador">
       <SaleForm
         action={recordSaleAction.bind(null, slug)}
-        search={searchMembers.bind(null, slug)}
+        search={ctx.can('members.read') ? searchMembers.bind(null, slug) : undefined}
         products={(products ?? []).map((p) => ({ id: p.id, name: p.name, priceCents: Number(p.price_cents), stock: p.stock, imageUrl: productImageUrl(p.image_path) }))}
       />
     </Card>

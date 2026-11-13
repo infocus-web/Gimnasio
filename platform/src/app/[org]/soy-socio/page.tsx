@@ -134,6 +134,7 @@ export default async function ExistingMemberPage({ params, searchParams }: PageP
                     document: profile.document ?? '',
                     phone: profile.phone ?? '',
                     birthDate: profile.birthDate ?? '',
+                    gender: profile.gender ?? '',
                     photoSrc: profile.photoSrc,
                   }
                 : null

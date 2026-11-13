@@ -34,6 +34,10 @@ const memberSchema = z.object({
   phone: optionalText,
   documentId: optionalText,
   birthDate: optionalText,
+  gender: z
+    .enum(['male', 'female', 'other', ''])
+    .optional()
+    .transform((v) => (v ? v : null)),
   medicalNotes: optionalText,
 })
 
@@ -142,8 +146,11 @@ export async function createMember(slug: string, _prev: ActionState, form: FormD
   })
   if (error || !memberId) return { message: error ? dbMessage(error) : 'No se pudo crear la ficha.' }
 
-  if (m.medicalNotes) {
-    await supabase.from('members').update({ medical_notes: m.medicalNotes }).eq('id', memberId)
+  if (m.medicalNotes || m.gender) {
+    await supabase
+      .from('members')
+      .update({ ...(m.medicalNotes ? { medical_notes: m.medicalNotes } : {}), ...(m.gender ? { gender: m.gender } : {}) })
+      .eq('id', memberId)
   }
   let notice = ''
   const photo = String(form.get('photo') ?? '')
@@ -178,6 +185,7 @@ export async function updateMember(slug: string, memberId: string, _prev: Action
       phone: m.phone ?? null,
       document_id: m.documentId ?? null,
       birth_date: m.birthDate ?? null,
+      gender: m.gender,
       medical_notes: m.medicalNotes ?? null,
       status: (['lead', 'active', 'frozen', 'archived'].includes(status) ? status : 'active') as
         'lead' | 'active' | 'frozen' | 'archived',
@@ -447,4 +455,24 @@ export async function setTrainerScheduleAccess(slug: string, staffId: string, al
   if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin/equipo`)
   return { ok: true, message: allow ? 'Ahora maneja su agenda.' : 'Ya no puede cambiar su agenda.' }
+}
+
+/**
+ * 0047 · ¿El profe puede vender en el mostrador? Por defecto no.
+ * El administrador lo habilita guardando una excepción (granted = true) en staff_permission_overrides.
+ */
+export async function setTrainerSalesAccess(slug: string, staffId: string, allow: boolean, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: target } = await supabase.from('staff').select('id, role').eq('id', staffId).eq('org_id', ctx.org.id).maybeSingle()
+  if (!target || target.role !== 'trainer') return { message: 'Esa opción es solo para profesores.' }
+  const { error } = allow
+    ? await supabase
+        .from('staff_permission_overrides')
+        .upsert({ staff_id: staffId, permission: 'sales.write', granted: true }, { onConflict: 'staff_id,permission' })
+    : await supabase.from('staff_permission_overrides').delete().eq('staff_id', staffId).eq('permission', 'sales.write')
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: allow ? 'Ahora puede vender.' : 'Ya no puede vender.' }
 }

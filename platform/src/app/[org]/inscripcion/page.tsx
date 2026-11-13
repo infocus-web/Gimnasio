@@ -141,6 +141,7 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
                     document: profile.document ?? '',
                     phone: profile.phone ?? '',
                     birthDate: profile.birthDate ?? '',
+                    gender: profile.gender ?? '',
                     photoSrc: profile.photoSrc,
                   }
                 : null

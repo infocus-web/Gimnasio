@@ -6,6 +6,15 @@ export default async function PagosLayout({ children, params }: LayoutProps<'/[o
   const base = `/${slug}/admin/pagos`
   const ctx = await getAdminContext(slug)
   const isAdmin = ctx?.staff.role === 'owner' || ctx?.staff.role === 'admin'
+  // Profes: solo venden (sin caja, pagos ni productos)
+  if (ctx && !ctx.can('billing.read') && ctx.can('sales.write')) {
+    return (
+      <div className="space-y-5">
+        <h1 className="text-2xl font-extrabold text-white">Vender</h1>
+        {children}
+      </div>
+    )
+  }
   return (
     <div className="space-y-5">
       <h1 className="text-2xl font-extrabold text-white">Pagos</h1>
