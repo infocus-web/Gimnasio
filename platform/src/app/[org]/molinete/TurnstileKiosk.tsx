@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, AlertTriangle, QrCode, SwitchCamera, Wifi, WifiO
 import { sound } from '@/utils/audio'
 import { OCCUPANCY, PASS_DENIED, type Occupancy } from '@/features/access-plus/labels'
 import { formatWindowsShort } from '@/features/access-plus/windows'
-import { BRAND } from '@/features/public/media'
+import { BRAND, WEB_MEDIA } from '@/features/public/media'
 
 type Result = {
   allowed: boolean
@@ -47,6 +47,16 @@ function deniedText(r: Result) {
   return REASONS[r.reason ?? ''] ?? 'Pasá por recepción.'
 }
 const SAME_QR_IGNORE_MS = 60_000
+
+// Modo espera: sin movimiento frente a la cámara durante este tiempo se muestra la publicidad
+const IDLE_MS = 20_000
+// Sensibilidad del detector de movimiento (la cámara hace de sensor: compara imágenes chiquitas)
+const MOTION_W = 40
+const MOTION_H = 30
+const MOTION_PIXEL_DIFF = 28 // cuánto tiene que cambiar un punto para contar como movimiento (0-255)
+const MOTION_SHARE = 0.05 // qué parte de la imagen tiene que cambiar (5 %)
+const AD_SLIDES = [WEB_MEDIA.app, ...WEB_MEDIA.gallery, WEB_MEDIA.cta]
+const AD_SLIDE_MS = 7000
 
 // La clave de la tablet se guarda en DOS lugares (almacenamiento del navegador + cookie de 1 año):
 // si Chrome limpia uno de los dos (ahorro de espacio, actualización), la tablet sigue vinculada.
@@ -123,6 +133,12 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const camera = useRef<Promise<unknown>>(Promise.resolve())
   const scanSeq = useRef(0)
+  const [idle, setIdle] = useState(false)
+  const lastActivity = useRef(Date.now())
+  const wake = useCallback(() => {
+    lastActivity.current = Date.now()
+    setIdle(false)
+  }, [])
 
   // Clave de la tablet: llega en el link (#k=…) una vez y queda guardada
   useEffect(() => {
@@ -206,6 +222,8 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const show = useCallback((r: Result | ((prev: Result | null) => Result), ms: number) => {
     setResult(r)
     shownAt.current = Date.now()
+    lastActivity.current = Date.now()
+    setIdle(false)
     if (clearTimer.current) clearTimeout(clearTimer.current)
     clearTimer.current = setTimeout(() => {
       setResult(null)
@@ -325,6 +343,45 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
     }
   }, [started, token, facing])
 
+  // Sensor de movimiento con la cámara: si algo se acerca (una mano, un celular, una persona) se despierta
+  useEffect(() => {
+    if (!started || !token) return
+    const canvas = document.createElement('canvas')
+    canvas.width = MOTION_W
+    canvas.height = MOTION_H
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return
+    let prev: Uint8ClampedArray | null = null
+    const t = setInterval(() => {
+      const video = document.querySelector<HTMLVideoElement>('#turnstile-camera video')
+      if (!video || video.readyState < 2) return
+      try {
+        ctx.drawImage(video, 0, 0, MOTION_W, MOTION_H)
+      } catch {
+        return
+      }
+      const px = ctx.getImageData(0, 0, MOTION_W, MOTION_H).data
+      const gray = new Uint8ClampedArray(MOTION_W * MOTION_H)
+      for (let i = 0; i < gray.length; i++) gray[i] = (px[i * 4]! * 3 + px[i * 4 + 1]! * 6 + px[i * 4 + 2]!) / 10
+      if (prev) {
+        let changed = 0
+        for (let i = 0; i < gray.length; i++) if (Math.abs(gray[i]! - prev[i]!) > MOTION_PIXEL_DIFF) changed++
+        if (changed / gray.length > MOTION_SHARE) wake()
+      }
+      prev = gray
+    }, 300)
+    return () => clearInterval(t)
+  }, [started, token, wake])
+
+  // Sin movimiento ni uso durante un rato: vuelve la publicidad
+  useEffect(() => {
+    if (!started || !token) return
+    const t = setInterval(() => {
+      if (Date.now() - lastActivity.current > IDLE_MS) setIdle(true)
+    }, 1000)
+    return () => clearInterval(t)
+  }, [started, token])
+
   if (!ready) return <main className="min-h-dvh bg-black" />
 
   if (!token) {
@@ -365,7 +422,7 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
   const tone = result ? (result.allowed ? (unlock === 'failed' ? 'warn' : 'ok') : 'no') : null
 
   return (
-    <main className="relative flex min-h-dvh flex-col bg-black text-white">
+    <main className="relative flex min-h-dvh flex-col bg-black text-white" onPointerDown={wake}>
       <header className="flex items-center justify-between px-5 py-3 text-sm text-zinc-400">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-9 w-auto" />
@@ -413,6 +470,8 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
         </div>
       </section>
 
+      {idle && !result && <IdleScreen gymName={gymName} />}
+
       {result && (
         <div
           role="status"
@@ -447,6 +506,41 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
         </div>
       )}
     </main>
+  )
+}
+
+/**
+ * Pantalla de espera: publicidad del gimnasio mientras nadie usa el molinete.
+ * La cámara sigue prendida detrás: detecta movimiento y también lee un QR directo.
+ */
+function IdleScreen({ gymName }: { gymName: string }) {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI((n) => (n + 1) % AD_SLIDES.length), AD_SLIDE_MS)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <div className="absolute inset-0 z-10 overflow-hidden bg-black">
+      {AD_SLIDES.map((src, n) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt=""
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${n === i ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30" />
+      <div className="relative flex h-full flex-col items-center justify-between p-10 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-auto w-80 max-w-[80vw]" />
+        <div className="flex flex-col items-center gap-3">
+          <QrCode className="h-14 w-14 animate-pulse text-[#edcc36]" aria-hidden="true" />
+          <p className="text-3xl font-extrabold sm:text-4xl">Acercate y mostrá tu QR</p>
+          <p className="text-lg text-zinc-300">o tocá la pantalla</p>
+        </div>
+      </div>
+    </div>
   )
 }
 
