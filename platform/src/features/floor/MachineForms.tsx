@@ -282,3 +282,50 @@ export function TvSettingsForm({ action, ranking, message, web }: { action: With
     </form>
   )
 }
+
+/**
+ * Vincular la TV con el código de 6 números que muestra en pantalla
+ * (en la TV solo hay que abrir evolutiongym.fitness/<gym>/tv).
+ */
+export function TvCodeForm({ slug, action }: { slug: string; action: (prev: ActionState, form: FormData) => Promise<ActionState> }) {
+  const [state, submit] = useActionForm(action)
+  const err = state.fieldErrors ?? {}
+  const host = typeof window !== 'undefined' ? window.location.host : 'evolutiongym.fitness'
+  return (
+    <div className="space-y-3 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3">
+      <ol className="list-decimal space-y-1 pl-5 text-sm text-zinc-200">
+        <li>
+          En el navegador de la TV abrí <strong className="font-mono text-white">{host}/{slug}/tv</strong>
+        </li>
+        <li>La TV muestra un código de 6 números: escribilo acá.</li>
+      </ol>
+      <form action={submit} className="flex flex-wrap items-start gap-2" key={state.ok ? 'ok' : 'form'}>
+        <div className="min-w-0">
+          <label htmlFor="tv-code" className="sr-only">
+            Código que muestra la TV
+          </label>
+          <input
+            id="tv-code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={7}
+            placeholder="123 456"
+            aria-invalid={!!err.code}
+            aria-describedby={err.code ? 'tv-code-error' : undefined}
+            className={`${inputClass} w-40 text-center font-mono text-xl tracking-[0.2em]`}
+          />
+          {err.code && (
+            <p id="tv-code-error" role="alert" className="mt-1 max-w-xs text-xs text-red-300">
+              {err.code}
+            </p>
+          )}
+        </div>
+        <SubmitButton variant="primary">
+          <Tv className="h-4 w-4" aria-hidden="true" /> Vincular TV
+        </SubmitButton>
+      </form>
+      <Notice state={state.fieldErrors ? {} : state} />
+    </div>
+  )
+}

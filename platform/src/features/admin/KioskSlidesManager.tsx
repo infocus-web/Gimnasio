@@ -2,14 +2,16 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Eye, EyeOff, ImagePlus, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, ImagePlus, Loader2, Trash2, Type } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
 import { KIOSK_BUCKET } from './kiosk-slides'
+import { PromoSlide } from '@/features/screens/PromoSlide'
+import { KioskSlideEditor, type SlideTexts } from './KioskSlideEditor'
+import type { PromoSlideData } from '@/features/screens/promo'
 
-export interface KioskSlide {
+export interface KioskSlide extends PromoSlideData {
   id: string
-  url: string
   active: boolean
 }
 
@@ -43,6 +45,7 @@ export function KioskSlidesManager({
   remove,
   toggle,
   move,
+  save,
 }: {
   orgId: string
   slides: KioskSlide[]
@@ -50,12 +53,15 @@ export function KioskSlidesManager({
   remove: (id: string) => Promise<ActionState>
   toggle: (id: string, active: boolean) => Promise<ActionState>
   move: (id: string, dir: -1 | 1) => Promise<ActionState>
+  save: (id: string, v: SlideTexts) => Promise<ActionState>
 }) {
   const router = useRouter()
   const input = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, start] = useTransition()
+  const [editing, setEditing] = useState<string | null>(null)
+  const editingSlide = slides.find((s) => s.id === editing) ?? null
 
   const run = (fn: () => Promise<ActionState>) =>
     start(async () => {
@@ -125,15 +131,24 @@ export function KioskSlidesManager({
       </p>
 
       {slides.length ? (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 items-start gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {slides.map((s, i) => (
             <li key={s.id} className={`overflow-hidden rounded-xl border border-zinc-700 bg-black ${s.active ? '' : 'opacity-50'}`}>
-              <div className="relative aspect-[3/4]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.url} alt={`Imagen ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+              <div className={`relative ${s.orientation === 'horizontal' ? 'aspect-video' : 'aspect-[9/16]'}`}>
+                <PromoSlide slide={s} />
                 <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{i + 1}</span>
-                {!s.active && <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs text-zinc-300">Pausada</span>}
+                <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs text-zinc-200">
+                  {!s.active ? 'Pausada' : s.orientation === 'horizontal' ? 'TVs' : s.orientation === 'vertical' ? 'Tablet' : 'Tablet y TVs'}
+                </span>
               </div>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setEditing(s.id)}
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 border-y border-zinc-800 text-sm font-semibold text-[#edcc36] hover:bg-zinc-900"
+              >
+                <Type className="h-4 w-4" aria-hidden="true" /> {s.title || s.subtitle || s.badge ? 'Editar textos' : 'Agregar textos'}
+              </button>
               <div className="flex items-center justify-between gap-1 p-1.5">
                 <button
                   type="button"
@@ -182,6 +197,23 @@ export function KioskSlidesManager({
         <p className="rounded-2xl border border-dashed border-zinc-700 p-8 text-center text-sm text-zinc-400">
           Todavía no cargaste imágenes: la tablet muestra las fotos de la web del gimnasio.
         </p>
+      )}
+
+      {editingSlide && (
+        <KioskSlideEditor
+          key={editingSlide.id}
+          slide={editingSlide}
+          onClose={() => setEditing(null)}
+          onSave={async (v) => {
+            const r = await save(editingSlide.id, v)
+            if (r.ok) {
+              setEditing(null)
+              setMsg({ ok: true, text: r.message ?? 'Guardado.' })
+              router.refresh()
+            }
+            return r
+          }}
+        />
       )}
     </div>
   )

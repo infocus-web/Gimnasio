@@ -7,6 +7,8 @@ import { sound } from '@/utils/audio'
 import { OCCUPANCY, PASS_DENIED, type Occupancy } from '@/features/access-plus/labels'
 import { formatWindowsShort } from '@/features/access-plus/windows'
 import { BRAND, WEB_MEDIA } from '@/features/public/media'
+import { PromoSlide } from '@/features/screens/PromoSlide'
+import { fitsScreen, promoDurationMs, type PromoSlideData } from '@/features/screens/promo'
 
 type Result = {
   allowed: boolean
@@ -58,9 +60,8 @@ const MOTION_H = 30
 const MOTION_PIXEL_DIFF = 28 // cuánto tiene que cambiar un punto para contar como movimiento (0-255)
 const MOTION_SHARE = 0.05 // qué parte de la imagen tiene que cambiar (5 %)
 /** Si el gimnasio no cargó publicidad (Panel → Pantallas), pasan las fotos de la web */
-const AD_SLIDES = [WEB_MEDIA.app, ...WEB_MEDIA.gallery, WEB_MEDIA.cta]
+const AD_SLIDES: PromoSlideData[] = [WEB_MEDIA.app, ...WEB_MEDIA.gallery, WEB_MEDIA.cta].map((url) => ({ url }))
 const SLIDES_REFRESH_MS = 5 * 60_000
-const AD_SLIDE_MS = 7000
 
 // La clave de la tablet se guarda en DOS lugares (almacenamiento del navegador + cookie de 1 año):
 // si Chrome limpia uno de los dos (ahorro de espacio, actualización), la tablet sigue vinculada.
@@ -178,7 +179,7 @@ export function TurnstileKiosk({ gymName, storageKey, slug }: { gymName: string;
   const camera = useRef<Promise<unknown>>(Promise.resolve())
   const scanSeq = useRef(0)
   const [idle, setIdle] = useState(false)
-  const [slides, setSlides] = useState<string[]>([])
+  const [slides, setSlides] = useState<PromoSlideData[]>([])
   const lastActivity = useRef(Date.now())
   const wake = useCallback(() => {
     lastActivity.current = Date.now()
@@ -435,11 +436,13 @@ export function TurnstileKiosk({ gymName, storageKey, slug }: { gymName: string;
       try {
         const r = await fetch(`/api/access/turnstile/slides?org=${encodeURIComponent(slug)}`, { cache: 'no-store' })
         if (!r.ok) return
-        const j = (await r.json()) as { slides?: string[] }
+        const j = (await r.json()) as { slides?: PromoSlideData[] }
         if (stop || !Array.isArray(j.slides)) return
+        // La tablet pasa las verticales (y las que son para las dos pantallas)
+        const mine = j.slides.filter((x) => x && typeof x.url === 'string' && fitsScreen(x, 'vertical'))
         // Se precargan para que el cambio de imagen no muestre un hueco negro
-        for (const u of j.slides) new window.Image().src = u
-        setSlides((prev) => (prev.join('|') === j.slides!.join('|') ? prev : j.slides!))
+        for (const x of mine) new window.Image().src = x.url
+        setSlides((prev) => (JSON.stringify(prev) === JSON.stringify(mine) ? prev : mine))
       } catch {
         /* sin conexión: sigue con las que tenía */
       }
@@ -592,35 +595,38 @@ export function TurnstileKiosk({ gymName, storageKey, slug }: { gymName: string;
  * Pantalla de espera: publicidad del gimnasio mientras nadie usa el molinete.
  * La cámara sigue prendida detrás: detecta movimiento y también lee un QR directo.
  */
-function IdleScreen({ gymName, slides }: { gymName: string; slides: readonly string[] }) {
+function IdleScreen({ gymName, slides }: { gymName: string; slides: readonly PromoSlideData[] }) {
   const [i, setI] = useState(0)
+  useEffect(() => setI(0), [slides])
+  // Cada publicidad dura lo suyo (con textos, un poco más)
   useEffect(() => {
-    setI(0)
     if (slides.length < 2) return
-    const t = setInterval(() => setI((n) => (n + 1) % slides.length), AD_SLIDE_MS)
-    return () => clearInterval(t)
-  }, [slides])
+    const t = setTimeout(() => setI((n) => (n + 1) % slides.length), promoDurationMs(slides[i % slides.length]!))
+    return () => clearTimeout(t)
+  }, [i, slides])
+  const current = slides[i % Math.max(slides.length, 1)]
+  const plain = !current?.title && !current?.subtitle && !current?.badge
   return (
-    <div className="absolute inset-0 z-10 overflow-hidden bg-black">
-      {slides.map((src, n) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={src}
-          src={src}
-          alt=""
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${n === i ? 'opacity-100' : 'opacity-0'}`}
-        />
-      ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/30" />
-      <div className="relative flex h-full flex-col items-center justify-between p-10 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-auto w-80 max-w-[80vw]" />
-        <div className="flex flex-col items-center gap-3">
-          <QrCode className="h-14 w-14 animate-pulse text-[#edcc36]" aria-hidden="true" />
-          <p className="text-3xl font-extrabold sm:text-4xl">Acercate y mostrá tu QR</p>
-          <p className="text-lg text-zinc-300">o tocá la pantalla</p>
+    <div className="absolute inset-0 z-10 flex flex-col overflow-hidden bg-black">
+      <div className="relative flex-1">
+        {current && <PromoSlide key={`${i}-${current.url}`} slide={current} className="animate-[idlefade_1s_ease-out]" />}
+        {/* Fotos sin textos: logo del gimnasio arriba */}
+        {plain && (
+          <div className="absolute inset-x-0 top-0 flex justify-center bg-gradient-to-b from-black/80 to-transparent p-10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={BRAND.logo} alt={gymName} width={BRAND.logoWidth} height={BRAND.logoHeight} className="h-auto w-80 max-w-[80vw]" />
+          </div>
+        )}
+      </div>
+      {/* Siempre visible: cómo se usa */}
+      <div className="flex items-center justify-center gap-4 border-t-4 border-[#edcc36] bg-black px-6 py-5">
+        <QrCode className="h-10 w-10 shrink-0 animate-pulse text-[#edcc36]" aria-hidden="true" />
+        <div>
+          <p className="text-2xl font-extrabold sm:text-3xl">Acercate y mostrá tu QR</p>
+          <p className="text-base text-zinc-400">o tocá la pantalla</p>
         </div>
       </div>
+      <style>{`@keyframes idlefade { from { opacity: 0 } to { opacity: 1 } }`}</style>
     </div>
   )
 }

@@ -16,6 +16,7 @@ export default async function MyClassesLayout({ children, params }: LayoutProps<
           ...(manage ? [{ href: `${base}/horarios`, label: 'Mis horarios' }] : []),
           { href: `${base}/socios`, label: 'Socios' },
           { href: `${base}/mensajes`, label: 'Mensajes' },
+          { href: `${base}/pizarra`, label: 'Pizarra TV' },
         ]}
       />
       {children}

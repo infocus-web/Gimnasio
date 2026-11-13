@@ -1645,30 +1645,92 @@ export type Database = {
           },
         ]
       }
+      class_boards: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          media: Json
+          org_id: string
+          staff_id: string
+          timer: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          media?: Json
+          org_id: string
+          staff_id: string
+          timer?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          media?: Json
+          org_id?: string
+          staff_id?: string
+          timer?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_boards_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kiosk_slides: {
         Row: {
           active: boolean
+          badge: string | null
           created_at: string
           id: string
           image_path: string
           org_id: string
+          orientation: string
           sort: number
+          style: string
+          subtitle: string | null
+          text_position: string
+          title: string | null
         }
         Insert: {
           active?: boolean
+          badge?: string | null
           created_at?: string
           id?: string
           image_path: string
           org_id: string
+          orientation?: string
           sort?: number
+          style?: string
+          subtitle?: string | null
+          text_position?: string
+          title?: string | null
         }
         Update: {
           active?: boolean
+          badge?: string | null
           created_at?: string
           id?: string
           image_path?: string
           org_id?: string
+          orientation?: string
           sort?: number
+          style?: string
+          subtitle?: string | null
+          text_position?: string
+          title?: string | null
         }
         Relationships: []
       }
@@ -3477,6 +3539,14 @@ export type Database = {
       floor_tv_save: { Args: { p_org: string; p_ranking: boolean; p_message: string | null; p_web?: boolean }; Returns: undefined }
       public_today: { Args: { p_slug: string }; Returns: Json }
       tv_feed: { Args: { p_token: string }; Returns: Json }
+      tv_pair_start: { Args: { p_slug: string }; Returns: Json }
+      tv_pair_poll: { Args: { p_nonce: string }; Returns: Json }
+      floor_tv_pair_claim: { Args: { p_org: string; p_code: string }; Returns: undefined }
+      tv_board_show: { Args: { p_board: string; p_minutes: number }; Returns: undefined }
+      tv_board_hide: { Args: { p_org: string }; Returns: undefined }
+      tv_board_timer: { Args: { p_org: string; p_action: string }; Returns: Json }
+      tv_live: { Args: { p_token: string }; Returns: Json }
+      tv_board_live: { Args: { p_org: string }; Returns: Json }
       ai_routine_reserve: { Args: { p_org: string }; Returns: Json }
       ai_routine_release: { Args: { p_org: string; p_ticket: number }; Returns: undefined }
       ai_routine_usage: { Args: { p_org: string }; Returns: Json }

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAdminContext } from './context'
 import { dbMessage, ERRORS, type ActionState } from './errors'
 import { KIOSK_BUCKET } from './kiosk-slides'
+import { isPromoOrientation, isPromoPosition, isPromoStyle } from '@/features/screens/promo'
 
 const MAX_SLIDES = 30
 
@@ -92,4 +93,36 @@ export async function moveKioskSlide(slug: string, id: string, dir: -1 | 1): Pro
   const failed = results.find((r) => r.error)
   if (failed?.error) return { message: dbMessage(failed.error) }
   return done(slug, 'Orden guardado.')
+}
+
+/** Textos animados, estilo, posición y orientación de una imagen (0049). */
+export async function updateKioskSlide(
+  slug: string,
+  id: string,
+  v: { badge: string; title: string; subtitle: string; style: string; position: string; orientation: string },
+): Promise<ActionState> {
+  const ctx = await guard(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const clean = (s: string, max: number) => {
+    const t = String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
+    return t || null
+  }
+  if (!isPromoStyle(v.style) || !isPromoPosition(v.position) || !isPromoOrientation(v.orientation)) {
+    return { message: 'Revisá las opciones elegidas.' }
+  }
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('kiosk_slides')
+    .update({
+      badge: clean(v.badge, 30),
+      title: clean(v.title, 80),
+      subtitle: clean(v.subtitle, 160),
+      style: v.style,
+      text_position: v.position,
+      orientation: v.orientation,
+    })
+    .eq('id', id)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: dbMessage(error) }
+  return done(slug, 'Guardado. Llega a las pantallas en unos minutos.')
 }

@@ -1,12 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Users, CalendarClock, Trophy, Cake, Megaphone, WifiOff } from 'lucide-react'
 import type { TvFeed } from './types'
+import { PromoSlide } from '@/features/screens/PromoSlide'
+import { BoardScreen, type LiveBoard } from './BoardScreen'
+import { fitsScreen, promoDurationMs, type PromoSlideData } from '@/features/screens/promo'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 const ROTATE_MS = 15_000
-const AD_MS = 8_000 // cada imagen de publicidad
 const ADS_REFRESH_MS = 5 * 60_000
 const REFRESH_MS = 60_000
 const RETRY_MS = 15_000
@@ -31,8 +33,8 @@ function save(key: string, value: string | null) {
 const time = (iso: string | Date, tz: string) =>
   new Intl.DateTimeFormat('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso))
 
-/** 'ad:<link>' = imagen de publicidad cargada en Panel → Pantallas */
-type Slide = 'now' | 'classes' | 'ranking' | 'birthdays' | 'message' | `ad:${string}`
+/** 'ad:<n>' = publicidad n° n cargada en Panel → Pantallas */
+type Slide = 'now' | 'classes' | 'ranking' | 'birthdays' | 'message' | `ad:${number}`
 
 const LEVEL: Record<string, string> = {
   quiet: 'Tranquilo',
@@ -50,7 +52,9 @@ export function TvScreen({ slug }: { slug: string }) {
   const [offline, setOffline] = useState(false)
   const [now, setNow] = useState<Date | null>(null)
   const [index, setIndex] = useState(0)
-  const [ads, setAds] = useState<string[]>([])
+  const [ads, setAds] = useState<PromoSlideData[]>([])
+  const [live, setLive] = useState<LiveBoard | null>(null)
+  const [offsetMs, setOffsetMs] = useState(0)
 
   // Clave: llega una vez en el link (#k=… o ?k=…) y queda guardada en el TV
   useEffect(() => {
@@ -127,10 +131,12 @@ export function TvScreen({ slug }: { slug: string }) {
       try {
         const r = await fetch(`/api/access/turnstile/slides?org=${encodeURIComponent(slug)}`, { cache: 'no-store' })
         if (!r.ok) return
-        const j = (await r.json()) as { slides?: string[] }
+        const j = (await r.json()) as { slides?: PromoSlideData[] }
         if (stop || !Array.isArray(j.slides)) return
-        for (const u of j.slides) new window.Image().src = u // precarga
-        setAds((prev) => (prev.join('|') === j.slides!.join('|') ? prev : j.slides!))
+        // Los televisores pasan las horizontales (y las que son para las dos pantallas)
+        const mine = j.slides.filter((x) => x && typeof x.url === 'string' && fitsScreen(x, 'horizontal'))
+        for (const x of mine) new window.Image().src = x.url // precarga
+        setAds((prev) => (JSON.stringify(prev) === JSON.stringify(mine) ? prev : mine))
       } catch {
         /* sin conexión: sigue con las que tenía */
       }
@@ -142,6 +148,40 @@ export function TvScreen({ slug }: { slug: string }) {
       clearInterval(t)
     }
   }, [slug])
+
+  // Pizarra del profe en vivo: se pregunta cada 3 segundos (el temporizador lo maneja desde su celular)
+  useEffect(() => {
+    if (!token) return
+    let stop = false
+    let last = ''
+    const poll = async () => {
+      try {
+        const sent = Date.now()
+        const r = await fetch(`/${slug}/tv/live`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ k: token }),
+          cache: 'no-store',
+        })
+        if (!r.ok || stop) return
+        const j = (await r.json()) as { server_now?: string; live?: LiveBoard | null }
+        if (j.server_now) setOffsetMs(new Date(j.server_now).getTime() - (sent + Date.now()) / 2)
+        const key = JSON.stringify(j.live ?? null)
+        if (key !== last) {
+          last = key
+          setLive(j.live ?? null)
+        }
+      } catch {
+        /* sin conexión: sigue mostrando lo último */
+      }
+    }
+    void poll()
+    const t = setInterval(poll, 3000)
+    return () => {
+      stop = true
+      clearInterval(t)
+    }
+  }, [token, slug])
 
   // Recarga preventiva (solo si hay internet, para no quedar en una página de error del navegador)
   useEffect(() => {
@@ -167,37 +207,35 @@ export function TvScreen({ slug }: { slug: string }) {
     let a = 0
     for (const s of list) {
       mixed.push(s)
-      mixed.push(`ad:${ads[a % ads.length]}`)
+      mixed.push(`ad:${a % ads.length}`)
       a++
     }
     // Si hay más imágenes que pantallas de información, las que sobran van juntas al final
-    while (a < ads.length) mixed.push(`ad:${ads[a++]}`)
+    while (a < ads.length) mixed.push(`ad:${a++}`)
     return mixed
   }, [feed, upcoming.length, ads])
 
   const slide = slides[index % Math.max(slides.length, 1)]
-  const adUrl = slide?.startsWith('ad:') ? slide.slice(3) : null
+  const ad = slide?.startsWith('ad:') ? (ads[Number(slide.slice(3))] ?? null) : null
 
   // Cada pantalla dura lo suyo: información 15 s, publicidad 8 s
   useEffect(() => {
     if (slides.length <= 1) return
-    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), adUrl ? AD_MS : ROTATE_MS)
+    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), ad ? promoDurationMs(ad) : ROTATE_MS)
     return () => clearTimeout(t)
-  }, [index, slides.length, adUrl])
+  }, [index, slides.length, ad])
 
   if (!ready) return <main className="min-h-dvh bg-black" />
 
   if (!token) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-black p-[4vw] text-center">
-        <div className="max-w-[70vw] space-y-[2vh]">
-          <p className="text-[3vw] font-black text-white">Pantalla de la sala</p>
-          <p className="text-[1.8vw] text-zinc-400">
-            Este televisor no está vinculado. En el panel entrá a <strong className="text-[#edcc36]">Pantallas → TV de la sala</strong>, generá el link y
-            abrilo en este navegador.
-          </p>
-        </div>
-      </main>
+      <TvPairScreen
+        slug={slug}
+        onPaired={(k) => {
+          save(storageKey, k)
+          setToken(k)
+        }}
+      />
     )
   }
 
@@ -227,11 +265,12 @@ export function TvScreen({ slug }: { slug: string }) {
         )}
       </section>
 
-      {adUrl && (
+      {live && <BoardScreen board={live} offsetMs={offsetMs} />}
+
+      {ad && !live && (
         // Publicidad a pantalla completa (tapa el encabezado y el pie)
-        <div key={slide} className="fixed inset-0 z-10 bg-black animate-[tvfade_0.8s_ease-out]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={adUrl} alt="" className="h-full w-full object-contain" />
+        <div key={`${index}-${slide}`} className="fixed inset-0 z-10 bg-black">
+          <PromoSlide slide={ad} />
         </div>
       )}
 
@@ -368,5 +407,75 @@ function MessageSlide({ text }: { text: string }) {
         <p className={`mt-[3vh] font-black leading-tight ${text.length > 120 ? 'text-[3.4vw]' : 'text-[4.6vw]'}`}>{text}</p>
       </div>
     </div>
+  )
+}
+
+/**
+ * TV sin vincular: muestra un código de 6 números grande. El administrador lo escribe en
+ * Panel → Pantallas y la TV queda vinculada sola (pregunta cada 3 segundos).
+ */
+function TvPairScreen({ slug, onPaired }: { slug: string; onPaired: (token: string) => void }) {
+  const [code, setCode] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  // La pantalla de arriba se redibuja seguido (reloj): el aviso de "vinculada" va por referencia
+  // para no pedir un código nuevo en cada redibujo
+  const paired = useRef(onPaired)
+  paired.current = onPaired
+
+  useEffect(() => {
+    let stop = false
+    let timer: ReturnType<typeof setTimeout>
+    let nonce: string | null = null
+    const post = async (body: object) => {
+      const r = await fetch(`/${slug}/tv/pair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        cache: 'no-store',
+      })
+      return (await r.json()) as { status?: string; code?: string; nonce?: string; token?: string }
+    }
+    const tick = async () => {
+      try {
+        if (!nonce) {
+          const r = await post({})
+          if (stop) return
+          if (r.status === 'ok' && r.code && r.nonce) {
+            nonce = r.nonce
+            setCode(r.code)
+            setFailed(false)
+          } else setFailed(true)
+        } else {
+          const r = await post({ nonce })
+          if (stop) return
+          if (r.status === 'ok' && r.token) return paired.current(r.token)
+          if (r.status === 'expired') nonce = null // venció: pide otro código
+        }
+      } catch {
+        if (!stop) setFailed(true)
+      }
+      if (!stop) timer = setTimeout(tick, 3000)
+    }
+    void tick()
+    return () => {
+      stop = true
+      clearTimeout(timer)
+    }
+  }, [slug])
+
+  return (
+    <main className="grid min-h-dvh cursor-none place-items-center bg-black p-[4vw] text-center text-white">
+      <div className="space-y-[4vh]">
+        <p className="text-[2.6vw] font-black uppercase tracking-[0.2em] text-[#edcc36]">Vincular esta TV</p>
+        <p className="font-mono text-[11vw] font-black leading-none tracking-[0.15em] tabular-nums" aria-live="polite">
+          {code ? `${code.slice(0, 3)} ${code.slice(3)}` : '··· ···'}
+        </p>
+        <p className="mx-auto max-w-[70vw] text-[2vw] leading-snug text-zinc-300">
+          En el panel entrá a <strong className="text-white">Pantallas</strong> y escribí este código en{' '}
+          <strong className="text-white">“TV de la sala”</strong>.
+        </p>
+        {failed && <p className="text-[1.6vw] text-amber-300">Sin conexión. Reintentando…</p>}
+      </div>
+    </main>
   )
 }

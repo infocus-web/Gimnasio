@@ -143,3 +143,19 @@ export async function approveDraft(slug: string, programId: string, _prev?: Acti
   revalidatePath(`/${slug}/admin/rutinas`, 'layout')
   return { ok: true, message: 'Rutina aprobada: ya la podés asignar a tus alumnos.' }
 }
+
+/** La TV muestra un código de 6 números: el administrador lo escribe acá y la TV queda vinculada. */
+export async function claimTvCode(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await tvCtx(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const code = String(form.get('code') ?? '').replace(/\D/g, '')
+  if (code.length !== 6) return { fieldErrors: { code: 'Escribí los 6 números que muestra la TV.' } }
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('floor_tv_pair_claim', { p_org: ctx.org.id, p_code: code })
+  if (error) {
+    if (error.message.trim() === 'TV_CODE_INVALID') return { fieldErrors: { code: 'Ese código no existe o venció. Fijate el que muestra la TV ahora.' } }
+    return { message: msg(error) }
+  }
+  revalidatePath(`/${slug}/admin/pantallas`)
+  return { ok: true, message: '¡Listo! En unos segundos la TV empieza a mostrar la pantalla.' }
+}

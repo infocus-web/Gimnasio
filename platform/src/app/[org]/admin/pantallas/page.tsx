@@ -7,9 +7,10 @@ import { fmtDateTime } from '@/features/admin/format'
 import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { KioskSlidesManager } from '@/features/admin/KioskSlidesManager'
 import { kioskSlideUrl } from '@/features/admin/kiosk-slides'
-import { addKioskSlide, deleteKioskSlide, moveKioskSlide, toggleKioskSlide } from '@/features/admin/kiosk-slide-actions'
-import { TvLinkPanel, TvSettingsForm } from '@/features/floor/MachineForms'
-import { linkTv, saveTvSettings, unlinkTv } from '@/features/floor/actions'
+import { addKioskSlide, deleteKioskSlide, moveKioskSlide, toggleKioskSlide, updateKioskSlide } from '@/features/admin/kiosk-slide-actions'
+import { isPromoOrientation, isPromoPosition, isPromoStyle } from '@/features/screens/promo'
+import { TvCodeForm, TvLinkPanel, TvSettingsForm } from '@/features/floor/MachineForms'
+import { claimTvCode, linkTv, saveTvSettings, unlinkTv } from '@/features/floor/actions'
 
 export const metadata: Metadata = { title: 'Pantallas' }
 
@@ -29,13 +30,31 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
   const supabase = await createClient()
   const [{ data }, tv] = await Promise.all([
     canAds
-      ? supabase.from('kiosk_slides').select('id, image_path, active').eq('org_id', ctx.org.id).order('sort').order('created_at')
-      : Promise.resolve({ data: [] as { id: string; image_path: string; active: boolean }[] }),
+      ? supabase
+          .from('kiosk_slides')
+          .select('id, image_path, active, badge, title, subtitle, style, text_position, orientation')
+          .eq('org_id', ctx.org.id)
+          .order('sort')
+          .order('created_at')
+      : Promise.resolve({ data: [] }),
     canTv ? supabase.rpc('floor_tv_settings', { p_org: ctx.org.id }) : Promise.resolve({ data: null }),
   ])
   const slides = (data ?? []).flatMap((s) => {
     const url = kioskSlideUrl(s.image_path)
-    return url ? [{ id: s.id, url, active: s.active }] : []
+    if (!url) return []
+    return [
+      {
+        id: s.id,
+        url,
+        active: s.active,
+        badge: s.badge,
+        title: s.title,
+        subtitle: s.subtitle,
+        style: isPromoStyle(s.style) ? s.style : ('impacto' as const),
+        position: isPromoPosition(s.text_position) ? s.text_position : ('bottom' as const),
+        orientation: isPromoOrientation(s.orientation) ? s.orientation : ('both' as const),
+      },
+    ]
   })
   const tvSettings = (tv.data ?? null) as { linked: boolean; seen_at: string | null; ranking_enabled: boolean; message: string | null; web_enabled?: boolean } | null
 
@@ -51,6 +70,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
           <p className="mb-4 text-sm text-zinc-400">
             Las imágenes que pasan <strong className="text-zinc-200">la tablet del molinete</strong> (cuando nadie la usa) y{' '}
             <strong className="text-zinc-200">los televisores</strong> (intercaladas con las clases y el ranking), en este orden.
+            A cada una le podés poner textos animados y elegir si es vertical (tablet), horizontal (TVs) o para las dos.
             Los cambios llegan solos en unos minutos.
           </p>
           <KioskSlidesManager
@@ -60,6 +80,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
             remove={deleteKioskSlide.bind(null, slug)}
             toggle={toggleKioskSlide.bind(null, slug)}
             move={moveKioskSlide.bind(null, slug)}
+            save={updateKioskSlide.bind(null, slug)}
           />
         </Card>
       )}
@@ -79,15 +100,31 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
             <div className="space-y-2">
               <p className="flex items-start gap-2 text-sm text-zinc-300">
                 <Tv className="mt-0.5 h-4 w-4 shrink-0 text-[#edcc36]" aria-hidden="true" /> Muestra la hora, cuánta gente hay, las clases que siguen hoy, el ranking del mes,
-                los cumpleaños, tu mensaje y la publicidad de arriba. Va rotando sola.
+                los cumpleaños, tu mensaje y la publicidad de arriba. Va rotando sola. Cuando un profe pone su pizarra, la TV la muestra durante la clase.
               </p>
-              <TvLinkPanel
-                slug={slug}
-                linked={tvSettings.linked}
-                seenAt={tvSettings.seen_at}
-                seenLabel={tvSettings.seen_at ? fmtDateTime(tvSettings.seen_at, ctx.org.timezone) : null}
-                action={linkTv.bind(null, slug)}
-              />
+              {tvSettings.linked ? (
+                <>
+                  <TvLinkPanel
+                    slug={slug}
+                    linked
+                    seenAt={tvSettings.seen_at}
+                    seenLabel={tvSettings.seen_at ? fmtDateTime(tvSettings.seen_at, ctx.org.timezone) : null}
+                    action={linkTv.bind(null, slug)}
+                  />
+                  <details className="group">
+                    <summary className="min-h-[44px] cursor-pointer py-2 text-sm text-zinc-400 underline hover:text-white">Cambiar de televisor (con código)</summary>
+                    <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
+                  </details>
+                </>
+              ) : (
+                <>
+                  <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
+                  <details>
+                    <summary className="min-h-[44px] cursor-pointer py-2 text-sm text-zinc-400 underline hover:text-white">Otra forma: con un link</summary>
+                    <TvLinkPanel slug={slug} linked={false} seenAt={null} seenLabel={null} action={linkTv.bind(null, slug)} />
+                  </details>
+                </>
+              )}
             </div>
             <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} web={tvSettings.web_enabled ?? true} />
           </div>
