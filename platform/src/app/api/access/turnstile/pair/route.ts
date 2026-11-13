@@ -22,9 +22,13 @@ export async function POST(req: NextRequest) {
   const code = typeof body.code === 'string' ? body.code.replace(/\D/g, '') : ''
   if (!/^[a-z0-9-]{1,60}$/.test(slug) || code.length !== 6) return json({ status: 'invalid' })
 
-  const { data, error } = await createAdminClient().rpc('kiosk_pair_with_code' as never, { p_slug: slug, p_code: code } as never)
+  // (la función es nueva y todavía no está en los tipos generados de la base)
+  const db = createAdminClient() as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>
+  }
+  const { data, error } = await db.rpc('kiosk_pair_with_code', { p_slug: slug, p_code: code })
   if (error) {
-    console.error('[turnstile/pair]', (error as { message: string }).message)
+    console.error('[turnstile/pair]', error.message)
     return json({ status: 'error' }, 500)
   }
   const r = (data ?? {}) as { status?: string; token?: string }

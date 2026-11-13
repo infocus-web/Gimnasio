@@ -94,7 +94,9 @@ export async function createKioskToken(slug: string, deviceId: string, _prev: Ac
   const { data, error } = await supabase.rpc('access_device_kiosk_token', { p_device: deviceId })
   if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
   // Código de 6 números para escribir en la tablet (alternativa al link). Si la base todavía no lo tiene (0044), sigue sin código.
-  const code = await supabase.rpc('access_device_kiosk_code' as never, { p_device: deviceId } as never)
+  // (la función es nueva y todavía no está en los tipos generados de la base)
+  const rpc = supabase as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown }> }
+  const code = await rpc.rpc('access_device_kiosk_code', { p_device: deviceId })
   refresh(slug)
   return {
     ok: true,

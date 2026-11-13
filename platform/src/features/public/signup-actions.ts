@@ -143,7 +143,7 @@ export interface DuplicateNotice {
 function maskEmail(email: string | null) {
   if (!email) return null
   const [user, domain] = email.split('@')
-  return domain ? `${user.slice(0, 1)}•••@${domain}` : null
+  return domain ? `${(user ?? '').slice(0, 1)}•••@${domain}` : null
 }
 
 /**

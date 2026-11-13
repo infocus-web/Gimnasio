@@ -53,7 +53,7 @@ const SAME_QR_IGNORE_MS = 60_000
 const cookieName = (key: string) => `k_${key.replace(/[^a-z0-9]/gi, '_')}`
 function readCookie(key: string) {
   const m = document.cookie.match(new RegExp(`(?:^|; )${cookieName(key)}=([^;]*)`))
-  return m ? decodeURIComponent(m[1]) : null
+  return m?.[1] ? decodeURIComponent(m[1]) : null
 }
 function writeCookie(key: string, value: string | null) {
   const base = `${cookieName(key)}=${value ? encodeURIComponent(value) : ''}; path=/; SameSite=Strict${location.protocol === 'https:' ? '; Secure' : ''}`
