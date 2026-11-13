@@ -42,6 +42,8 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
   }
   const email = user.email.toLowerCase()
   const current = await getSignupProfile(slug, user.id)
+  // Viene de /soy-socio: ya es socio del gimnasio (sistema viejo), no elige plan ni paga online
+  const existingMember = next.startsWith(`/${slug}/soy-socio`)
 
   const fieldErrors: ProfileState['fieldErrors'] = {}
   if (v.firstName.length < 2 || v.firstName.length > 60) fieldErrors.firstName = 'Escribí tu nombre.'
@@ -106,7 +108,7 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
         .maybeSingle()
       const { data: created, error } = await admin
         .from('members')
-        .insert({ org_id: org.id, ...data, email, user_id: user.id, status: 'lead', home_location_id: loc?.id ?? null, tags: ['web'] })
+        .insert({ org_id: org.id, ...data, email, user_id: user.id, status: 'lead', home_location_id: loc?.id ?? null, tags: existingMember ? ['web', 'socio-existente'] : ['web'] })
         .select('id')
         .single()
       if (error || !created) {
@@ -128,7 +130,7 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
     if (photoError) return { fieldErrors: { photo: `${photoError} Probá sacarla de nuevo.` } }
   }
 
-  redirect((next.startsWith(`/${slug}/inscripcion`) ? next : `/${slug}/inscripcion`) as Route)
+  redirect((existingMember ? `/${slug}/soy-socio` : next.startsWith(`/${slug}/inscripcion`) ? next : `/${slug}/inscripcion`) as Route)
 }
 
 export interface SignupState {

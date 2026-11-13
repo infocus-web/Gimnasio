@@ -12,6 +12,7 @@ const FILTERS = [
   { key: 'al_dia', label: 'Al día' },
   { key: 'por_vencer', label: 'Por vencer' },
   { key: 'vencido', label: 'Vencidos / sin plan' },
+  { key: 'ya_socios', label: 'Ya socios · web (activar)' },
   { key: 'archivados', label: 'Archivados' },
 ] as const
 
@@ -47,6 +48,16 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
   if (estado === 'al_dia') query = query.eq('status', 'active').in('membership_status', ['active', 'trialing']).gt('current_period_end', in7)
   if (estado === 'por_vencer') query = query.eq('status', 'active').gte('current_period_end', now).lte('current_period_end', in7)
   if (estado === 'vencido') query = query.eq('status', 'active').or(`membership_id.is.null,current_period_end.lt.${now}`)
+  if (estado === 'ya_socios') {
+    // Socios del sistema viejo que se registraron por /soy-socio y esperan que recepción les asigne el plan
+    const { data: pend } = await supabase
+      .from('members')
+      .select('id')
+      .eq('org_id', ctx.org.id)
+      .eq('status', 'lead')
+      .contains('tags', ['socio-existente'])
+    query = query.in('id', (pend ?? []).map((r) => r.id).concat('00000000-0000-0000-0000-000000000000'))
+  }
 
   if (q) {
     const terms = q.split(/\s+/).slice(0, 3)

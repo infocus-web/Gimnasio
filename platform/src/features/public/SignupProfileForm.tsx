@@ -50,10 +50,13 @@ export function SignupProfileForm({
   action,
   defaults,
   accountEmail,
+  submitLabel = 'Seguir: elegir mi plan',
 }: {
   action: (prev: ProfileState, form: FormData) => Promise<ProfileState>
   defaults: ProfileDefaults | null
   accountEmail: string
+  /** Texto del botón (en /soy-socio no se elige plan) */
+  submitLabel?: string
 }) {
   const [state, submit, pending] = useActionState(action, {})
   const fe = state.fieldErrors ?? {}
@@ -151,7 +154,7 @@ export function SignupProfileForm({
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> Guardando…
           </>
         ) : (
-          'Seguir: elegir mi plan'
+          submitLabel
         )}
       </button>
     </form>

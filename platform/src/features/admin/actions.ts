@@ -199,6 +199,8 @@ export async function assignPlan(slug: string, memberId: string, _prev: ActionSt
   const supabase = await createClient()
   const { error } = await supabase.rpc('admin_assign_plan', { p_member: memberId, p_plan: planId, p_start: start })
   if (error) return { message: dbMessage(error) }
+  // Socio que se registró por la web sin plan (lead): al asignarle el plan queda activo
+  await supabase.from('members').update({ status: 'active' }).eq('id', memberId).eq('org_id', ctx.org.id).eq('status', 'lead')
   revalidatePath(`/${slug}/admin`, 'layout')
   return { ok: true, message: 'Plan asignado.' }
 }
