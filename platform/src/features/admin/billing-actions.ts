@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getAdminContext } from './context'
 import { dbMessage, ERRORS, formObject, type ActionState } from './errors'
 import { toCents } from '@/features/payments/money'
+import { formatMoney } from './format'
+import { normalizeArPhone, whatsappLink } from './whatsapp'
 import type { Database } from '@/types/database.types'
 import { PERIOD_MAP, periodOf, rateLabel, type PeriodKey } from './rates'
 
@@ -33,10 +35,24 @@ export async function recordPayment(slug: string, memberId: string, _prev: Actio
   if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin`, 'layout')
   const end = (data as { period_end?: string } | null)?.period_end
-  const until = end
-    ? ` Plan al día hasta el ${new Intl.DateTimeFormat('es-AR', { timeZone: ctx.org.timezone, dateStyle: 'short' }).format(new Date(end))}.`
-    : ''
-  return { ok: true, message: `Cobro registrado.${until}` }
+  const endText = end ? new Intl.DateTimeFormat('es-AR', { timeZone: ctx.org.timezone, dateStyle: 'short' }).format(new Date(end)) : null
+  const until = endText ? ` Plan al día hasta el ${endText}.` : ''
+
+  // Comprobante para mandarle al socio (no un link de pago: el cobro ya está hecho)
+  const { data: m } = await supabase.from('member_directory').select('first_name, phone, plan_name').eq('id', memberId).maybeSingle()
+  const methodText: Record<string, string> = {
+    cash: 'en efectivo',
+    transfer: 'por transferencia',
+    mercadopago: 'por Mercado Pago',
+    card_terminal: 'con tarjeta',
+    other: '',
+  }
+  const shareText =
+    `Hola ${m?.first_name ?? ''}! Recibimos tu pago de ${formatMoney(cents, 'ARS')} ${methodText[method]} en ${ctx.org.name}.`.replace(/\s+/g, ' ').replace(' .', '.') +
+    (renew && endText ? ` Tu plan${m?.plan_name ? ` ${m.plan_name}` : ''} queda al día hasta el ${endText}.` : '') +
+    ' ¡Gracias y a entrenar! 💪'
+  const phone = normalizeArPhone(m?.phone ?? null)
+  return { ok: true, message: `Cobro registrado.${until}`, shareText, waUrl: phone ? whatsappLink(phone, shareText) : null }
 }
 
 export async function voidPayment(slug: string, paymentId: string, _prev: ActionState, form: FormData): Promise<ActionState> {

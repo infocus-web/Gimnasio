@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Banknote, Ban } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { Banknote, Ban, Copy, MessageCircle } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 import { InfoTip } from '@/components/InfoTip'
@@ -26,12 +26,15 @@ function PaymentFormInner({
   plans,
   currentPlanId,
   onDone,
+  extra,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   plans: PlanOption[]
   currentPlanId: string | null
   onDone: () => void
+  extra?: ReactNode
 }) {
+  const [copied, setCopied] = useState(false)
   const [state, formAction] = useActionForm(action, {})
   const initial = plans.find((p) => p.id === currentPlanId) ?? plans[0]
   const [planId, setPlanId] = useState(initial?.id ?? '')
@@ -44,6 +47,29 @@ function PaymentFormInner({
     return (
       <div className="space-y-3">
         <Notice state={state} />
+        {state.shareText && (
+          <div className="flex flex-wrap items-center gap-2">
+            {state.waUrl ? (
+              <a
+                href={state.waUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-500 px-4 text-sm font-bold text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" /> Enviar comprobante por WhatsApp
+              </a>
+            ) : (
+              <span className="text-xs text-zinc-400">No tiene un celular válido cargado: copiá el comprobante y mandalo vos.</span>
+            )}
+            <button
+              type="button"
+              onClick={() => void navigator.clipboard?.writeText(state.shareText!).then(() => setCopied(true))}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60"
+            >
+              <Copy className="h-4 w-4" aria-hidden="true" /> {copied ? 'Copiado' : 'Copiar comprobante'}
+            </button>
+          </div>
+        )}
         <button type="button" onClick={onDone}
           className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60">
           <Banknote className="h-4 w-4" aria-hidden="true" /> Registrar otro cobro
@@ -53,6 +79,7 @@ function PaymentFormInner({
   }
 
   return (
+    <>
     <form action={formAction} className="space-y-3" noValidate>
       <label className="flex min-h-[40px] items-center gap-2 text-sm text-zinc-200">
         <input type="checkbox" name="renew" checked={renew} onChange={(e) => setRenew(e.target.checked)} className="h-4 w-4 accent-[#edcc36]" />
@@ -108,6 +135,9 @@ function PaymentFormInner({
         </SubmitButton>
       </div>
     </form>
+    {/* Link de pago de Mercado Pago: solo antes de registrar un cobro (después sería contradictorio) */}
+    {extra}
+    </>
   )
 }
 
@@ -148,6 +178,8 @@ export function PaymentForm(props: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   plans: PlanOption[]
   currentPlanId: string | null
+  /** Se muestra debajo del formulario y se oculta al registrar el cobro */
+  extra?: ReactNode
 }) {
   const [round, setRound] = useState(0)
   return <PaymentFormInner key={round} {...props} onDone={() => setRound((r) => r + 1)} />

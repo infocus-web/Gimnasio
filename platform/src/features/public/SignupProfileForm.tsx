@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { WebcamCapture } from '@/features/admin/WebcamCapture'
-import type { ProfileState } from './signup-actions'
+import type { DuplicateNotice, ProfileState } from './signup-actions'
 
 const input =
   'mt-1.5 block w-full min-h-[48px] rounded-md border border-white/15 bg-[#141414] px-3.5 text-base text-white placeholder:text-white/30 focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 aria-[invalid=true]:border-red-400'
@@ -51,16 +51,32 @@ export function SignupProfileForm({
   defaults,
   accountEmail,
   submitLabel = 'Seguir: elegir mi plan',
+  checkDuplicate,
 }: {
   action: (prev: ProfileState, form: FormData) => Promise<ProfileState>
   defaults: ProfileDefaults | null
   accountEmail: string
   /** Texto del botón (en /soy-socio no se elige plan) */
   submitLabel?: string
+  /** Chequeo silencioso de DNI / celular ya cargados en el gimnasio */
+  checkDuplicate?: (field: 'document' | 'phone', value: string) => Promise<DuplicateNotice | null>
 }) {
   const [state, submit, pending] = useActionState(action, {})
   const fe = state.fieldErrors ?? {}
   const formRef = useRef<HTMLFormElement>(null)
+  const [notices, setNotices] = useState<Partial<Record<'document' | 'phone', DuplicateNotice>>>({})
+  const checked = useRef<Partial<Record<'document' | 'phone', string>>>({})
+  const check = (field: 'document' | 'phone') => (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.currentTarget.value.replace(/\D/g, '')
+    if (!checkDuplicate || checked.current[field] === value) return
+    checked.current[field] = value
+    checkDuplicate(field, value)
+      .then((n) => {
+        if (checked.current[field] !== value) return
+        setNotices((prev) => ({ ...prev, [field]: n ?? undefined }))
+      })
+      .catch(() => {}) // en silencio: si falla, valida igual al guardar
+  }
   const errorList = Object.values(fe).filter(Boolean) as string[]
 
   // Si algo no pasa la validación, llevar al socio al primer campo con error (si no, desde el botón parece que "no hace nada")
@@ -112,7 +128,8 @@ export function SignupProfileForm({
             required
             defaultValue={defaults?.document}
             error={fe.document}
-            hint="Solo números."
+            hint={fe.document ? undefined : notices.document ? undefined : 'Solo números.'}
+            onBlur={check('document')}
           />
           <Field
             label="Celular"
@@ -125,10 +142,24 @@ export function SignupProfileForm({
             placeholder="11 2345-6789"
             defaultValue={defaults?.phone}
             error={fe.phone}
-            hint="Para avisarte de tus clases y tu plan."
+            hint={notices.phone ? undefined : 'Para avisarte de tus clases y tu plan.'}
+            onBlur={check('phone')}
           />
           <BirthDateField defaultValue={defaults?.birthDate} error={fe.birthDate} />
         </div>
+        {(['document', 'phone'] as const).map((k) =>
+          notices[k] && !fe[k] ? (
+            <p
+              key={k}
+              role="status"
+              className={`rounded-md border px-4 py-3 text-[15px] ${
+                notices[k]!.tone === 'warn' ? 'border-amber-400/40 bg-amber-950/50 text-amber-100' : 'border-brand/40 bg-brand/10 text-white/90'
+              }`}
+            >
+              {notices[k]!.text}
+            </p>
+          ) : null,
+        )}
         <p className="text-sm text-white/55">
           Tu cuenta: <strong className="text-white/85">{accountEmail}</strong>
         </p>

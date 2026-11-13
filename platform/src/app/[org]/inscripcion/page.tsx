@@ -10,7 +10,7 @@ import { BRAND } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { mpConfigured } from '@/features/payments/mercadopago'
 import { SignupForm, type SignupPlan } from '@/features/public/SignupForm'
-import { saveSignupProfile, startSignup } from '@/features/public/signup-actions'
+import { checkSignupDuplicate, saveSignupProfile, startSignup } from '@/features/public/signup-actions'
 import { SignupProfileForm } from '@/features/public/SignupProfileForm'
 import { getSignupProfile } from '@/features/public/signup-profile'
 import type { ReferralInfo } from '@/features/public/referral-types'
@@ -132,6 +132,7 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
           <SignupProfileForm
             action={saveSignupProfile.bind(null, gym.slug, here)}
             accountEmail={accountEmail}
+            checkDuplicate={checkSignupDuplicate.bind(null, gym.slug)}
             defaults={
               profile
                 ? {

@@ -8,6 +8,9 @@ export interface ActionState {
   secret?: string
   /** Lo que se envió, para no vaciar el formulario cuando hay un error */
   values?: Record<string, string | string[]>
+  /** Mensaje listo para mandarle al socio (ej. comprobante de cobro) y su link de WhatsApp */
+  shareText?: string
+  waUrl?: string | null
 }
 
 export const ERRORS: Record<string, string> = {

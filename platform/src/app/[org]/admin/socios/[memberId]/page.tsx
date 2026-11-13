@@ -232,12 +232,14 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                   action={recordPayment.bind(null, slug, memberId)}
                   plans={(plans.data ?? []).map((p) => ({ id: p.id, label: `${p.name} · ${formatMoney(p.price_cents, p.currency)}`, priceCents: p.price_cents }))}
                   currentPlanId={m.plan_id}
+                  extra={
+                    mpConfigured() ? (
+                      <div className="mt-4 border-t border-zinc-900 pt-4">
+                        <PaymentLinkButton action={createPaymentLink.bind(null, slug, memberId)} />
+                      </div>
+                    ) : null
+                  }
                 />
-                {mpConfigured() && (
-                  <div className="mt-4 border-t border-zinc-900 pt-4">
-                    <PaymentLinkButton action={createPaymentLink.bind(null, slug, memberId)} />
-                  </div>
-                )}
               </Card>
             </div>
           )}

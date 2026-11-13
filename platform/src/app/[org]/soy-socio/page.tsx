@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getPublicGym } from '@/features/public/profile'
 import { BRAND } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
-import { saveSignupProfile } from '@/features/public/signup-actions'
+import { checkSignupDuplicate, saveSignupProfile } from '@/features/public/signup-actions'
 import { SignupProfileForm } from '@/features/public/SignupProfileForm'
 import { getSignupProfile } from '@/features/public/signup-profile'
 
@@ -124,6 +124,7 @@ export default async function ExistingMemberPage({ params, searchParams }: PageP
           <SignupProfileForm
             action={saveSignupProfile.bind(null, gym.slug, here)}
             accountEmail={accountEmail}
+            checkDuplicate={checkSignupDuplicate.bind(null, gym.slug)}
             submitLabel="Guardar mis datos"
             defaults={
               profile

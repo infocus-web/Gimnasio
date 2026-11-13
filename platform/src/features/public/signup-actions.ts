@@ -133,6 +133,70 @@ export async function saveSignupProfile(slug: string, next: string, _prev: Profi
   redirect((existingMember ? `/${slug}/soy-socio` : next.startsWith(`/${slug}/inscripcion`) ? next : `/${slug}/inscripcion`) as Route)
 }
 
+export interface DuplicateNotice {
+  /** warn: hay que resolverlo (no va a poder guardar) · info: todo bien, solo avisa */
+  tone: 'warn' | 'info'
+  text: string
+}
+
+/** p•••@gmail.com: alcanza para que el socio reconozca su email sin exponerlo entero */
+function maskEmail(email: string | null) {
+  if (!email) return null
+  const [user, domain] = email.split('@')
+  return domain ? `${user.slice(0, 1)}•••@${domain}` : null
+}
+
+/**
+ * Chequeo silencioso mientras el socio completa sus datos (al salir del campo DNI o celular).
+ * Devuelve null si no hay nada que avisar. Solo para cuentas logueadas con email confirmado;
+ * nunca devuelve nombres ni datos de otra ficha (a lo sumo el email enmascarado de su propia cuenta vieja).
+ */
+export async function checkSignupDuplicate(slug: string, field: 'document' | 'phone', raw: string): Promise<DuplicateNotice | null> {
+  const digits = String(raw ?? '').replace(/\D/g, '')
+  if (field === 'document' && (digits.length < 6 || digits.length > 10)) return null
+  if (field === 'phone' && digits.length < 8) return null
+  if (!process.env.SUPABASE_SECRET_KEY) return null
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email || !user.email_confirmed_at) return null
+  const email = user.email.toLowerCase()
+
+  const admin = createAdminClient()
+  const { data: org } = await admin.from('organizations').select('id').eq('slug', slug).maybeSingle()
+  if (!org) return null
+  const base = () => admin.from('members').select('id, email, user_id, phone').eq('org_id', org.id).neq('status', 'archived')
+
+  if (field === 'document') {
+    const { data: m } = await base().eq('document_id', digits).limit(1).maybeSingle()
+    if (!m || m.user_id === user.id) return null
+    if (m.user_id) {
+      const masked = maskEmail(m.email)
+      return {
+        tone: 'warn',
+        text: `Ese DNI ya tiene una cuenta en el gimnasio${masked ? ` (${masked})` : ''}. Cerrá sesión e ingresá con ese email, o escribinos y lo resolvemos.`,
+      }
+    }
+    if ((m.email ?? '').toLowerCase() === email) {
+      return { tone: 'info', text: '¡Te encontramos! Ya estás cargado/a en el gimnasio: al guardar, tu ficha queda vinculada a esta cuenta.' }
+    }
+    return { tone: 'warn', text: DOC_TAKEN }
+  }
+
+  // Celular: se compara por los últimos 8 dígitos (se guarda con distintos formatos)
+  const tail = digits.slice(-8)
+  const { data: rows } = await base().ilike('phone', `%${tail.slice(-4)}%`).limit(50)
+  const other = (rows ?? []).find((r) => r.user_id !== user.id && (r.phone ?? '').replace(/\D/g, '').endsWith(tail))
+  if (!other) return null
+  if (!other.user_id && (other.email ?? '').toLowerCase() === email) return null
+  return {
+    tone: 'warn',
+    text: 'Ese celular ya está registrado en otra ficha del gimnasio. Si ya tenés cuenta, ingresá con ese email; si no, revisá el número o consultá en recepción.',
+  }
+}
+
 export interface SignupState {
   error?: string
   fieldErrors?: Partial<Record<'promo' | 'plan' | 'firstName' | 'lastName' | 'document' | 'phone' | 'email' | 'birthDate' | 'terms', string>>
