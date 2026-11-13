@@ -387,7 +387,12 @@ export function TurnstileKiosk({ gymName, storageKey }: { gymName: string; stora
       <section className="flex flex-1 flex-col items-center justify-center gap-5 px-4 pb-6">
         <h1 className="text-center text-3xl font-extrabold sm:text-4xl">Mostrá el QR de tu app o de tu pase</h1>
         <div className="relative w-full max-w-md overflow-hidden rounded-3xl border-4 border-[#edcc36]/60">
-          <div id="turnstile-camera" className="aspect-square w-full bg-zinc-950 [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover" />
+          <div
+            id="turnstile-camera"
+            className={`aspect-square w-full bg-zinc-950 [&_video]:!h-full [&_video]:!w-full [&_video]:object-cover ${
+              facing === 'user' ? '[&_video]:-scale-x-100' : ''
+            }`}
+          />
         </div>
         {error && <p role="alert" className="max-w-md text-center text-amber-200">{error}</p>}
         <div className="flex gap-3">

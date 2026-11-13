@@ -6,6 +6,8 @@ import { daysUntil, fmtDate, planState } from '@/features/admin/format'
 import { classVars, normalizeArPhone } from '@/features/admin/whatsapp'
 import { loadTemplates } from '@/features/admin/templates'
 import { TrainerMembers, type TrainerMemberRow } from '@/features/admin/TrainerMembers'
+import { createTrainerPaymentLink } from '@/features/payments/actions'
+import { mpConfigured } from '@/features/payments/mercadopago'
 
 export const metadata: Metadata = { title: 'Control de socios' }
 
@@ -80,7 +82,14 @@ export default async function TrainerMembersPage({ params, searchParams }: PageP
           ))}
         </nav>
       </div>
-      <TrainerMembers slug={slug} senderName={ctx.staff.display_name} templates={templates} rows={rows} days={days} />
+      <TrainerMembers
+        slug={slug}
+        senderName={ctx.staff.display_name}
+        templates={templates}
+        rows={rows}
+        days={days}
+        payAction={mpConfigured() ? createTrainerPaymentLink : undefined}
+      />
     </div>
   )
 }

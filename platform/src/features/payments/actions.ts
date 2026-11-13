@@ -54,6 +54,42 @@ async function preferenceFor(info: IntentInfo, backUrl: string, expiresInHours: 
 }
 
 // ---------------------------------------------------------------------
+// Panel del profe: link de pago para SUS alumnos (sin permisos de cobro)
+// ---------------------------------------------------------------------
+export async function createTrainerPaymentLink(slug: string, memberId: string, _prev: LinkState): Promise<LinkState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  if (!mpConfigured()) return { message: NOT_CONFIGURED }
+  const supabase = await createClient()
+  // (la función es nueva y todavía no está en los tipos generados de la base)
+  const db = supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string; code?: string; hint?: string | null } | null }>
+  }
+  const { data, error } = await db.rpc('trainer_payment_intent_create', { p_org: ctx.org.id, p_member: memberId })
+  if (error) {
+    if (error.message.trim() === 'PLAN_REQUIRED') {
+      return { message: 'No tiene un plan cargado: que lo elija y pague desde la app (Pagar mi plan) o en recepción.' }
+    }
+    if (error.message.trim() === 'FORBIDDEN') return { message: 'Solo podés mandarle el link a alumnos de tus clases.' }
+    return { message: payMessage(error) }
+  }
+  const info = data as unknown as IntentInfo
+  let url: string
+  try {
+    url = await preferenceFor(info, `${publicSiteUrl()}/api/payments/mercadopago/resultado`, 72)
+  } catch (e) {
+    console.error('[link de pago · profe]', e instanceof Error ? e.message : e)
+    return { message: 'No pudimos conectar con Mercado Pago. Probá de nuevo en unos minutos.' }
+  }
+  const text =
+    `Hola ${info.payer_first_name}! Soy ${ctx.staff.display_name}, de ${info.org_name}. Te paso el link para pagar tu plan ${info.plan_name} ` +
+    `(${formatMoney(Number(info.amount_cents), info.currency)}): ${url}\n` +
+    `Podés pagar con tarjeta, débito o dinero en Mercado Pago. Apenas se acredita, el plan queda renovado solo. El link vence en 3 días.`
+  const phone = normalizeArPhone(info.payer_phone)
+  return { ok: true, message: 'Link de pago listo.', url, text, waUrl: phone ? whatsappLink(phone, text) : null }
+}
+
+// ---------------------------------------------------------------------
 // App del socio: pagar su plan
 // ---------------------------------------------------------------------
 export async function startMemberCheckout(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {

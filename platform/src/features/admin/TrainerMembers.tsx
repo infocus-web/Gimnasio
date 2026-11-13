@@ -7,6 +7,8 @@ import { HeartPulse, MessageCircle, Search } from 'lucide-react'
 import { PLAN_STATE_UI, type PlanState } from './format'
 import { WhatsAppComposer, type ComposerFilter } from './WhatsAppComposer'
 import type { MessageTemplate } from './whatsapp'
+import { PaymentLinkButton } from '@/features/payments/PaymentLinkButton'
+import type { LinkState } from '@/features/payments/actions'
 
 export interface TrainerMemberRow {
   id: string
@@ -47,12 +49,15 @@ export function TrainerMembers({
   templates,
   rows,
   days,
+  payAction,
 }: {
   slug: string
   senderName: string
   templates: MessageTemplate[]
   rows: TrainerMemberRow[]
   days: number
+  /** Link de pago de Mercado Pago para alumnos vencidos o por vencer (solo si el gimnasio lo conectó) */
+  payAction?: (slug: string, memberId: string, prev: LinkState) => Promise<LinkState>
 }) {
   const [filter, setFilter] = useState('all')
   const [q, setQ] = useState('')
@@ -142,6 +147,9 @@ export function TrainerMembers({
                   </p>
                   {r.nextClass && <p className="text-emerald-300/90">Próxima: {r.nextClass}</p>}
                 </div>
+                {payAction && (r.state === 'vencido' || r.state === 'por_vencer') && (
+                  <PaymentLinkButton compact action={payAction.bind(null, slug, r.id)} />
+                )}
                 {r.phone ? (
                   <a
                     href={`https://wa.me/${r.phone}`}
