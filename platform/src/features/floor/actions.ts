@@ -89,7 +89,7 @@ export async function linkTv(slug: string, _prev: ActionState): Promise<ActionSt
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('floor_tv_link', { p_org: ctx.org.id })
   if (error || !data) return { message: error ? msg(error) : 'Ocurrió un error.' }
-  revalidatePath(`/${slug}/admin/maquinas`)
+  revalidatePath(`/${slug}/admin/pantallas`)
   return {
     ok: true,
     secret: data,
@@ -103,7 +103,7 @@ export async function unlinkTv(slug: string, _prev?: ActionState): Promise<Actio
   const supabase = await createClient()
   const { error } = await supabase.rpc('floor_tv_unlink', { p_org: ctx.org.id })
   if (error) return { message: msg(error) }
-  revalidatePath(`/${slug}/admin/maquinas`)
+  revalidatePath(`/${slug}/admin/pantallas`)
   return { ok: true, message: 'La TV quedó desvinculada.' }
 }
 
@@ -120,7 +120,7 @@ export async function saveTvSettings(slug: string, _prev: ActionState, form: For
     p_web: form.get('web') === 'on',
   })
   if (error) return { message: msg(error) }
-  revalidatePath(`/${slug}/admin/maquinas`)
+  revalidatePath(`/${slug}/admin/pantallas`)
   revalidatePath(`/${slug}`)
   return { ok: true, message: 'Listo: la TV y la web lo muestran en menos de un minuto.' }
 }

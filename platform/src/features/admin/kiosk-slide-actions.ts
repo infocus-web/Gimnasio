@@ -14,7 +14,7 @@ async function guard(slug: string) {
 }
 
 function done(slug: string, message: string): ActionState {
-  revalidatePath(`/${slug}/admin/pantalla-molinete`)
+  revalidatePath(`/${slug}/admin/pantallas`)
   return { ok: true, message }
 }
 

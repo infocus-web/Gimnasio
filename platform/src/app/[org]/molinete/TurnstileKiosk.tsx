@@ -57,7 +57,7 @@ const MOTION_W = 40
 const MOTION_H = 30
 const MOTION_PIXEL_DIFF = 28 // cuánto tiene que cambiar un punto para contar como movimiento (0-255)
 const MOTION_SHARE = 0.05 // qué parte de la imagen tiene que cambiar (5 %)
-/** Si el gimnasio no cargó publicidad (Panel → Pantalla del molinete), pasan las fotos de la web */
+/** Si el gimnasio no cargó publicidad (Panel → Pantallas), pasan las fotos de la web */
 const AD_SLIDES = [WEB_MEDIA.app, ...WEB_MEDIA.gallery, WEB_MEDIA.cta]
 const SLIDES_REFRESH_MS = 5 * 60_000
 const AD_SLIDE_MS = 7000

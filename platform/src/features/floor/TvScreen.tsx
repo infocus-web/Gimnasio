@@ -6,6 +6,8 @@ import type { TvFeed } from './types'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 const ROTATE_MS = 15_000
+const AD_MS = 8_000 // cada imagen de publicidad
+const ADS_REFRESH_MS = 5 * 60_000
 const REFRESH_MS = 60_000
 const RETRY_MS = 15_000
 const RELOAD_MS = 6 * 60 * 60_000 // cada 6 h recarga la página (toma cambios y libera memoria)
@@ -29,7 +31,8 @@ function save(key: string, value: string | null) {
 const time = (iso: string | Date, tz: string) =>
   new Intl.DateTimeFormat('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso))
 
-type Slide = 'now' | 'classes' | 'ranking' | 'birthdays' | 'message'
+/** 'ad:<link>' = imagen de publicidad cargada en Panel → Pantallas */
+type Slide = 'now' | 'classes' | 'ranking' | 'birthdays' | 'message' | `ad:${string}`
 
 const LEVEL: Record<string, string> = {
   quiet: 'Tranquilo',
@@ -47,6 +50,7 @@ export function TvScreen({ slug }: { slug: string }) {
   const [offline, setOffline] = useState(false)
   const [now, setNow] = useState<Date | null>(null)
   const [index, setIndex] = useState(0)
+  const [ads, setAds] = useState<string[]>([])
 
   // Clave: llega una vez en el link (#k=… o ?k=…) y queda guardada en el TV
   useEffect(() => {
@@ -116,6 +120,29 @@ export function TvScreen({ slug }: { slug: string }) {
     }
   }, [token, fetchFeed])
 
+  // Publicidad (la misma de la tablet del molinete): se lee al abrir y cada 5 minutos
+  useEffect(() => {
+    let stop = false
+    const loadAds = async () => {
+      try {
+        const r = await fetch(`/api/access/turnstile/slides?org=${encodeURIComponent(slug)}`, { cache: 'no-store' })
+        if (!r.ok) return
+        const j = (await r.json()) as { slides?: string[] }
+        if (stop || !Array.isArray(j.slides)) return
+        for (const u of j.slides) new window.Image().src = u // precarga
+        setAds((prev) => (prev.join('|') === j.slides!.join('|') ? prev : j.slides!))
+      } catch {
+        /* sin conexión: sigue con las que tenía */
+      }
+    }
+    void loadAds()
+    const t = setInterval(loadAds, ADS_REFRESH_MS)
+    return () => {
+      stop = true
+      clearInterval(t)
+    }
+  }, [slug])
+
   // Recarga preventiva (solo si hay internet, para no quedar en una página de error del navegador)
   useEffect(() => {
     const t = setInterval(() => {
@@ -134,16 +161,29 @@ export function TvScreen({ slug }: { slug: string }) {
     if (feed.ranking_enabled && feed.ranking?.length) list.push('ranking')
     if (feed.birthdays?.length) list.push('birthdays')
     if (feed.message) list.push('message')
-    return list
-  }, [feed, upcoming.length])
-
-  useEffect(() => {
-    if (slides.length <= 1) return
-    const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), ROTATE_MS)
-    return () => clearInterval(t)
-  }, [slides.length])
+    // Publicidad intercalada: después de cada pantalla de información va una imagen
+    if (!ads.length) return list
+    const mixed: Slide[] = []
+    let a = 0
+    for (const s of list) {
+      mixed.push(s)
+      mixed.push(`ad:${ads[a % ads.length]}`)
+      a++
+    }
+    // Si hay más imágenes que pantallas de información, las que sobran van juntas al final
+    while (a < ads.length) mixed.push(`ad:${ads[a++]}`)
+    return mixed
+  }, [feed, upcoming.length, ads])
 
   const slide = slides[index % Math.max(slides.length, 1)]
+  const adUrl = slide?.startsWith('ad:') ? slide.slice(3) : null
+
+  // Cada pantalla dura lo suyo: información 15 s, publicidad 8 s
+  useEffect(() => {
+    if (slides.length <= 1) return
+    const t = setTimeout(() => setIndex((i) => (i + 1) % slides.length), adUrl ? AD_MS : ROTATE_MS)
+    return () => clearTimeout(t)
+  }, [index, slides.length, adUrl])
 
   if (!ready) return <main className="min-h-dvh bg-black" />
 
@@ -153,7 +193,7 @@ export function TvScreen({ slug }: { slug: string }) {
         <div className="max-w-[70vw] space-y-[2vh]">
           <p className="text-[3vw] font-black text-white">Pantalla de la sala</p>
           <p className="text-[1.8vw] text-zinc-400">
-            Este televisor no está vinculado. En el panel entrá a <strong className="text-[#edcc36]">Máquinas → Pantalla de TV</strong>, generá el link y
+            Este televisor no está vinculado. En el panel entrá a <strong className="text-[#edcc36]">Pantallas → TV de la sala</strong>, generá el link y
             abrilo en este navegador.
           </p>
         </div>
@@ -187,11 +227,19 @@ export function TvScreen({ slug }: { slug: string }) {
         )}
       </section>
 
+      {adUrl && (
+        // Publicidad a pantalla completa (tapa el encabezado y el pie)
+        <div key={slide} className="fixed inset-0 z-10 bg-black animate-[tvfade_0.8s_ease-out]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={adUrl} alt="" className="h-full w-full object-contain" />
+        </div>
+      )}
+
       <footer className="flex items-center justify-between px-[3vw] pb-[2.5vh]">
         <div className="flex gap-[0.8vw]" aria-hidden="true">
           {slides.length > 1 &&
             slides.map((s, i) => (
-              <span key={s} className={`h-[0.8vh] w-[3vw] rounded-full ${i === index % slides.length ? 'bg-[#edcc36]' : 'bg-zinc-800'}`} />
+              <span key={`${s}-${i}`} className={`h-[0.8vh] w-[3vw] rounded-full ${i === index % slides.length ? 'bg-[#edcc36]' : 'bg-zinc-800'}`} />
             ))}
         </div>
         {offline && feed && (

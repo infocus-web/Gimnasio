@@ -1,7 +1,7 @@
 -- =====================================================================
 -- 0048 · Publicidad de la tablet del molinete
 --
--- El administrador sube desde el panel (Panel → Pantalla del molinete) las imágenes
+-- El administrador sube desde el panel (Panel → Pantallas) las imágenes
 -- que la tablet pasa mientras nadie la usa.
 -- Bucket `molinete` (PÚBLICO: son publicidades del gimnasio, nada privado):
 --   <org_id>/<uuid>.jpg   (JPEG de hasta 1920 px de lado, ≈300 KB)
