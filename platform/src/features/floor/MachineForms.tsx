@@ -158,12 +158,15 @@ export function TvLinkPanel({
   seenAt,
   seenLabel,
   action,
+  statusOnly = false,
 }: {
   slug: string
   linked: boolean
   seenAt: string | null
   seenLabel: string | null
   action: Bare
+  /** Solo el estado (conectada / sin conexión): la vinculación se hace con el código de 6 números */
+  statusOnly?: boolean
 }) {
   const [state, submit] = useActionForm(action)
   const [sure, setSure] = useState(false)
@@ -202,17 +205,17 @@ export function TvLinkPanel({
           ) : seenAt ? (
             <p>
               <strong>La TV no se conecta desde el {seenLabel}.</strong> Fijate que esté prendida, con internet y con la pantalla abierta en el navegador. Si
-              es otro televisor o se borró, vinculalo de nuevo.
+              es otro televisor o se borró, vinculalo de nuevo con el código de abajo.
             </p>
           ) : (
             <p>
-              <strong>Link generado, pero ningún televisor lo abrió todavía.</strong> Si perdiste el link, generá uno nuevo.
+              <strong>Vinculada, pero la TV todavía no se conectó.</strong> Fijate que tenga la pantalla abierta en el navegador.
             </p>
           )}
         </div>
       )}
 
-      {link ? (
+      {statusOnly ? null : link ? (
         <div className="space-y-3 rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/10 p-3">
           <TvSteps link={link} />
           <div className="flex flex-wrap items-start gap-4">

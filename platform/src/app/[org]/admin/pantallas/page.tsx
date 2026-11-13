@@ -102,29 +102,18 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
                 <Tv className="mt-0.5 h-4 w-4 shrink-0 text-[#edcc36]" aria-hidden="true" /> Muestra la hora, cuánta gente hay, las clases que siguen hoy, el ranking del mes,
                 los cumpleaños, tu mensaje y la publicidad de arriba. Va rotando sola. Cuando un profe pone su pizarra, la TV la muestra durante la clase.
               </p>
-              {tvSettings.linked ? (
-                <>
-                  <TvLinkPanel
-                    slug={slug}
-                    linked
-                    seenAt={tvSettings.seen_at}
-                    seenLabel={tvSettings.seen_at ? fmtDateTime(tvSettings.seen_at, ctx.org.timezone) : null}
-                    action={linkTv.bind(null, slug)}
-                  />
-                  <details className="group">
-                    <summary className="min-h-[44px] cursor-pointer py-2 text-sm text-zinc-400 underline hover:text-white">Cambiar de televisor (con código)</summary>
-                    <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
-                  </details>
-                </>
-              ) : (
-                <>
-                  <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
-                  <details>
-                    <summary className="min-h-[44px] cursor-pointer py-2 text-sm text-zinc-400 underline hover:text-white">Otra forma: con un link</summary>
-                    <TvLinkPanel slug={slug} linked={false} seenAt={null} seenLabel={null} action={linkTv.bind(null, slug)} />
-                  </details>
-                </>
+              {tvSettings.linked && (
+                <TvLinkPanel
+                  slug={slug}
+                  linked
+                  statusOnly
+                  seenAt={tvSettings.seen_at}
+                  seenLabel={tvSettings.seen_at ? fmtDateTime(tvSettings.seen_at, ctx.org.timezone) : null}
+                  action={linkTv.bind(null, slug)}
+                />
               )}
+              <p className="pt-1 text-sm font-semibold text-white">{tvSettings.linked ? 'Vincular de nuevo u otro televisor' : 'Vincular la TV'}</p>
+              <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
             </div>
             <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} web={tvSettings.web_enabled ?? true} />
           </div>
