@@ -228,11 +228,6 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
           </div>
         </section>
 
-        {/* ---------- Buffet (publicidad del concesionario: menú de hoy + carta) ---------- */}
-        {buffet && (
-          <BuffetSection data={buffet} slug={gym.slug} orderHref={`/login?next=${encodeURIComponent(`/${gym.slug}/app/buffet`)}`} />
-        )}
-
         {/* ---------- Actividades ---------- */}
         {gym.activities.length > 0 && (
           <section id="actividades" aria-labelledby="act-title" className="scroll-mt-4 py-24 sm:py-32">
@@ -268,6 +263,11 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               </div>
             </div>
           </section>
+        )}
+
+        {/* ---------- Buffet (publicidad del concesionario: menú de hoy + carta) ---------- */}
+        {buffet && (
+          <BuffetSection data={buffet} slug={gym.slug} orderHref={`/login?next=${encodeURIComponent(`/${gym.slug}/app/buffet`)}`} />
         )}
 
         {/* ---------- Más propuestas ---------- */}
