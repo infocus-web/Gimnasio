@@ -8,6 +8,7 @@ export const CATEGORIES = [
   { value: 'licuado', label: 'Licuados y jugos' },
   { value: 'dulce', label: 'Tortas y dulces' },
   { value: 'cafeteria', label: 'Cafetería' },
+  { value: 'desayuno', label: 'Desayunos y meriendas' },
   { value: 'bebida', label: 'Bebidas' },
   { value: 'otro', label: 'Otros' },
 ] as const
