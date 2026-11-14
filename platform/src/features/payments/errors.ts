@@ -13,6 +13,10 @@ const PAY_ERRORS: Record<string, string> = {
   INTENT_NOT_FOUND: 'No encontramos ese pago. Probá de nuevo.',
   NOT_PAYER: 'El plan lo paga el titular del grupo familiar.',
   PLAN_REQUIRED: 'Elegí qué plan querés pagar.',
+  SUBSCRIPTION_ACTIVE: 'Ya tenés el débito automático activo.',
+  PLAN_NOT_RECURRING: 'El débito automático es solo para planes con renovación periódica.',
+  EMAIL_REQUIRED: 'Escribí el email de tu cuenta de Mercado Pago.',
+  SUBSCRIPTION_NOT_FOUND: 'No encontramos ese débito automático.',
 }
 
 /** Igual que dbMessage del panel, más los códigos de pagos y caja (usa el hint si la base lo manda). */

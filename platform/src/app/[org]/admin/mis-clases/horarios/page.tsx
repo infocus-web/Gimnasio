@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { Plus } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { createSeriesRpc, editSeries, endSeries } from '@/features/admin/schedule-actions'
-import { SeriesForm } from '@/features/admin/ScheduleForms'
+import { createSeriesRpc, editSeries, endSeries, renameRoom } from '@/features/admin/schedule-actions'
+import { RoomNameForm, SeriesForm } from '@/features/admin/ScheduleForms'
 import { EditSeriesForm } from '@/features/admin/ClassEditForms'
 import { InfoTip } from '@/components/InfoTip'
 import { WEEKDAYS, fmtDate, todayYMD } from '@/features/admin/format'
@@ -21,7 +21,7 @@ export default async function MyScheduleGridPage({ params }: PageProps<'/[org]/a
 
   const supabase = await createClient()
   const today = todayYMD(ctx.org.timezone)
-  const [{ data: series }, { data: types }, { data: rooms }] = await Promise.all([
+  const [{ data: series }, { data: types }, { data: rooms }, { data: upcoming }] = await Promise.all([
     supabase
       .from('class_series')
       .select('id, weekday, start_time, duration_min, capacity, room_id, valid_from, valid_until, class_types(name, color), rooms(name)')
@@ -32,8 +32,18 @@ export default async function MyScheduleGridPage({ params }: PageProps<'/[org]/a
       .order('start_time'),
     supabase.from('class_types').select('id, name, default_duration_min, default_capacity').eq('org_id', ctx.org.id).eq('active', true).order('name'),
     supabase.from('rooms').select('id, name, capacity').eq('org_id', ctx.org.id).eq('active', true).order('name'),
+    supabase
+      .from('class_sessions')
+      .select('room_id')
+      .eq('org_id', ctx.org.id)
+      .eq('instructor_id', ctx.staff.id)
+      .eq('status', 'scheduled')
+      .gt('ends_at', new Date().toISOString()),
   ])
   const roomOpts = (rooms ?? []).map((r) => ({ id: r.id, name: r.name, capacity: r.capacity }))
+  // Sus salas: donde tiene un horario fijo vigente o una clase próxima (la base vuelve a verificarlo al renombrar)
+  const myRoomIds = new Set([...(series ?? []).map((s) => s.room_id), ...(upcoming ?? []).map((u) => u.room_id)])
+  const myRooms = (rooms ?? []).filter((r) => myRoomIds.has(r.id))
   const byDay = WEEKDAYS.map((_, i) => (series ?? []).filter((s) => s.weekday === i + 1))
 
   return (
@@ -112,6 +122,25 @@ export default async function MyScheduleGridPage({ params }: PageProps<'/[org]/a
           <p className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">Todavía no tenés horarios fijos.</p>
         )}
       </div>
+
+      {myRooms.length > 0 && (
+        <section className="space-y-3 rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-zinc-300">
+            Mis salas
+            <InfoTip label="Mis salas">
+              <p>Las salas donde das clases. Podés cambiarles el nombre (ej. «Salón 2» → «Sala Spinning»).</p>
+              <p>El nombre nuevo se ve en todo el sistema: agenda, app de socios, pantallas y en las clases de otros profes que usen la misma sala. La capacidad y los equipos los maneja administración.</p>
+            </InfoTip>
+          </h2>
+          <ul className="space-y-3">
+            {myRooms.map((r) => (
+              <li key={r.id}>
+                <RoomNameForm action={renameRoom.bind(null, slug, r.id)} name={r.name} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

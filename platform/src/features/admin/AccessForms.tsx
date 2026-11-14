@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import QRCode from 'qrcode'
-import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound, Tablet, DoorOpen, ChevronDown } from 'lucide-react'
+import { useFormStatus } from 'react-dom'
+import { RefreshCw, ListChecks, ShieldCheck, Pause, Play, Trash2, Link2, UserX, ScanFace, Copy, Check, Monitor, KeyRound, Tablet, DoorOpen, ChevronDown, AlertTriangle, Search, Loader2 } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, Notice, SubmitButton, inputClass, useActionForm } from './ui'
 import { InfoTip } from '@/components/InfoTip'
@@ -352,41 +353,116 @@ export function KioskPanel({
   )
 }
 
-export function UnlinkedUserRow({ pin, name, link, forget }: { pin: number; name: string; link: WithForm; forget: Bare }) {
+export interface UnlinkedUser {
+  pin: number
+  name: string
+  link: WithForm
+  forget: Bare
+}
+
+/** Personas cargadas a mano en el lector sin socio: cajón plegable con buscador y lista con scroll */
+export function UnlinkedUsersDrawer({ users }: { users: UnlinkedUser[] }) {
+  const [q, setQ] = useState('')
+  const needle = q.trim().toLowerCase()
+  const matches = (u: UnlinkedUser) => !needle || (u.name || 'sin nombre').toLowerCase().includes(needle) || String(u.pin).includes(needle)
+  const visible = users.filter(matches).length
+  return (
+    <details className="group rounded-xl border border-amber-500/30 bg-amber-500/[0.03]">
+      <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-sm text-amber-100 hover:bg-amber-500/5">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <strong className="font-semibold">{users.length === 1 ? '1 persona' : `${users.length} personas`} sin vincular</strong>
+          <span className="text-amber-100/70"> · entran sin control de pagos</span>
+        </span>
+        <span className="hidden text-xs text-amber-200/70 sm:inline group-open:hidden">Ver y vincular</span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-amber-300 transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+
+      <div className="space-y-2 border-t border-amber-500/20 p-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nombre o N°"
+              aria-label="Buscar persona del lector"
+              className="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-900 pl-8 pr-3 text-sm text-white placeholder:text-zinc-600 focus-visible:border-[#edcc36] focus-visible:outline-none"
+            />
+          </div>
+          <span className="shrink-0 text-xs tabular-nums text-zinc-500">
+            {visible === users.length ? users.length : `${visible} de ${users.length}`}
+          </span>
+          <InfoTip label="Personas sin vincular">
+            <p>Fueron cargadas a mano en el lector y no están unidas a ningún socio, así que entran aunque deban.</p>
+            <p><strong>Vincular:</strong> escribí el DNI del socio. Conserva su cara, palma o huella y desde ahí el sistema controla sus pagos.</p>
+            <p><strong>Borrar:</strong> la saca del aparato; ya no puede entrar. No toca a ningún socio del sistema.</p>
+          </InfoTip>
+        </div>
+
+        <ul className="max-h-[360px] divide-y divide-zinc-800/70 overflow-y-auto overscroll-contain rounded-lg border border-zinc-800 bg-black/20">
+          {users.map((u) => (
+            <UnlinkedUserRow key={u.pin} {...u} hidden={!matches(u)} />
+          ))}
+          {visible === 0 && <li className="px-3 py-6 text-center text-xs text-zinc-500">Nadie coincide con «{q}».</li>}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
+function RowSubmit({ children, className, title }: { children: React.ReactNode; className: string; title?: string }) {
+  const { pending } = useFormStatus()
+  return (
+    <button type="submit" disabled={pending} title={title} className={`${className} disabled:opacity-60`}>
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+      {children}
+    </button>
+  )
+}
+
+export function UnlinkedUserRow({ pin, name, link, forget, hidden }: UnlinkedUser & { hidden?: boolean }) {
   const [ls, doLink] = useActionForm(link)
   const [fs, doForget] = useActionForm(forget)
   const shown = fs.message ? fs : ls
   return (
-    <li className="space-y-2 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-white">
-          {name || 'Sin nombre'} <span className="font-mono text-xs text-zinc-500">· N° {pin}</span>
+    <li className={hidden ? 'hidden' : 'px-3 py-2'}>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="min-w-0 flex-1 basis-32 truncate text-sm text-white">
+          {name || 'Sin nombre'} <span className="font-mono text-[11px] text-zinc-500">N° {pin}</span>
         </p>
-        <form action={doForget} className="flex items-center gap-1.5">
-          <SubmitButton variant="ghost">
-            <UserX className="h-4 w-4" aria-hidden="true" /> Borrar del lector
-          </SubmitButton>
-          <InfoTip label="Borrar del lector">
-            <p>Saca a esta persona del aparato: <strong>ya no puede entrar con su cara, palma o huella</strong>.</p>
-            <p>No toca a ningún socio del sistema.</p>
-          </InfoTip>
+        <form action={doLink} className="flex items-center gap-1.5">
+          <label className="sr-only" htmlFor={`dni-${pin}`}>DNI del socio para {name || `N° ${pin}`}</label>
+          <input
+            id={`dni-${pin}`}
+            name="dni"
+            inputMode="numeric"
+            placeholder="DNI"
+            className="h-8 w-28 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-white placeholder:text-zinc-600 focus-visible:border-[#edcc36] focus-visible:outline-none"
+          />
+          <RowSubmit
+            title="Vincular con el socio de ese DNI"
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-zinc-700 px-2.5 text-xs font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white"
+          >
+            <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> Vincular
+          </RowSubmit>
+        </form>
+        <form action={doForget}>
+          <RowSubmit
+            title="Borrar del lector (ya no puede entrar)"
+            className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs text-zinc-500 hover:bg-red-500/10 hover:text-red-300"
+          >
+            <UserX className="h-3.5 w-3.5" aria-hidden="true" /> Borrar
+          </RowSubmit>
         </form>
       </div>
-      <form action={doLink} className="flex flex-wrap items-start gap-2">
-        <label className="sr-only" htmlFor={`dni-${pin}`}>DNI del socio</label>
-        <input id={`dni-${pin}`} name="dni" inputMode="numeric" placeholder="DNI del socio" className={`${inputClass} w-44`} />
-        <SubmitButton variant="ghost">
-          <Link2 className="h-4 w-4" aria-hidden="true" /> Vincular a socio
-        </SubmitButton>
-        <span className="flex min-h-[44px] items-center">
-          <InfoTip label="Vincular a socio">
-            <p>Une a esta persona, que fue cargada a mano en el lector, con el socio de ese DNI. <strong>Conserva su cara, palma o huella.</strong></p>
-            <p>Desde ese momento el sistema controla sus pagos: si se vence o debe, la saca del lector; cuando paga, la vuelve a cargar.</p>
-          </InfoTip>
-        </span>
-        {ls.fieldErrors?.dni && <span className="w-full text-xs text-red-300">{ls.fieldErrors.dni}</span>}
-      </form>
-      <Notice state={shown} />
+      {ls.fieldErrors?.dni && <p className="mt-1 text-xs text-red-300">{ls.fieldErrors.dni}</p>}
+      {shown.message && (
+        <div className="mt-2">
+          <Notice state={shown} />
+        </div>
+      )}
     </li>
   )
 }

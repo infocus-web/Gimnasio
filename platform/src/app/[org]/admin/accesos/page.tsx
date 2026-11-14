@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
-import { Wifi, WifiOff, ScanFace, AlertTriangle, ChevronDown } from 'lucide-react'
+import { Wifi, WifiOff, ScanFace, ChevronDown } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { siteUrl } from '@/lib/site-url'
 import { Card } from '@/features/admin/ui'
 import { fmtDateTime } from '@/features/admin/format'
-import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, OpenTurnstileButton, RegisterDeviceForm, UnlinkedUserRow } from '@/features/admin/AccessForms'
+import { AgentPanel, CopyValue, KioskPanel, DeviceButtons, OpenTurnstileButton, RegisterDeviceForm, UnlinkedUsersDrawer } from '@/features/admin/AccessForms'
 import { createAgentToken, createKioskToken, deviceAction, openTurnstile, forgetDeviceUser, linkDeviceUser, registerDevice } from '@/features/admin/access-actions'
 
 export const metadata: Metadata = { title: 'Accesos' }
@@ -202,24 +202,14 @@ export default async function AccessPage({ params }: PageProps<'/[org]/admin/acc
               />
 
               {unlinked.length > 0 && (
-                <div className="rounded-xl border border-amber-500/30 p-3">
-                  <p className="flex items-start gap-2 text-sm text-amber-100">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                    {unlinked.length === 1 ? 'Hay 1 persona cargada' : `Hay ${unlinked.length} personas cargadas`} a mano en el lector que no
-                    están vinculadas a un socio: entran sin control de pagos. Vinculalas con su DNI (conservan la cara) o borralas.
-                  </p>
-                  <ul className="divide-y divide-zinc-900">
-                    {unlinked.slice(0, 50).map((u) => (
-                      <UnlinkedUserRow
-                        key={u.pin}
-                        pin={u.pin}
-                        name={u.name ?? ''}
-                        link={linkDeviceUser.bind(null, slug, d.id, u.pin)}
-                        forget={forgetDeviceUser.bind(null, slug, d.id, u.pin)}
-                      />
-                    ))}
-                  </ul>
-                </div>
+                <UnlinkedUsersDrawer
+                  users={unlinked.map((u) => ({
+                    pin: u.pin,
+                    name: u.name ?? '',
+                    link: linkDeviceUser.bind(null, slug, d.id, u.pin),
+                    forget: forgetDeviceUser.bind(null, slug, d.id, u.pin),
+                  }))}
+                />
               )}
             </div>
           </Card>

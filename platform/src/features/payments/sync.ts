@@ -1,8 +1,9 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getPayment } from './mercadopago'
+import { getPayment, type MpPayment } from './mercadopago'
 import { sendDayPassEmailOnce } from './day-pass'
 import { sendSignupAccessOnce } from './signup'
+import { settleSubscriptionMpPayment } from './subscriptions'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -19,7 +20,7 @@ export async function syncMpPayment(paymentId: string): Promise<SyncResult> {
   const p = await getPayment(paymentId)
   if (!p) return { ok: false, reason: 'NOT_FOUND' }
   const intentId = p.external_reference ?? ''
-  if (!UUID.test(intentId)) return { ok: false, reason: 'NOT_OURS' }
+  if (!UUID.test(intentId)) return subscriptionFallback(p)
 
   const { data, error } = await createAdminClient().rpc('payment_intent_settle', {
     p_intent: intentId,
@@ -30,7 +31,7 @@ export async function syncMpPayment(paymentId: string): Promise<SyncResult> {
     p_currency: p.currency_id,
   })
   if (error) {
-    if (error.message.includes('INTENT_NOT_FOUND')) return { ok: false, reason: 'NOT_OURS' }
+    if (error.message.includes('INTENT_NOT_FOUND')) return subscriptionFallback(p)
     console.error('[mercadopago] settle', error.message)
     return { ok: false, reason: 'ERROR' }
   }
@@ -50,4 +51,11 @@ export async function syncMpPayment(paymentId: string): Promise<SyncResult> {
     await sendSignupAccessOnce(intentId).catch((e) => console.error('[inscripción]', e instanceof Error ? e.message : e))
   }
   return { ok: true, intentId, status: r.status ?? 'pending', duplicate: r.duplicate, periodEnd: r.result?.period_end ?? null, dayPass, signup }
+}
+
+/** Cobro de un débito automático (no es de una intención de pago): se registra en su suscripción. */
+async function subscriptionFallback(p: MpPayment): Promise<SyncResult> {
+  const r = await settleSubscriptionMpPayment(p)
+  if (!r.ok) return { ok: false, reason: r.reason }
+  return { ok: true, intentId: r.subscriptionId, status: r.status }
 }

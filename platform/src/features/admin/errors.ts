@@ -56,6 +56,8 @@ export const ERRORS: Record<string, string> = {
   INVALID_CAPACITY: 'El cupo tiene que ser de al menos 1 lugar.',
   CAPACITY_BELOW_BOOKED: 'Ya hay más anotados que ese cupo.',
   ROOM_NOT_FOUND: 'Esa sala no existe o está desactivada.',
+  ROOM_NAME_TAKEN: 'Ya hay otra sala con ese nombre.',
+  ROOM_NAME_TOO_LONG: 'El nombre de la sala es muy largo (máximo 60 letras).',
   ROOM_BUSY: 'La sala ya está ocupada en ese horario.',
   INSTRUCTOR_BUSY: 'El profe ya tiene otra clase en ese horario.',
   SLOT_TAKEN: 'Ya hay otra clase de este horario fijo en esa fecha y hora.',

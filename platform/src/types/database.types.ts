@@ -2133,6 +2133,87 @@ export type Database = {
           },
         ]
       }
+      mp_subscriptions: {
+        Row: {
+          amount_cents: number
+          billing_account_id: string
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          failed_payment_ids: string[]
+          frequency: number
+          frequency_type: string
+          id: string
+          init_point: string | null
+          last_failure_at: string | null
+          last_failure_detail: string | null
+          last_payment_at: string | null
+          member_id: string
+          mp_preapproval_id: string | null
+          next_payment_date: string | null
+          org_id: string
+          payer_email: string
+          plan_id: string
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          billing_account_id: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          failed_payment_ids?: string[]
+          frequency: number
+          frequency_type: string
+          id?: string
+          init_point?: string | null
+          last_failure_at?: string | null
+          last_failure_detail?: string | null
+          last_payment_at?: string | null
+          member_id: string
+          mp_preapproval_id?: string | null
+          next_payment_date?: string | null
+          org_id: string
+          payer_email: string
+          plan_id: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          billing_account_id?: string
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          failed_payment_ids?: string[]
+          frequency?: number
+          frequency_type?: string
+          id?: string
+          init_point?: string | null
+          last_failure_at?: string | null
+          last_failure_detail?: string | null
+          last_payment_at?: string | null
+          member_id?: string
+          mp_preapproval_id?: string | null
+          next_payment_date?: string | null
+          org_id?: string
+          payer_email?: string
+          plan_id?: string
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           billing_account_id: string
@@ -3405,6 +3486,10 @@ export type Database = {
         }
         Returns: Json
       }
+      rename_room: {
+        Args: { p_room: string; p_name: string }
+        Returns: undefined
+      }
       create_series: {
         Args: {
           p_org: string
@@ -3487,6 +3572,38 @@ export type Database = {
           p_mp_payment_id: string
           p_mp_status: string
           p_status_detail: string
+        }
+        Returns: Json
+      }
+      subscription_cancel: {
+        Args: { p_sub: string }
+        Returns: Json
+      }
+      subscription_create: {
+        Args: { p_member: string; p_payer_email?: string; p_plan?: string }
+        Returns: Json
+      }
+      subscription_payment_settle: {
+        Args: {
+          p_amount_cents: number
+          p_currency?: string
+          p_mp_payment_id: string
+          p_mp_status: string
+          p_status_detail: string
+          p_sub: string
+        }
+        Returns: Json
+      }
+      subscription_set_preapproval: {
+        Args: { p_init_point: string; p_preapproval_id: string; p_sub: string }
+        Returns: undefined
+      }
+      subscription_sync: {
+        Args: {
+          p_mp_status: string
+          p_next_payment_date?: string
+          p_preapproval_id: string
+          p_sub: string
         }
         Returns: Json
       }

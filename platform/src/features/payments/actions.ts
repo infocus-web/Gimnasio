@@ -9,7 +9,7 @@ import { ERRORS, formObject, type ActionState } from '@/features/admin/errors'
 import { formatMoney } from '@/features/admin/format'
 import { normalizeArPhone, whatsappLink } from '@/features/admin/whatsapp'
 import { getMemberContext } from '@/lib/member-context'
-import { createPreference, mpConfigured, publicSiteUrl } from './mercadopago'
+import { cancelPreapproval, createPreapproval, createPreference, mpConfigured, publicSiteUrl } from './mercadopago'
 import { payMessage } from './errors'
 import { SALE_METHODS, toCents } from './money'
 import { PRODUCT_BUCKET } from './product-image'
@@ -371,4 +371,81 @@ export async function saveDayPassSettings(slug: string, _prev: ActionState, form
   if (error) return { message: payMessage(error) }
   revalidatePath(`/${slug}/admin/pagos/online`)
   return { ok: true, message: enabled ? 'Listo: el pase por día ya se puede comprar online.' : 'Guardado. El pase online está apagado.' }
+}
+
+// ---------------------------------------------------------------------
+// Débito automático (suscripción de Mercado Pago)
+// ---------------------------------------------------------------------
+interface SubscriptionInfo {
+  subscription_id: string
+  amount_cents: number
+  currency: string
+  frequency: number
+  frequency_type: 'days' | 'months'
+  start_date: string | null
+  reason: string
+  payer_email: string
+}
+
+/** Socio titular: activa el débito automático y va a Mercado Pago a autorizar su tarjeta. */
+export async function startMemberSubscription(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!mpConfigured()) return { message: NOT_CONFIGURED }
+  const ctx = await getMemberContext(slug)
+  if ('error' in ctx) return { message: 'Iniciá sesión para activar el débito automático.' }
+  const planId = String(form.get('planId') ?? '') || undefined
+  const email = String(form.get('mpEmail') ?? '').trim().toLowerCase()
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { message: 'Escribí el email de tu cuenta de Mercado Pago.' }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('subscription_create', { p_member: ctx.meId, p_plan: planId, p_payer_email: email })
+  if (error) return { message: payMessage(error) }
+  const info = data as unknown as SubscriptionInfo
+  let url: string
+  try {
+    const pre = await createPreapproval({
+      subscriptionId: info.subscription_id,
+      reason: info.reason,
+      payerEmail: info.payer_email,
+      amountCents: Number(info.amount_cents),
+      currency: info.currency,
+      frequency: info.frequency,
+      frequencyType: info.frequency_type,
+      startDate: info.start_date,
+      backUrl: `${publicSiteUrl()}/${slug}/app/pagar?debito=1`,
+    })
+    const { error: e2 } = await supabase.rpc('subscription_set_preapproval', {
+      p_sub: info.subscription_id,
+      p_preapproval_id: pre.id,
+      p_init_point: pre.init_point!,
+    })
+    if (e2) throw new Error(e2.message)
+    url = pre.init_point!
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[débito]', msg)
+    if (msg === 'MP_PAYER_EMAIL') return { message: 'Mercado Pago no aceptó ese email. Usá el de tu cuenta de Mercado Pago.' }
+    return { message: 'No pudimos conectar con Mercado Pago. Probá de nuevo en unos minutos.' }
+  }
+  redirect(url as Route)
+}
+
+/**
+ * Baja del débito automático: el socio desde la app o recepción desde el panel.
+ * Primero se marca en la base (desde ese momento no se renueva nada) y después se cancela en MP;
+ * si MP no responde, el próximo aviso de MP lo vuelve a intentar.
+ */
+export async function cancelSubscriptionAction(slug: string, subscriptionId: string, from: 'app' | 'panel', _prev: ActionState): Promise<ActionState> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('subscription_cancel', { p_sub: subscriptionId })
+  if (error) return { message: payMessage(error) }
+  const r = data as { preapproval_id?: string | null }
+  let remoteOk = true
+  if (r?.preapproval_id && mpConfigured()) remoteOk = await cancelPreapproval(r.preapproval_id).catch(() => false)
+  revalidatePath(from === 'app' ? `/${slug}/app/pagar` : `/${slug}/admin/socios`, from === 'app' ? 'page' : 'layout')
+  return {
+    ok: true,
+    message: remoteOk
+      ? 'Listo: el débito automático quedó dado de baja. No se van a hacer más cobros.'
+      : 'Lo dimos de baja. Mercado Pago tardó en responder: lo reintentamos solos, no se renueva nada más.',
+  }
 }

@@ -12,7 +12,8 @@ import { recordPayment } from '@/features/admin/billing-actions'
 import { assignTrainer } from '@/features/admin/coach-actions'
 import { TrainerSelectForm } from '@/features/admin/CoachForms'
 import { METHOD_LABELS, PaymentForm } from '@/features/admin/PaymentForms'
-import { createPaymentLink } from '@/features/payments/actions'
+import { cancelSubscriptionAction, createPaymentLink } from '@/features/payments/actions'
+import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { mpConfigured } from '@/features/payments/mercadopago'
 import { PaymentLinkButton } from '@/features/payments/PaymentLinkButton'
 import { CHECKIN_REASON, fmtDate, fmtDateTime, formatMoney, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
@@ -120,6 +121,20 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
         ])
       : [{ data: [] as { device_id: string; state: string; has_bio: boolean }[] }, { data: null }, { data: [] as { device_id: string }[] }]
 
+  // Débito automático de la cuenta (0056)
+  const { data: debit } =
+    m.billing_account_id && ctx.can('billing.read')
+      ? await supabase
+          .from('mp_subscriptions')
+          .select('id, status, amount_cents, currency, next_payment_date, last_payment_at, last_failure_at, last_failure_detail, payer_email')
+          .eq('billing_account_id', m.billing_account_id)
+          .in('status', ['pending', 'authorized', 'paused'])
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null }
+  const debitFailing =
+    !!debit && !!debit.last_failure_at && (!debit.last_payment_at || debit.last_failure_at > debit.last_payment_at) && debit.status !== 'pending'
   const st = PLAN_STATE_UI[planState(m as { membership_status: string | null; current_period_end: string | null; status: string })]
   const payer = (family.data ?? []).find((f) => f.is_payer)
   const canWrite = ctx.can('members.write')
@@ -200,6 +215,45 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                 </div>
               )}
             </dl>
+            {debit && (
+              <div
+                className={`mb-4 rounded-xl border p-3 text-sm ${
+                  debitFailing
+                    ? 'border-amber-400/40 bg-amber-400/10 text-amber-100'
+                    : debit.status === 'pending'
+                      ? 'border-zinc-700 bg-zinc-900 text-zinc-300'
+                      : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+                }`}
+              >
+                <p className="font-semibold">
+                  {debit.status === 'pending'
+                    ? 'Débito automático: falta que autorice en Mercado Pago'
+                    : debit.status === 'paused'
+                      ? 'Débito automático pausado en Mercado Pago'
+                      : `Débito automático activo · ${formatMoney(Number(debit.amount_cents), debit.currency)}`}
+                </p>
+                {debit.next_payment_date && debit.status !== 'pending' && (
+                  <p className="text-xs opacity-80">Próximo cobro: {fmtDate(debit.next_payment_date)}</p>
+                )}
+                {debitFailing && (
+                  <p className="text-xs">
+                    Último cobro rechazado el {fmtDate(debit.last_failure_at)}
+                    {debit.last_failure_detail ? ` (${debit.last_failure_detail})` : ''}. Mercado Pago lo reintenta.
+                  </p>
+                )}
+                <p className="text-xs opacity-70">Cuenta de Mercado Pago: {debit.payer_email}</p>
+                {canBill && (
+                  <ConfirmAction
+                    action={cancelSubscriptionAction.bind(null, slug, debit.id, 'panel')}
+                    confirmText="No se le van a hacer más cobros automáticos. El plan sigue hasta su vencimiento."
+                    yesLabel="Sí, dar de baja"
+                    className="mt-2 space-y-2"
+                  >
+                    Dar de baja el débito
+                  </ConfirmAction>
+                )}
+              </div>
+            )}
             {m.is_payer || !m.billing_account_id ? (
               canBill ? (
                 <>

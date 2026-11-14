@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { verifyMpSignature } from '@/features/payments/signature'
 import { mpWebhookConfigured } from '@/features/payments/mercadopago'
 import { syncMpPayment } from '@/features/payments/sync'
+import { syncAuthorizedPayment, syncPreapproval } from '@/features/payments/subscriptions'
 
 /**
  * Notificaciones de Mercado Pago (Webhooks, evento "Pagos").
@@ -10,6 +11,9 @@ import { syncMpPayment } from '@/features/payments/sync'
  * 2. Consulta el pago a la API de MP (nunca se confía en el body).
  * 3. payment_intent_settle: si está aprobado registra el cobro (misma lógica que el cobro manual),
  *    renueva el plan y el molinete lo deja pasar al instante. Idempotente.
+ * Débito automático (0056): "subscription_preapproval" (adhesión: autorizada, pausada, cancelada) y
+ *    "subscription_authorized_payment" (cada cuota). En el panel de MP hay que activar esos tópicos
+ *    ("Planes y suscripciones") además de "Pagos".
  * Responde 200 rápido; 500 solo si hay que reintentar (MP reintenta solo).
  */
 export const dynamic = 'force-dynamic'
@@ -38,10 +42,22 @@ export async function POST(req: NextRequest) {
   })
   if (!valid) return json({ status: 'invalid_signature' }, 401)
 
-  // Solo nos interesan los pagos (merchant_order, etc. se ignoran con 200 para que no reintente)
-  if (type !== 'payment' || !dataId) return json({ status: 'ignored' })
+  if (!dataId) return json({ status: 'ignored' })
 
   try {
+    // Débito automático: adhesión y cuotas
+    if (type === 'subscription_preapproval' || type === 'preapproval') {
+      const r = await syncPreapproval(dataId)
+      if (!r.ok && r.reason === 'ERROR') return json({ status: 'retry' }, 500)
+      return json(r.ok ? { status: r.status } : { status: 'ignored', reason: r.reason })
+    }
+    if (type === 'subscription_authorized_payment' || type === 'authorized_payment') {
+      const r = await syncAuthorizedPayment(dataId)
+      if (!r.ok && r.reason === 'ERROR') return json({ status: 'retry' }, 500)
+      return json(r.ok ? { status: r.status } : { status: 'ignored', reason: r.reason })
+    }
+    // Del resto solo interesan los pagos (merchant_order, etc. se ignoran con 200 para que no reintente)
+    if (type !== 'payment') return json({ status: 'ignored' })
     const r = await syncMpPayment(dataId)
     if (!r.ok && r.reason === 'ERROR') return json({ status: 'retry' }, 500)
     return json(r.ok ? { status: r.status } : { status: 'ignored', reason: r.reason })

@@ -197,6 +197,18 @@ export async function saveRoom(slug: string, roomId: string | null, _prev: Actio
   return done(slug, roomId ? 'Sala guardada.' : 'Sala creada.')
 }
 
+/** Cambiar solo el nombre de una sala: administración o el profe en las salas donde da clases (lo verifica la base). */
+export async function renameRoom(slug: string, roomId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await classGuard(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const parsed = z.object({ name: z.string().trim().min(1, 'Poné un nombre').max(60, 'Máximo 60 letras') }).safeParse(formObject(form))
+  if (!parsed.success) return issues(parsed.error)
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('rename_room', { p_room: roomId, p_name: parsed.data.name })
+  if (error) return { message: dbMessage(error) }
+  return done(slug, 'Nombre de la sala guardado.')
+}
+
 export async function addEquipment(slug: string, roomId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await guard(slug)
   if (!ctx || !ctx.org.locationId) return { message: ERRORS.FORBIDDEN }

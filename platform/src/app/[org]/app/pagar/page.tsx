@@ -1,13 +1,17 @@
 import Link from 'next/link'
 import type { Metadata, Route } from 'next'
-import { AlertTriangle, CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Clock, Repeat, ShieldCheck } from 'lucide-react'
 import { getMemberContext } from '@/lib/member-context'
 import { createClient } from '@/lib/supabase/server'
 import { fmtDate } from '@/features/admin/format'
-import { startMemberCheckout } from '@/features/payments/actions'
+import { cancelSubscriptionAction, startMemberCheckout, startMemberSubscription } from '@/features/payments/actions'
 import { mpConfigured } from '@/features/payments/mercadopago'
 import { syncMpPayment } from '@/features/payments/sync'
 import { PayPlanForm } from '@/features/payments/PayPlanForm'
+import { AutoDebitForm } from '@/features/payments/AutoDebitForm'
+import { syncPreapproval } from '@/features/payments/subscriptions'
+import { ConfirmAction } from '@/features/admin/ConfirmAction'
+import { formatMoney } from '@/features/admin/format'
 
 export const metadata: Metadata = { title: 'Pagar mi plan' }
 export const dynamic = 'force-dynamic'
@@ -54,8 +58,32 @@ export default async function PagarPage({
     }
   }
 
-  const { data: optData, error: optError } = await supabase.rpc('member_payment_options', { p_member: ctx.meId })
+  // Vuelta de la adhesión al débito automático: se consulta a MP y se aplica (el webhook hace lo mismo)
+  const preId = typeof sp.preapproval_id === 'string' ? sp.preapproval_id : null
+  const debitReturn = sp.debito === '1'
+  if (debitReturn && preId && mpConfigured() && process.env.SUPABASE_SECRET_KEY) {
+    await syncPreapproval(preId).catch(() => null)
+  }
+
+  const [{ data: optData, error: optError }, { data: sub }, { data: meRow }] = await Promise.all([
+    supabase.rpc('member_payment_options', { p_member: ctx.meId }),
+    supabase
+      .from('mp_subscriptions')
+      .select('id, status, amount_cents, currency, frequency, frequency_type, start_date, next_payment_date, last_payment_at, last_failure_at, init_point')
+      .eq('member_id', ctx.meId)
+      .in('status', ['pending', 'authorized', 'paused'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from('members').select('email').eq('id', ctx.meId).maybeSingle(),
+  ])
   const opts = optData as Options | null
+  const debitActive = sub?.status === 'authorized' || sub?.status === 'paused'
+  const debitFailing = debitActive && !!sub && !!sub.last_failure_at && (!sub.last_payment_at || sub.last_failure_at > sub.last_payment_at)
+  const every = (n: number, t: string) =>
+    t === 'months' ? (n === 1 ? 'por mes' : n === 12 ? 'por año' : `cada ${n} meses`) : n === 7 ? 'por semana' : `cada ${n} días`
+  const startsAtLabel =
+    opts?.current && new Date(opts.current.period_end).getTime() > Date.now() + 2 * 3_600_000 ? `el ${fmtDate(opts.current.period_end, tz)}` : null
 
   const resultBox =
     result === 'aprobado' ? (
@@ -144,6 +172,78 @@ export default async function PagarPage({
           <p className="text-center text-xs text-zinc-500">
             El pago se hace en Mercado Pago (tarjeta, débito o dinero en cuenta). No guardamos datos de tu tarjeta.
           </p>
+
+          <section aria-labelledby="debito-titulo" className="space-y-4 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+            <div className="flex items-start gap-3">
+              <Repeat className="mt-0.5 h-5 w-5 shrink-0 text-[#edcc36]" aria-hidden="true" />
+              <div>
+                <h2 id="debito-titulo" className="text-lg font-bold text-white">Débito automático</h2>
+                <p className="text-sm text-zinc-400">Tu cuota se cobra sola cada mes y tu plan se renueva sin que tengas que hacer nada.</p>
+              </div>
+            </div>
+
+            {debitActive && sub ? (
+              <div className="space-y-3">
+                <div role="status" className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
+                  <p className="font-semibold text-emerald-100">
+                    {sub.status === 'paused' ? 'Pausado en Mercado Pago' : 'Activo'} · {formatMoney(Number(sub.amount_cents), sub.currency)}{' '}
+                    {every(sub.frequency, sub.frequency_type)}
+                  </p>
+                  {sub.next_payment_date && (
+                    <p className="text-emerald-100/80">Próximo cobro: {fmtDate(sub.next_payment_date, tz)}</p>
+                  )}
+                </div>
+                {debitFailing && (
+                  <p role="alert" className="rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm text-amber-100">
+                    El último cobro fue rechazado. Mercado Pago lo reintenta en los próximos días: revisá que tu tarjeta tenga saldo o límite.
+                    Si querés, podés pagar ahora con el botón de arriba.
+                  </p>
+                )}
+                <ConfirmAction
+                  action={cancelSubscriptionAction.bind(null, slug, sub.id, 'app')}
+                  confirmText="No se van a hacer más cobros automáticos. Tu plan sigue hasta su vencimiento."
+                  yesLabel="Sí, dar de baja"
+                >
+                  Dar de baja el débito automático
+                </ConfirmAction>
+              </div>
+            ) : sub?.status === 'pending' && sub.init_point ? (
+              <div className="space-y-3">
+                <p className="rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm text-amber-100">
+                  {debitReturn
+                    ? 'Mercado Pago todavía está confirmando tu adhesión. Si ya autorizaste, en unos minutos aparece como activo.'
+                    : 'Empezaste a activar el débito automático pero falta autorizarlo en Mercado Pago.'}
+                </p>
+                <a
+                  href={sub.init_point}
+                  className="btn-tac inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#edcc36] px-4 text-sm font-bold text-black"
+                >
+                  <Repeat className="h-4 w-4" aria-hidden="true" /> Terminar en Mercado Pago
+                </a>
+                <ConfirmAction
+                  action={cancelSubscriptionAction.bind(null, slug, sub.id, 'app')}
+                  confirmText="Se descarta la adhesión. No se te cobra nada."
+                  yesLabel="Sí, descartar"
+                >
+                  Descartar
+                </ConfirmAction>
+              </div>
+            ) : opts.plans.length ? (
+              <AutoDebitForm
+                action={startMemberSubscription.bind(null, slug)}
+                plans={opts.plans.map((p) => ({
+                  id: p.plan_id,
+                  name: p.name,
+                  description: p.description,
+                  priceCents: Number(p.price_cents),
+                  currency: p.currency,
+                  current: p.plan_id === opts.current?.plan_id,
+                }))}
+                defaultEmail={meRow?.email ?? ''}
+                startsAtLabel={startsAtLabel}
+              />
+            ) : null}
+          </section>
         </>
       )}
     </div>

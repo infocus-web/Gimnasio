@@ -389,6 +389,25 @@ export function RoomForm({ action, values }: { action: Action; values?: { name: 
   )
 }
 
+/** Solo el nombre de la sala (panel del profe) */
+export function RoomNameForm({ action, name }: { action: Action; name: string }) {
+  const [state, formAction] = useActionForm(action, {})
+  const err = state.fieldErrors ?? {}
+  return (
+    <form action={formAction} className="flex flex-wrap items-end gap-2" noValidate>
+      <div className="min-w-[160px] flex-1">
+        <Field label="Nombre de la sala" name="name" error={err.name}>
+          <input id="name" name="name" defaultValue={name} maxLength={60} className={inputClass} />
+        </Field>
+      </div>
+      <SubmitButton variant="ghost">Guardar</SubmitButton>
+      <div className="w-full">
+        <Notice state={state} />
+      </div>
+    </form>
+  )
+}
+
 const OTHER = '__other'
 
 /** Tipo de equipo: se guarda en inglés (bike, rower…) pero se elige en castellano */
