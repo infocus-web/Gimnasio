@@ -15,6 +15,8 @@ import { REVEAL_BOOT, RevealObserver } from '@/components/RevealObserver'
 import { EXTRAS } from '@/features/public/content'
 import { getPublicToday } from '@/features/public/today'
 import { TodayLive } from '@/features/public/TodayLive'
+import { getBuffetPublic } from '@/features/buffet/data'
+import { BuffetSection } from '@/features/buffet/BuffetSection'
 
 export const revalidate = 300
 
@@ -52,7 +54,7 @@ function Heading({ id, children, className = '' }: { id?: string; children: Reac
 
 export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const { org } = await params
-  const [gym, today] = await Promise.all([getPublicGym(org), getPublicToday(org)])
+  const [gym, today, buffet] = await Promise.all([getPublicGym(org), getPublicToday(org), getBuffetPublic(org)])
   if (!gym) notFound()
 
   const p = gym.profile
@@ -73,6 +75,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const todayTitle = `Hoy en ${gym.name.split(' ')[0]}`
   const signupHref = `/${gym.slug}/inscripcion`
   const plans = gym.plans.filter((pl) => pl.price_cents > 0)   // sin tarifa cargada = no se muestra
+  const nav: readonly (readonly [string, string])[] = buffet ? [...NAV.slice(0, 2), ['#buffet', 'Buffet'], ...NAV.slice(2)] : NAV
 
   return (
     <div className={`${display.variable} ${text.variable} public-site min-h-dvh bg-black font-text text-[#e9e7e1]`}>
@@ -91,7 +94,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             />
           </a>
           <nav aria-label="Secciones" className="hidden items-center gap-7 lg:flex">
-            {NAV.map(([href, label]) => (
+            {nav.map(([href, label]) => (
               <a key={href} href={href} className={`rounded text-[15px] font-semibold text-white/80 transition-colors hover:text-brand ${focus}`}>
                 {label}
               </a>
@@ -118,7 +121,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                 <Link href={signupHref as Route} className="mb-1 block rounded-md bg-brand px-3 py-3 text-[15px] font-bold text-black">
                   Hacete socio
                 </Link>
-                {NAV.map(([href, label]) => (
+                {nav.map(([href, label]) => (
                   <a key={href} href={href} className="block rounded-md px-3 py-3 text-[15px] font-semibold text-white hover:bg-white/5 hover:text-brand">
                     {label}
                   </a>
@@ -232,6 +235,11 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
 
         {/* ---------- Hoy en el gimnasio (en vivo) ---------- */}
         <TodayLive slug={gym.slug} title={todayTitle} initial={today} bookHref={bookHref} signupHref={signupHref} />
+
+        {/* ---------- Buffet (publicidad del concesionario: menú de hoy + carta) ---------- */}
+        {buffet && (
+          <BuffetSection data={buffet} slug={gym.slug} orderHref={`/login?next=${encodeURIComponent(`/${gym.slug}/app/buffet`)}`} />
+        )}
 
         {/* ---------- Actividades ---------- */}
         {gym.activities.length > 0 && (

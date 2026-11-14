@@ -126,3 +126,11 @@ export function dayLabel(ymd: string, today: string, long = false) {
 export function money(cents: number, currency = 'ARS') {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100)
 }
+
+/** "Menú de hoy" / "Menú de mañana" / "Menú del jueves 14 de noviembre" */
+export function menuDayTitle(ymd: string, today: string) {
+  const l = dayLabel(ymd, today, true)
+  if (l === 'Hoy') return 'Menú de hoy'
+  if (l === 'Mañana') return 'Menú de mañana'
+  return `Menú del ${l.toLowerCase()}`
+}
