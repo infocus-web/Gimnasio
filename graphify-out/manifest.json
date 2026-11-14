@@ -78,10 +78,10 @@
     "semantic_hash": "2066acf58d23564faa14a8698eac511a"
   },
   "platform/src/app/[org]/admin/accesos/page.tsx": {
-    "mtime": 1792611161.6872916,
-    "seen": 1793838985.5679393,
-    "ast_hash": "fbe7dd068237a2258cc23fbff8c900c9",
-    "semantic_hash": "fbe7dd068237a2258cc23fbff8c900c9"
+    "mtime": 1794665180.7829845,
+    "seen": 1794667531.7279122,
+    "ast_hash": "65be0961ee68b5663c48215acbeaa554",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/agenda/[sessionId]/page.tsx": {
     "mtime": 1793838832.9744005,
@@ -222,10 +222,10 @@
     "semantic_hash": "8a2547cca4f3363ff2ab86e0f1a9b9f5"
   },
   "platform/src/app/[org]/admin/mis-clases/horarios/page.tsx": {
-    "mtime": 1794605786.9748192,
-    "seen": 1794664507.497581,
-    "ast_hash": "4d5c4caaf9e0a2a6d0639c755e4aaa4d",
-    "semantic_hash": "4d5c4caaf9e0a2a6d0639c755e4aaa4d"
+    "mtime": 1794667342.9857507,
+    "seen": 1794667531.7279122,
+    "ast_hash": "000b9deca0a2248c40cb54d40baa7772",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/mis-clases/layout.tsx": {
     "mtime": 1794614866.4562514,
@@ -354,10 +354,10 @@
     "semantic_hash": "8adaab87a36d9b348679b05ff5fc2202"
   },
   "platform/src/app/[org]/admin/socios/[memberId]/page.tsx": {
-    "mtime": 1794602863.473991,
-    "seen": 1794664507.4995794,
-    "ast_hash": "f97c7a3099d1966073240e02748a07fd",
-    "semantic_hash": "f97c7a3099d1966073240e02748a07fd"
+    "mtime": 1794666968.5812535,
+    "seen": 1794667531.7279122,
+    "ast_hash": "734ab584c5960d6e5fc74f1e2800c36d",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/socios/nuevo/page.tsx": {
     "mtime": 1792594930.6109285,
@@ -432,10 +432,10 @@
     "semantic_hash": "ebc1e9e3cc327d5f5e9778a779eecd9d"
   },
   "platform/src/app/[org]/app/pagar/page.tsx": {
-    "mtime": 1792989236.983804,
-    "seen": 1793838985.686841,
-    "ast_hash": "a3a1bdfa1d4998713263e756476d856d",
-    "semantic_hash": "a3a1bdfa1d4998713263e756476d856d"
+    "mtime": 1794666968.5977092,
+    "seen": 1794667531.7279122,
+    "ast_hash": "6ea4d5d8288d7202f5d27258ed1190d9",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/app/page.tsx": {
     "mtime": 1790661853.0854208,
@@ -612,10 +612,10 @@
     "semantic_hash": "53e4e6556154a75271ade22d952c81d9"
   },
   "platform/src/app/api/payments/mercadopago/webhook/route.ts": {
-    "mtime": 1792608774.7324708,
-    "seen": 1793838985.750915,
-    "ast_hash": "62d53b892ff2f150717553d99bf1c915",
-    "semantic_hash": "62d53b892ff2f150717553d99bf1c915"
+    "mtime": 1794666852.1085014,
+    "seen": 1794667531.728912,
+    "ast_hash": "83564ec96c3f4425fe49c8e9d395fb31",
+    "semantic_hash": ""
   },
   "platform/src/app/api/payments/pase-diario/route.ts": {
     "mtime": 1792608774.740987,
@@ -894,10 +894,10 @@
     "semantic_hash": "0edefba89cbd6c646d27c394f65bbc71"
   },
   "platform/src/features/admin/AccessForms.tsx": {
-    "mtime": 1794595937.0815399,
-    "seen": 1794664507.5086498,
-    "ast_hash": "cc917a781454460116e6cec3ed424ff6",
-    "semantic_hash": "cc917a781454460116e6cec3ed424ff6"
+    "mtime": 1794665174.235054,
+    "seen": 1794667531.728912,
+    "ast_hash": "cd20d46f63e2a4e5c085385923b9342b",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/AdminNav.tsx": {
     "mtime": 1794616090.3370454,
@@ -984,10 +984,10 @@
     "semantic_hash": "5eea4ee04e3afffdc64cc688af61655d"
   },
   "platform/src/features/admin/ScheduleForms.tsx": {
-    "mtime": 1794605781.1297097,
-    "seen": 1794664507.5096564,
-    "ast_hash": "c9866ec07fecfa04e53d75aad991be75",
-    "semantic_hash": "c9866ec07fecfa04e53d75aad991be75"
+    "mtime": 1794667328.7586594,
+    "seen": 1794667531.728912,
+    "ast_hash": "cb602024cfe5dde41fbf6b1177a72fc2",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/StatCard.tsx": {
     "mtime": 1793362432.1445081,
@@ -1074,10 +1074,10 @@
     "semantic_hash": "33f4644dcc21e15a6c30d5f3dc514b4f"
   },
   "platform/src/features/admin/errors.ts": {
-    "mtime": 1794595026.4683468,
-    "seen": 1794664507.5106487,
-    "ast_hash": "eccbdb5de6987413e6269032ad985ec7",
-    "semantic_hash": "eccbdb5de6987413e6269032ad985ec7"
+    "mtime": 1794667328.5898893,
+    "seen": 1794667531.728912,
+    "ast_hash": "d5d43f0aa0e4d9de8381277986d8d749",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/format.ts": {
     "mtime": 1792594930.6239333,
@@ -1110,10 +1110,10 @@
     "semantic_hash": "16a6a10147ce4468fe38fef7ecd751fb"
   },
   "platform/src/features/admin/schedule-actions.ts": {
-    "mtime": 1794605781.1186981,
-    "seen": 1794664507.5111754,
-    "ast_hash": "b7b4b1459861271393d8ed2202408563",
-    "semantic_hash": "b7b4b1459861271393d8ed2202408563"
+    "mtime": 1794667328.7204251,
+    "seen": 1794667531.728912,
+    "ast_hash": "08b41918132dc3bad5887af66142f413",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/staff-account-actions.ts": {
     "mtime": 1794616090.3145156,
@@ -1428,10 +1428,10 @@
     "semantic_hash": "c42dce033ba751c4886014eec99d1af5"
   },
   "platform/src/features/payments/actions.ts": {
-    "mtime": 1794604255.0371096,
-    "seen": 1794664507.516184,
-    "ast_hash": "dfd035a2fc4b96d0883afd3f5995e81f",
-    "semantic_hash": "dfd035a2fc4b96d0883afd3f5995e81f"
+    "mtime": 1794666870.8991597,
+    "seen": 1794667531.728912,
+    "ast_hash": "f178c71fbfe9fbaf9bec7f30d3396a37",
+    "semantic_hash": ""
   },
   "platform/src/features/payments/day-pass.ts": {
     "mtime": 1792608774.7637095,
@@ -1440,16 +1440,16 @@
     "semantic_hash": "6e0d1806b4e0e51ccf40469fc4427632"
   },
   "platform/src/features/payments/errors.ts": {
-    "mtime": 1792608774.7637095,
-    "seen": 1793838985.9704573,
-    "ast_hash": "afb2808be05972655e30c2ad9e26b58d",
-    "semantic_hash": "afb2808be05972655e30c2ad9e26b58d"
+    "mtime": 1794666870.889862,
+    "seen": 1794667531.728912,
+    "ast_hash": "ecc7d24c1070a003175110589c445c93",
+    "semantic_hash": ""
   },
   "platform/src/features/payments/mercadopago.ts": {
-    "mtime": 1792608774.7647114,
-    "seen": 1793838985.9716687,
-    "ast_hash": "42ae8e304d0abea991cb3fa3e8196897",
-    "semantic_hash": "42ae8e304d0abea991cb3fa3e8196897"
+    "mtime": 1794666811.8181775,
+    "seen": 1794667531.728912,
+    "ast_hash": "a7f7bf3267a7c31f5817587e727db995",
+    "semantic_hash": ""
   },
   "platform/src/features/payments/money.ts": {
     "mtime": 1792608774.7647114,
@@ -1488,10 +1488,10 @@
     "semantic_hash": "aba4fb3aafe084b560bb1cbb87de2dca"
   },
   "platform/src/features/payments/sync.ts": {
-    "mtime": 1793832133.8828177,
-    "seen": 1793838985.9819605,
-    "ast_hash": "78fcab9aea0d333c7186f9a4782f7489",
-    "semantic_hash": "78fcab9aea0d333c7186f9a4782f7489"
+    "mtime": 1794666842.4616532,
+    "seen": 1794667531.728912,
+    "ast_hash": "d413ead00a715a2a9ae77be162ce9c74",
+    "semantic_hash": ""
   },
   "platform/src/features/public/SignupForm.tsx": {
     "mtime": 1794450824.840448,
@@ -1602,10 +1602,10 @@
     "semantic_hash": "d064dab0d36b0579f54ef255dc464909"
   },
   "platform/src/types/database.types.ts": {
-    "mtime": 1794616090.2815118,
-    "seen": 1794664507.5191727,
-    "ast_hash": "00ccbad6369b2f417a41ab0cde7e9d54",
-    "semantic_hash": "00ccbad6369b2f417a41ab0cde7e9d54"
+    "mtime": 1794667328.392448,
+    "seen": 1794667531.728912,
+    "ast_hash": "58369b33f6fe3335d429e081e8565cbb",
+    "semantic_hash": ""
   },
   "platform/src/types/platform.ts": {
     "mtime": 1792594930.6279366,
@@ -3585,6 +3585,36 @@
     "mtime": 1790206144.6444027,
     "seen": 1794664892.3132975,
     "ast_hash": "4a699254fa186e21c8b3a5286a6e25c8",
+    "semantic_hash": ""
+  },
+  "Claude outputs/aplicar-en-supabase-0057-renombrar-salas.sql": {
+    "mtime": 1794667328.1787682,
+    "seen": 1794667531.7279122,
+    "ast_hash": "8e08fa73a00ca1e31e3af1e1531d222b",
+    "semantic_hash": ""
+  },
+  "platform/src/features/payments/AutoDebitForm.tsx": {
+    "mtime": 1794667033.2980902,
+    "seen": 1794667531.728912,
+    "ast_hash": "a1049a1ae155a61e9516b0d086c89a23",
+    "semantic_hash": ""
+  },
+  "platform/src/features/payments/subscriptions.ts": {
+    "mtime": 1794666946.616662,
+    "seen": 1794667531.728912,
+    "ast_hash": "e87acb7542d5a5092f9bf53a229ad561",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0056_mp_subscriptions.sql": {
+    "mtime": 1794666946.293175,
+    "seen": 1794667531.728912,
+    "ast_hash": "d5e2db0d2daf9c6a22e0334e37731ab6",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0057_trainer_rename_room.sql": {
+    "mtime": 1794667328.0053606,
+    "seen": 1794667531.728912,
+    "ast_hash": "8e08fa73a00ca1e31e3af1e1531d222b",
     "semantic_hash": ""
   }
 }
