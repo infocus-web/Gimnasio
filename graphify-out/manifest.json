@@ -1890,10 +1890,10 @@
     "semantic_hash": "3b41e3b2b16740a4ece0334bfdaa61a3"
   },
   ".claude/settings.json": {
-    "mtime": 1793839004.1191006,
-    "seen": 1794664507.4935915,
-    "ast_hash": "3b541b9935fcf0831355da956f897645",
-    "semantic_hash": "3b541b9935fcf0831355da956f897645"
+    "mtime": 1794664509.765041,
+    "seen": 1794664892.3122976,
+    "ast_hash": "3915f7a5bca9f15cc21792c2085986c9",
+    "semantic_hash": ""
   },
   "Claude outputs/aplicar-en-supabase-0050-final.sql": {
     "mtime": 1794611194.2001097,
@@ -2932,5 +2932,659 @@
     "seen": 1794664507.523696,
     "ast_hash": "515fc665b0bdcc853524b9748a609027",
     "semantic_hash": "515fc665b0bdcc853524b9748a609027"
+  },
+  "CLAUDE.md": {
+    "mtime": 1794664509.761037,
+    "seen": 1794664892.3132975,
+    "ast_hash": "8a6643a420fdad6bfb583523bc6cef16",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1790655456.3202033,
+    "seen": 1794664892.3132975,
+    "ast_hash": "f4b397878c0e2f111d416b2934c16bd3",
+    "semantic_hash": ""
+  },
+  "app-ios/AGENTS.md": {
+    "mtime": 1794365781.6674156,
+    "seen": 1794664892.3132975,
+    "ast_hash": "233d1484702a528f5dcb4333cd01bb43",
+    "semantic_hash": ""
+  },
+  "app-ios/GUIA-APP-STORE.md": {
+    "mtime": 1794365781.5671868,
+    "seen": 1794664892.3132975,
+    "ast_hash": "e1e5d685b8edfb13f283ea9c12cfce42",
+    "semantic_hash": ""
+  },
+  "docs/brief-etapa-ideas.md": {
+    "mtime": 1792608774.6773741,
+    "seen": 1794664892.3132975,
+    "ast_hash": "c93c5e45ce80e76481308725bfe6e7e2",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1790204352.5229683,
+    "seen": 1794664892.3132975,
+    "ast_hash": "f6e689e2af85b0e1b1d0276710082119",
+    "semantic_hash": ""
+  },
+  "platform/ARCHITECTURE.md": {
+    "mtime": 1790661846.94225,
+    "seen": 1794664892.3132975,
+    "ast_hash": "ff1c9ccd7cce731e65cce521d350f007",
+    "semantic_hash": ""
+  },
+  "platform/docs/prompt-gemini-fase-A-correcciones.md": {
+    "mtime": 1790659024.0468812,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4044ec5715bf1b17fb3e6446115c31ec",
+    "semantic_hash": ""
+  },
+  "platform/docs/prompt-gemini-fase-A.md": {
+    "mtime": 1790657009.3627052,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4e2e85355921830b6b1067ac7f639a29",
+    "semantic_hash": ""
+  },
+  "supabase/email-templates/change-email.html": {
+    "mtime": 1792594930.6289337,
+    "seen": 1794664892.3132975,
+    "ast_hash": "00ea946b2102943e75aea35e074bde9e",
+    "semantic_hash": ""
+  },
+  "supabase/email-templates/confirm-signup.html": {
+    "mtime": 1792594930.6289337,
+    "seen": 1794664892.3132975,
+    "ast_hash": "d350e67809e756fdb6b3657bc329bbc4",
+    "semantic_hash": ""
+  },
+  "supabase/email-templates/invite.html": {
+    "mtime": 1792594930.6289337,
+    "seen": 1794664892.3132975,
+    "ast_hash": "aa73086daf098a4b16b0e0090d778213",
+    "semantic_hash": ""
+  },
+  "supabase/email-templates/magic-link.html": {
+    "mtime": 1793839398.9781008,
+    "seen": 1794664892.3132975,
+    "ast_hash": "25af666d3c85e72215cf2e6ef0b3b687",
+    "semantic_hash": ""
+  },
+  "tools/zk-agent/LEEME.md": {
+    "mtime": 1792594930.6319337,
+    "seen": 1794664892.3132975,
+    "ast_hash": "6c4804cba68631ab6d9844911980cd54",
+    "semantic_hash": ""
+  },
+  "tools/zk-agent/requirements.txt": {
+    "mtime": 1792594930.6339333,
+    "seen": 1794664892.3132975,
+    "ast_hash": "7e8b1afc2a349a7b24157aff2515fdfa",
+    "semantic_hash": ""
+  },
+  "Claude outputs/Banner-QR-Evolution.pdf": {
+    "mtime": 1794618814.847525,
+    "seen": 1794664892.3132975,
+    "ast_hash": "cdcd8006d4c6f4ed63e5a2f897ea3396",
+    "semantic_hash": ""
+  },
+  "Claude outputs/Banner-QR-Evolution.png": {
+    "mtime": 1794618814.295859,
+    "seen": 1794664892.3132975,
+    "ast_hash": "36f0690d1fff8415280b6009c3710510",
+    "semantic_hash": ""
+  },
+  "Claude outputs/QR-evolutiongym.svg": {
+    "mtime": 1794618624.682207,
+    "seen": 1794664892.3132975,
+    "ast_hash": "c985c6b80f6e3526bec4f5ff112339fd",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/01 Nescaf\u00e9 Dolce.jpg": {
+    "mtime": 1794623316.726333,
+    "seen": 1794664892.3132975,
+    "ast_hash": "a059c823454d1b7d3344e48dcb16621c",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/02 Nescaf\u00e9 Dolce doble.jpg": {
+    "mtime": 1794623317.0987709,
+    "seen": 1794664892.3132975,
+    "ast_hash": "f0a2efe4597b8b24f628c37340d1f152",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/03 Caf\u00e9 o cortado.jpg": {
+    "mtime": 1794623317.6569605,
+    "seen": 1794664892.3132975,
+    "ast_hash": "259221e3fdf09b256436afba43f6739e",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/04 Caf\u00e9 con crema.jpg": {
+    "mtime": 1794623318.280805,
+    "seen": 1794664892.3132975,
+    "ast_hash": "87dbd261a8a7091f3c7884465eb81bfa",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/05 Jarrito.jpg": {
+    "mtime": 1794623318.6353123,
+    "seen": 1794664892.3132975,
+    "ast_hash": "d275c2d9863f906169ebe47c4a54a665",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/06 Jarrito con crema.jpg": {
+    "mtime": 1794623318.976115,
+    "seen": 1794664892.3132975,
+    "ast_hash": "cdf372793fa4d144f89341d6b5e51d77",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/07 Caf\u00e9 doble.jpg": {
+    "mtime": 1794623319.5132866,
+    "seen": 1794664892.3132975,
+    "ast_hash": "3cef85a0509c09650815c9cddecc8d18",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/08 Caf\u00e9 doble con crema.jpg": {
+    "mtime": 1794623320.0223272,
+    "seen": 1794664892.3132975,
+    "ast_hash": "2b7bf826ca2d181dc3bb658a4b4fe194",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/09 Caf\u00e9 con leche.jpg": {
+    "mtime": 1794622550.4816363,
+    "seen": 1794664892.3132975,
+    "ast_hash": "647c5ba63e7528dd4ee19126f53dd3a8",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/10 Capuchino.jpg": {
+    "mtime": 1794622551.0441523,
+    "seen": 1794664892.3132975,
+    "ast_hash": "0f734c14e65f57c57ede15ab7c1694f6",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/11 T\u00e9 a elecci\u00f3n.jpg": {
+    "mtime": 1794622551.5394707,
+    "seen": 1794664892.3132975,
+    "ast_hash": "a16f2a0f54a773141432c3e37d728396",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/12 T\u00e9 con lim\u00f3n o leche.jpg": {
+    "mtime": 1794622551.9344358,
+    "seen": 1794664892.3132975,
+    "ast_hash": "0844a4ebb8bba52b70615661878dd87a",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/13 Vaso de leche.jpg": {
+    "mtime": 1794622552.2752593,
+    "seen": 1794664892.3132975,
+    "ast_hash": "76e7e491b9597fd6e8144c8b6bbcf041",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/14 Tostadas.jpg": {
+    "mtime": 1794622552.7132506,
+    "seen": 1794664892.3132975,
+    "ast_hash": "73ba48eda6bed9d0d00f480302b9b5d4",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/15 Yogur.jpg": {
+    "mtime": 1794622553.098775,
+    "seen": 1794664892.3132975,
+    "ast_hash": "8c8ad55952177986776814937124e470",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/16 Panqueque energ\u00e9tico.jpg": {
+    "mtime": 1794622553.43819,
+    "seen": 1794664892.3132975,
+    "ast_hash": "2f3af64f796e7d69a9afbc093fbaf2a9",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/17 Banana.jpg": {
+    "mtime": 1794622553.8990784,
+    "seen": 1794664892.3132975,
+    "ast_hash": "5e1685cb81e65fe56b98c39825c5192f",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/18 Manzana.jpg": {
+    "mtime": 1794622554.2584615,
+    "seen": 1794664892.3132975,
+    "ast_hash": "bcd899365b92484ddcc63ec717e18d75",
+    "semantic_hash": ""
+  },
+  "Claude outputs/fotos-buffet/19 Naranja.jpg": {
+    "mtime": 1794622554.7538588,
+    "seen": 1794664892.3132975,
+    "ast_hash": "ed2b74d33b90c2af4aa842695d25ad2f",
+    "semantic_hash": ""
+  },
+  "Claude outputs/heroes.png": {
+    "mtime": 1790662703.8359542,
+    "seen": 1794664892.3132975,
+    "ast_hash": "36eb5c3a695e5c66c315c7f995eac637",
+    "semantic_hash": ""
+  },
+  "Claude outputs/preview-logos.png": {
+    "mtime": 1793367861.7534032,
+    "seen": 1794664892.3132975,
+    "ast_hash": "92f29285e9cf794304460340f66b7bb3",
+    "semantic_hash": ""
+  },
+  "LOGO EVOLUTION.png": {
+    "mtime": 1793367677.2721486,
+    "seen": 1794664892.3132975,
+    "ast_hash": "52896648c378868976726198989442e5",
+    "semantic_hash": ""
+  },
+  "LOGO.png": {
+    "mtime": 1793367546.2394013,
+    "seen": 1794664892.3132975,
+    "ast_hash": "9d738aa3400c30a94d77dc6870b77a24",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/android-icon-background.png": {
+    "mtime": 1794365781.353665,
+    "seen": 1794664892.3132975,
+    "ast_hash": "06ac0f05467a8e9fcb0ac8323973f83d",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/android-icon-foreground.png": {
+    "mtime": 1794365781.549527,
+    "seen": 1794664892.3132975,
+    "ast_hash": "58662f0ac1ae6f465853068eba27f99e",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/android-icon-monochrome.png": {
+    "mtime": 1794365781.5103126,
+    "seen": 1794664892.3132975,
+    "ast_hash": "f14998dce7d56109c73aba218246699e",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/favicon.png": {
+    "mtime": 1794365781.4075239,
+    "seen": 1794664892.3132975,
+    "ast_hash": "18d953a9145a8420168d610f74c9ee67",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/icon.png": {
+    "mtime": 1794365781.3960035,
+    "seen": 1794664892.3132975,
+    "ast_hash": "540dbce3b12cc617e86d951f5f2c6c62",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/logo.png": {
+    "mtime": 1794365781.4977,
+    "seen": 1794664892.3132975,
+    "ast_hash": "e14833106c59c13a6d86a4220f5255f9",
+    "semantic_hash": ""
+  },
+  "app-ios/assets/splash-icon.png": {
+    "mtime": 1794365781.4533634,
+    "seen": 1794664892.3132975,
+    "ast_hash": "58662f0ac1ae6f465853068eba27f99e",
+    "semantic_hash": ""
+  },
+  "envato_raw/black-kettlebells-for-fitness-strength-and-exercis-2026-09-23-00-49-51-utc.jpg": {
+    "mtime": 1792719536.8396935,
+    "seen": 1794664892.3132975,
+    "ast_hash": "d1bb3ac817c199dca0f730b6abfcfa18",
+    "semantic_hash": ""
+  },
+  "envato_raw/fit-woman-checking-phone-after-workout-2026-09-22-20-08-36-utc.jpg": {
+    "mtime": 1792719529.9103503,
+    "seen": 1794664892.3132975,
+    "ast_hash": "822ad582d0e196c444ff5cd204af40b2",
+    "semantic_hash": ""
+  },
+  "envato_raw/focused-woman-doing-dumbbell-exercises-in-gym-2026-09-22-18-19-27-utc.jpg": {
+    "mtime": 1792719539.3509314,
+    "seen": 1794664892.3132975,
+    "ast_hash": "470633535f80e9994a57bebc9bb2bcf9",
+    "semantic_hash": ""
+  },
+  "envato_raw/man-prepares-with-chalk-for-intense-workout-2026-09-25-01-52-41-utc.jpg": {
+    "mtime": 1792719535.720219,
+    "seen": 1794664892.3132975,
+    "ast_hash": "295421b470cbf93b4fd903906d3b0cd4",
+    "semantic_hash": ""
+  },
+  "envato_raw/people-exercising-with-kettlebells-in-dark-gym-2026-09-21-12-37-08-utc.jpg": {
+    "mtime": 1792719526.2999935,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4cbceffe2e80f810bc4be85cf6e5ed14",
+    "semantic_hash": ""
+  },
+  "envato_raw/row-of-black-dumbbells-on-a-rack-in-a-modern-gym-2026-09-25-05-01-20-utc.jpg": {
+    "mtime": 1792719538.4258828,
+    "seen": 1794664892.3132975,
+    "ast_hash": "add6bd89213ed50a33dc6f9307b3523d",
+    "semantic_hash": ""
+  },
+  "envato_raw/spacious-gym-interior-with-exercise-equipment-2026-09-22-22-40-23-utc.jpg": {
+    "mtime": 1792719530.792575,
+    "seen": 1794664892.3132975,
+    "ast_hash": "bd8f1ca360846d55fc512856df05007c",
+    "semantic_hash": ""
+  },
+  "envato_raw/strong-man-preparing-to-lift-heavy-barbell-2026-09-23-04-57-06-utc.jpg": {
+    "mtime": 1792719527.13246,
+    "seen": 1794664892.3132975,
+    "ast_hash": "a28e14a5a910438f52ae3c4a61028dce",
+    "semantic_hash": ""
+  },
+  "envato_raw/trainer-wrapping-hands-of-young-woman-for-boxing-2026-09-22-20-34-34-utc.jpg": {
+    "mtime": 1792719527.8049138,
+    "seen": 1794664892.3132975,
+    "ast_hash": "b75140fe3b5b96b47f535fa62e9f8401",
+    "semantic_hash": ""
+  },
+  "envato_raw/weight-bench-with-barbell-in-dark-gym-2026-09-21-05-20-30-utc.jpg": {
+    "mtime": 1792719529.0600014,
+    "seen": 1794664892.3132975,
+    "ast_hash": "6f93c2340ae03beb295bc6ce00bbafb5",
+    "semantic_hash": ""
+  },
+  "envato_raw/woman-working-out-with-dumbbell-2026-09-21-14-10-32-utc.jpg": {
+    "mtime": 1792719532.670432,
+    "seen": 1794664892.3132975,
+    "ast_hash": "342e3108374a4f0c22273d575c071031",
+    "semantic_hash": ""
+  },
+  "platform/public/apple-touch-icon.png": {
+    "mtime": 1793367818.4838154,
+    "seen": 1794664892.3132975,
+    "ast_hash": "51ab3bbd5c89300c6b371b6d1b8cc661",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-1.jpg": {
+    "mtime": 1794366988.3453712,
+    "seen": 1794664892.3132975,
+    "ast_hash": "c1492e62f769f21fec16a3d99968acee",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-10.jpg": {
+    "mtime": 1794366989.0791056,
+    "seen": 1794664892.3132975,
+    "ast_hash": "cab40dfc86ed074d51e020eb9bf5b8db",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-11.jpg": {
+    "mtime": 1794366989.0603125,
+    "seen": 1794664892.3132975,
+    "ast_hash": "5654315d8869819db4e54bf5d1fc94f8",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-2.jpg": {
+    "mtime": 1794366989.1149397,
+    "seen": 1794664892.3132975,
+    "ast_hash": "567b5976846102823bdb0b1e94311602",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-3.jpg": {
+    "mtime": 1794366988.3299282,
+    "seen": 1794664892.3132975,
+    "ast_hash": "deac3b71b1b513d0a7db9e07853e2f3e",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-4.jpg": {
+    "mtime": 1794366988.752906,
+    "seen": 1794664892.3132975,
+    "ast_hash": "51d69943830171491a9e66ff60564d9e",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-5.jpg": {
+    "mtime": 1794366989.0963695,
+    "seen": 1794664892.3132975,
+    "ast_hash": "88d50c18b2948bcafcd3dacd45436aab",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-6.jpg": {
+    "mtime": 1794366989.1349702,
+    "seen": 1794664892.3132975,
+    "ast_hash": "d25d0a1d0fb0068e355fba8080986f79",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-7.jpg": {
+    "mtime": 1794366988.7709317,
+    "seen": 1794664892.3132975,
+    "ast_hash": "3f05222186c6be2ab98e5e3081827a56",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-8.jpg": {
+    "mtime": 1794366985.9883385,
+    "seen": 1794664892.3132975,
+    "ast_hash": "180227fa7f0b6e5ea9d2609305d60117",
+    "semantic_hash": ""
+  },
+  "platform/public/ayuda/video-9.jpg": {
+    "mtime": 1794366988.0397632,
+    "seen": 1794664892.3132975,
+    "ast_hash": "ad6950853c59eb9be3f8c2bc0f787164",
+    "semantic_hash": ""
+  },
+  "platform/public/brand/emblema-evolution.png": {
+    "mtime": 1793367818.1154056,
+    "seen": 1794664892.3132975,
+    "ast_hash": "291279433b52ecbc94bf02cb831aca83",
+    "semantic_hash": ""
+  },
+  "platform/public/brand/logo-evolution.png": {
+    "mtime": 1793367817.5930176,
+    "seen": 1794664892.3132975,
+    "ast_hash": "b864ed5023023b5bf4ace835a2fa025c",
+    "semantic_hash": ""
+  },
+  "platform/public/icon-192.png": {
+    "mtime": 1793367818.14214,
+    "seen": 1794664892.3132975,
+    "ast_hash": "9997341f279ae823c97b6b83d3e04a17",
+    "semantic_hash": ""
+  },
+  "platform/public/icon-512.png": {
+    "mtime": 1793367818.32363,
+    "seen": 1794664892.3132975,
+    "ast_hash": "c97239abe9588894f9b5bda5ea1e709d",
+    "semantic_hash": ""
+  },
+  "platform/public/icon-maskable-512.png": {
+    "mtime": 1793367818.4406395,
+    "seen": 1794664892.3132975,
+    "ast_hash": "bee0273f3b654cf1fd7511fbd5648ed9",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-1.jpg": {
+    "mtime": 1790662677.3820124,
+    "seen": 1794664892.3132975,
+    "ast_hash": "237c66e4ebcd7eb4cd0cfc795e5e8da7",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-2.jpg": {
+    "mtime": 1790662678.0699918,
+    "seen": 1794664892.3132975,
+    "ast_hash": "8e67cbe34d935c6bf4b5a7385ff86425",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-3.jpg": {
+    "mtime": 1790662678.98709,
+    "seen": 1794664892.3132975,
+    "ast_hash": "edf8dec66190ceb518ca6de901f71b75",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-4.jpg": {
+    "mtime": 1790662679.5236294,
+    "seen": 1794664892.3132975,
+    "ast_hash": "fffb70dd26fd098229b239bb76039252",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-5.jpg": {
+    "mtime": 1790662680.338712,
+    "seen": 1794664892.3132975,
+    "ast_hash": "77ee3b000bb01f039d0721b09d5af6aa",
+    "semantic_hash": ""
+  },
+  "platform/public/img/galeria-6.jpg": {
+    "mtime": 1790662681.3086755,
+    "seen": 1794664892.3132975,
+    "ast_hash": "ad0569f8fa74826ed16462e11d537b75",
+    "semantic_hash": ""
+  },
+  "platform/public/img/hero.jpg": {
+    "mtime": 1790662682.3147807,
+    "seen": 1794664892.3132975,
+    "ast_hash": "175a2ee86e01813584d82aa328700978",
+    "semantic_hash": ""
+  },
+  "platform/public/img/nosotros-1.jpg": {
+    "mtime": 1790662683.078683,
+    "seen": 1794664892.3132975,
+    "ast_hash": "73d2ab9f01fdfc5c85dde1f57c94d1d6",
+    "semantic_hash": ""
+  },
+  "platform/public/img/nosotros-2.jpg": {
+    "mtime": 1790662683.934665,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4a699254fa186e21c8b3a5286a6e25c8",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/app.jpg": {
+    "mtime": 1792721074.4147491,
+    "seen": 1794664892.3132975,
+    "ast_hash": "e3ce6fd0d74b4ace5a0e627d0057b787",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/cta.jpg": {
+    "mtime": 1792721074.42381,
+    "seen": 1794664892.3132975,
+    "ast_hash": "686b70893f821cb7a14d5be5e1e4859a",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/funcional.jpg": {
+    "mtime": 1792721074.4258192,
+    "seen": 1794664892.3132975,
+    "ast_hash": "904d1c84eac32be736b09a450e7da9dd",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/galeria-1.jpg": {
+    "mtime": 1792721074.4283147,
+    "seen": 1794664892.3132975,
+    "ast_hash": "6b433f22ea798737f132f7571a7c83ce",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/galeria-2.jpg": {
+    "mtime": 1792721074.4283147,
+    "seen": 1794664892.3132975,
+    "ast_hash": "c94f01a9ffd887d6076f99e234f2434e",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/galeria-3.jpg": {
+    "mtime": 1792721074.429329,
+    "seen": 1794664892.3132975,
+    "ast_hash": "b9cc0af4b4313b1e7a344fff9eb25a4c",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/galeria-4.jpg": {
+    "mtime": 1792721074.4308445,
+    "seen": 1794664892.3132975,
+    "ast_hash": "360e4fbd40ad411d47649d2af4c8a8d7",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/galeria-5.jpg": {
+    "mtime": 1792721074.4328563,
+    "seen": 1794664892.3132975,
+    "ast_hash": "07e4476e27627ac1b7a8c33395ead10c",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/hero-poster.jpg": {
+    "mtime": 1792721074.4328563,
+    "seen": 1794664892.3132975,
+    "ast_hash": "a3d958ded04d3fea072498e72ea043c9",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/musculacion.jpg": {
+    "mtime": 1792721074.4409149,
+    "seen": 1794664892.3132975,
+    "ast_hash": "be89a24a49a35bc38dc085254431bc10",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/nosotros-1.jpg": {
+    "mtime": 1792721074.4434836,
+    "seen": 1794664892.3132975,
+    "ast_hash": "302bc9271904a09217eb87886fb52b1b",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/nosotros-2.jpg": {
+    "mtime": 1792721074.44447,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4d133d8e0e564e56e9d280853f2c2729",
+    "semantic_hash": ""
+  },
+  "platform/public/img/web/spinning.jpg": {
+    "mtime": 1792721074.4454687,
+    "seen": 1794664892.3132975,
+    "ast_hash": "f1b557f2cc98593d9d0cdf4ec7095226",
+    "semantic_hash": ""
+  },
+  "platform/src/app/icon.svg": {
+    "mtime": 1793367818.5235934,
+    "seen": 1794664892.3132975,
+    "ast_hash": "3e4e34ea9d8b56d79ccb138b68b9bf4e",
+    "semantic_hash": ""
+  },
+  "public/favicon.svg": {
+    "mtime": 1790204352.9152708,
+    "seen": 1794664892.3132975,
+    "ast_hash": "9706a1495dade753e6d5f2695751e3e0",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-1.jpg": {
+    "mtime": 1790206145.8513136,
+    "seen": 1794664892.3132975,
+    "ast_hash": "237c66e4ebcd7eb4cd0cfc795e5e8da7",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-2.jpg": {
+    "mtime": 1790206146.5413184,
+    "seen": 1794664892.3132975,
+    "ast_hash": "8e67cbe34d935c6bf4b5a7385ff86425",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-3.jpg": {
+    "mtime": 1790206147.2479365,
+    "seen": 1794664892.3132975,
+    "ast_hash": "edf8dec66190ceb518ca6de901f71b75",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-4.jpg": {
+    "mtime": 1790206147.7843485,
+    "seen": 1794664892.3132975,
+    "ast_hash": "fffb70dd26fd098229b239bb76039252",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-5.jpg": {
+    "mtime": 1790206148.9597447,
+    "seen": 1794664892.3132975,
+    "ast_hash": "77ee3b000bb01f039d0721b09d5af6aa",
+    "semantic_hash": ""
+  },
+  "public/img/galeria-6.jpg": {
+    "mtime": 1790206150.0650382,
+    "seen": 1794664892.3132975,
+    "ast_hash": "ad0569f8fa74826ed16462e11d537b75",
+    "semantic_hash": ""
+  },
+  "public/img/hero.jpg": {
+    "mtime": 1790206143.7084358,
+    "seen": 1794664892.3132975,
+    "ast_hash": "175a2ee86e01813584d82aa328700978",
+    "semantic_hash": ""
+  },
+  "public/img/nosotros-1.jpg": {
+    "mtime": 1790206144.1098163,
+    "seen": 1794664892.3132975,
+    "ast_hash": "73d2ab9f01fdfc5c85dde1f57c94d1d6",
+    "semantic_hash": ""
+  },
+  "public/img/nosotros-2.jpg": {
+    "mtime": 1790206144.6444027,
+    "seen": 1794664892.3132975,
+    "ast_hash": "4a699254fa186e21c8b3a5286a6e25c8",
+    "semantic_hash": ""
   }
 }
