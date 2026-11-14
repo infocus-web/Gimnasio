@@ -4,6 +4,8 @@ import { Search, UserPlus, Smartphone, Users } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { fmtDate, planState, PLAN_STATE_UI, todayYMD } from '@/features/admin/format'
+import { ExistingMemberInvite } from '@/features/admin/ExistingMemberInvite'
+import { publicSiteUrl } from '@/features/payments/mercadopago'
 
 export const metadata: Metadata = { title: 'Socios' }
 
@@ -76,6 +78,15 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
 
   const total = count ?? 0
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  // Registrados por /soy-socio que esperan que les asignen el plan
+  const { count: pendingCount } = ctx.can('members.write')
+    ? await supabase
+        .from('members')
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', ctx.org.id)
+        .eq('status', 'lead')
+        .contains('tags', ['socio-existente'])
+    : { count: 0 }
   const qs = (patch: Record<string, string | number>) => {
     const u = new URLSearchParams()
     const merged = { q, estado, p: page, ...patch }
@@ -100,6 +111,15 @@ export default async function MembersPage({ params, searchParams }: PageProps<'/
           </Link>
         )}
       </div>
+
+      {ctx.can('members.write') && (
+        <ExistingMemberInvite
+          url={`${publicSiteUrl()}/${slug}/soy-socio`}
+          gymName={ctx.org.name}
+          pending={pendingCount ?? 0}
+          pendingHref={qs({ estado: 'ya_socios', p: 1 })}
+        />
+      )}
 
       <form role="search" className="flex gap-2" action={`/${slug}/admin/socios`}>
         {estado && <input type="hidden" name="estado" value={estado} />}

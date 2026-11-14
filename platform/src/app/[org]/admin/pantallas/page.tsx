@@ -115,7 +115,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
               <p className="pt-1 text-sm font-semibold text-white">{tvSettings.linked ? 'Vincular de nuevo u otro televisor' : 'Vincular la TV'}</p>
               <TvCodeForm slug={slug} action={claimTvCode.bind(null, slug)} />
             </div>
-            <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} web={tvSettings.web_enabled ?? true} />
+            <TvSettingsForm action={saveTvSettings.bind(null, slug)} ranking={tvSettings.ranking_enabled} message={tvSettings.message} />
           </div>
         </Card>
       )}

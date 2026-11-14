@@ -13,8 +13,6 @@ import { IosInstallButton } from '@/components/IosInstallButton'
 import { SplitWords } from '@/components/RevealText'
 import { REVEAL_BOOT, RevealObserver } from '@/components/RevealObserver'
 import { EXTRAS } from '@/features/public/content'
-import { getPublicToday } from '@/features/public/today'
-import { TodayLive } from '@/features/public/TodayLive'
 import { getBuffetPublic } from '@/features/buffet/data'
 import { BuffetSection } from '@/features/buffet/BuffetSection'
 
@@ -32,7 +30,6 @@ export async function generateMetadata({ params }: PageProps<'/[org]'>): Promise
 }
 
 const NAV = [
-  ['#hoy', 'Hoy'],
   ['#actividades', 'Actividades'],
   ['#app', 'La app'],
   ['#horarios', 'Horarios'],
@@ -54,7 +51,7 @@ function Heading({ id, children, className = '' }: { id?: string; children: Reac
 
 export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const { org } = await params
-  const [gym, today, buffet] = await Promise.all([getPublicGym(org), getPublicToday(org), getBuffetPublic(org)])
+  const [gym, buffet] = await Promise.all([getPublicGym(org), getBuffetPublic(org)])
   if (!gym) notFound()
 
   const p = gym.profile
@@ -71,8 +68,6 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const contactHref = whatsapp ?? tel ?? '#contacto'
   const gallery: readonly string[] = p.gallery?.length ? p.gallery : WEB_MEDIA.gallery
   const about: readonly string[] = p.about_images?.length === 2 ? p.about_images : WEB_MEDIA.about
-  const bookHref = `/login?next=${encodeURIComponent(`/${gym.slug}/app/clases`)}`
-  const todayTitle = `Hoy en ${gym.name.split(' ')[0]}`
   const signupHref = `/${gym.slug}/inscripcion`
   const plans = gym.plans.filter((pl) => pl.price_cents > 0)   // sin tarifa cargada = no se muestra
   const nav: readonly (readonly [string, string])[] = buffet ? [...NAV.slice(0, 2), ['#buffet', 'Buffet'], ...NAV.slice(2)] : NAV
@@ -232,9 +227,6 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             </dl>
           </div>
         </section>
-
-        {/* ---------- Hoy en el gimnasio (en vivo) ---------- */}
-        <TodayLive slug={gym.slug} title={todayTitle} initial={today} bookHref={bookHref} signupHref={signupHref} />
 
         {/* ---------- Buffet (publicidad del concesionario: menú de hoy + carta) ---------- */}
         {buffet && (
