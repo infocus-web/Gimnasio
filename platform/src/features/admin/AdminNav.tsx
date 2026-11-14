@@ -26,12 +26,14 @@ export function AdminNav({ sections, base, variant }: { sections: AdminSection[]
     return (
       <nav aria-label="Panel" className="flex gap-1.5 overflow-x-auto px-3 pb-3">
         {sections.map((s) => {
+          const first = s.tabs[0]
+          if (!first) return null
           const Icon = ICONS[s.icon]
           const active = s.id === activeId
           return (
             <Link
               key={s.id}
-              href={s.tabs[0].href as Route}
+              href={first.href as Route}
               aria-current={active ? 'page' : undefined}
               className={`flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium transition-colors ${
                 active ? 'bg-brand font-semibold text-black' : 'bg-[#2c2c2c] text-zinc-300 hover:text-white'
@@ -50,12 +52,14 @@ export function AdminNav({ sections, base, variant }: { sections: AdminSection[]
   return (
     <nav aria-label="Panel" className="space-y-1.5">
       {sections.map((s) => {
+        const first = s.tabs[0]
+        if (!first) return null
         const Icon = ICONS[s.icon]
         const active = s.id === activeId
         return (
           <Link
             key={s.id}
-            href={s.tabs[0].href as Route}
+            href={first.href as Route}
             aria-current={active ? 'page' : undefined}
             className={`group flex min-h-[48px] items-center gap-3 rounded-full px-1 text-[15px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${
               active ? 'font-semibold text-white' : 'font-medium text-zinc-300 hover:text-white'
