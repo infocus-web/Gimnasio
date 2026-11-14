@@ -1,35 +1,14 @@
-import { SubNav } from '@/features/admin/SubNav'
 import { getAdminContext } from '@/features/admin/context'
 
+/** Las pestañas de la sección «Caja» las arma el panel (features/admin/sections.ts). */
 export default async function PagosLayout({ children, params }: LayoutProps<'/[org]/admin/pagos'>) {
   const { org: slug } = await params
-  const base = `/${slug}/admin/pagos`
   const ctx = await getAdminContext(slug)
-  const isAdmin = ctx?.staff.role === 'owner' || ctx?.staff.role === 'admin'
-  // Profes: solo venden (sin caja, pagos ni productos)
-  if (ctx && !ctx.can('billing.read') && ctx.can('sales.write')) {
-    return (
-      <div className="space-y-5">
-        <h1 className="text-2xl font-extrabold text-white">Vender</h1>
-        {children}
-      </div>
-    )
-  }
+  // Profes: solo venden (sin caja, pagos ni productos) → una sola pantalla, sin pestañas
+  const onlySells = ctx && !ctx.can('billing.read') && ctx.can('sales.write')
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-extrabold text-white">Pagos</h1>
-      <SubNav
-        items={[
-          { href: base, label: 'Caja' },
-          { href: `${base}/vender`, label: 'Vender' },
-          { href: `${base}/cierre`, label: 'Cierre de caja' },
-          { href: `${base}/deudores`, label: 'Vencidos' },
-          { href: `${base}/online`, label: 'Pagos online' },
-          { href: `${base}/productos`, label: 'Productos' },
-          ...(isAdmin ? [{ href: `${base}/ganancias`, label: 'Ganancias' }] : []),
-          { href: `${base}/planes`, label: 'Planes' },
-        ]}
-      />
+      {onlySells && <h1 className="text-2xl font-extrabold text-white">Vender</h1>}
       {children}
     </div>
   )

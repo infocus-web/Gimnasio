@@ -1,29 +1,4 @@
-import { SubNav } from '@/features/admin/SubNav'
-import { getAdminContext } from '@/features/admin/context'
-
-export default async function AgendaLayout({ children, params }: LayoutProps<'/[org]/admin/agenda'>) {
-  const { org: slug } = await params
-  const ctx = await getAdminContext(slug)
-  const base = `/${slug}/admin/agenda`
-  const manage = ctx?.can('schedule.manage')
-  // El profe llega acá solo para ver/manejar una clase suya (desde «Mis clases»)
-  if (ctx && !manage && !ctx.can('bookings.manage')) return <div className="space-y-5">{children}</div>
-  return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-extrabold text-white">Agenda</h1>
-      <SubNav
-        items={[
-          { href: base, label: 'Semana' },
-          ...(manage
-            ? [
-                { href: `${base}/grilla`, label: 'Grilla semanal' },
-                { href: `${base}/actividades`, label: 'Actividades' },
-                { href: `${base}/salas`, label: 'Salas y equipos' },
-              ]
-            : []),
-        ]}
-      />
-      {children}
-    </div>
-  )
+/** Las pestañas de la sección «Clases» las arma el panel (features/admin/sections.ts). */
+export default function AgendaLayout({ children }: LayoutProps<'/[org]/admin/agenda'>) {
+  return <div className="space-y-5">{children}</div>
 }

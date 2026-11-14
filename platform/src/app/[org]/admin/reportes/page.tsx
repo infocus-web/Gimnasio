@@ -1,11 +1,9 @@
 import Link from 'next/link'
 import type { Metadata, Route } from 'next'
-import { MessageCircle } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { normalizeArPhone, whatsappLink } from '@/features/admin/whatsapp'
-import { fmtDate, formatMoney } from '@/features/admin/format'
-import { CheckinHeatmap, MonthlyBars } from '@/features/admin/ReportCharts'
+import { formatMoney } from '@/features/admin/format'
+import { MonthlyBars } from '@/features/admin/ReportCharts'
 import { Card } from '@/features/admin/ui'
 
 export const metadata: Metadata = { title: 'Reportes' }
@@ -64,10 +62,6 @@ export default async function ReportsPage({ params }: PageProps<'/[org]/admin/re
         <MonthlyBars data={r.months as unknown as Record<string, number | string>[]} valueKey="lapsed" title="Bajas (no renovaron) por mes" color="#a1a1aa" />
       </div>
 
-      <Card title="¿Cuándo viene la gente?">
-        <CheckinHeatmap cells={r.heatmap} />
-      </Card>
-
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Ocupación de clases (8 semanas)">
           {r.occupancy.length ? (
@@ -111,39 +105,17 @@ export default async function ReportsPage({ params }: PageProps<'/[org]/admin/re
         </Card>
       </div>
 
-      <Card title={`En riesgo de abandonar (${r.at_risk.length})`}>
-        <p className="mb-3 text-xs text-zinc-500">Tienen el plan pago pero hace más de 10 días que no vienen. Un mensaje a tiempo los recupera.</p>
-        {r.at_risk.length ? (
-          <ul className="divide-y divide-zinc-900">
-            {r.at_risk.map((m) => {
-              const intl = normalizeArPhone(m.phone)
-              const wa = intl
-                ? whatsappLink(intl, `Hola ${m.name.split(' ')[0]}! Te extrañamos en ${ctx.org.name} 💪 ¿Todo bien? Te esperamos esta semana.`)
-                : null
-              return (
-                <li key={m.id} className="flex items-center gap-3 py-2.5 text-sm">
-                  <span className="min-w-0 flex-1">
-                    <Link href={`/${slug}/admin/socios/${m.id}` as Route} className="font-semibold text-white hover:text-[#edcc36]">
-                      {m.name}
-                    </Link>
-                    <span className="block text-xs text-zinc-500">
-                      {m.plan} · última entrada {fmtDate(m.last_checkin_at)}
-                    </span>
-                  </span>
-                  {wa && (
-                    <a href={wa} target="_blank" rel="noreferrer" aria-label={`Escribirle a ${m.name} por WhatsApp`}
-                      className="grid h-10 w-10 place-items-center rounded-xl border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10">
-                      <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                    </a>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        ) : (
-          <p className="text-sm text-zinc-500">Nadie en riesgo por ahora. 🎉</p>
-        )}
-      </Card>
+      <p className="text-sm text-zinc-400">
+        {r.at_risk.length === 1 ? '1 socio con el plan pago no viene hace días.' : `${r.at_risk.length} socios con el plan pago no vienen hace días.`}{' '}
+        <Link href={`/${slug}/admin/socios/riesgo` as Route} className="font-semibold text-[#edcc36] hover:underline">
+          Ver quiénes y escribirles
+        </Link>
+        {' · '}Los horarios de más gente están en{' '}
+        <Link href={`/${slug}/admin/negocio` as Route} className="font-semibold text-[#edcc36] hover:underline">
+          Resumen
+        </Link>
+        .
+      </p>
     </div>
   )
 }

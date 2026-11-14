@@ -5,7 +5,8 @@ import type { Route } from 'next'
 import { ExternalLink, KeyRound, Search, CalendarDays, ScanLine, UserPlus } from 'lucide-react'
 import { Wordmark } from '@/components/Wordmark'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
-import { AdminNav, type NavItem } from '@/features/admin/AdminNav'
+import { AdminNav, SectionTabs } from '@/features/admin/AdminNav'
+import { buildAdminSections } from '@/features/admin/sections'
 import { HelpVideoButton } from '@/features/admin/HelpVideoButton'
 import { SignOutButton } from '@/features/member/SignOutButton'
 import { getStaffContext } from '@/lib/member-context'
@@ -64,31 +65,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
       .eq('status', 'pending')
     pendingRequests = count ?? 0
   }
-  const items: NavItem[] = [
-    { href: base, label: 'Inicio', icon: 'home' },
-    ...(ctx.can('members.read') ? [{ href: `${base}/socios`, label: 'Socios', icon: 'users' } as const] : []),
-    ...(ctx.can('checkins.manage') ? [{ href: `${base}/recepcion`, label: 'Recepción', icon: 'scan' } as const] : []),
-    ...(ctx.can('staff.manage') ? [{ href: `${base}/equipo`, label: pendingRequests ? `Equipo (${pendingRequests})` : 'Equipo', icon: 'team' } as const] : []),
-    ...(ctx.can('billing.read') ? [{ href: `${base}/pagos`, label: 'Pagos', icon: 'billing' } as const] : []),
-    // Profes: solo la pantalla de venta (no ven la caja ni los pagos)
-    ...(!ctx.can('billing.read') && ctx.can('sales.write') ? [{ href: `${base}/pagos/vender`, label: 'Vender', icon: 'billing' } as const] : []),
-    ...(ctx.can('schedule.manage') || ctx.can('bookings.manage') ? [{ href: `${base}/agenda`, label: 'Agenda', icon: 'calendar' } as const] : []),
-    ...(ctx.staff.role === 'trainer' || ctx.can('schedule.own') ? [{ href: `${base}/mis-clases`, label: 'Mis clases', icon: 'mine' } as const] : []),
-    ...(ctx.staff.role === 'trainer' || ctx.can('training.manage_all')
-      ? ([
-          { href: `${base}/alumnos`, label: ctx.staff.role === 'trainer' ? 'Mis alumnos' : 'Alumnos', icon: 'list' },
-          { href: `${base}/rutinas`, label: 'Rutinas', icon: 'dumbbell' },
-        ] as const)
-      : []),
-    ...(ctx.can('reports.read') ? [{ href: `${base}/negocio`, label: 'Negocio', icon: 'business' } as const] : []),
-    ...(ctx.can('reports.read') ? [{ href: `${base}/reportes`, label: 'Reportes', icon: 'chart' } as const] : []),
-    ...(ctx.can('members.write') ? [{ href: `${base}/comunicacion`, label: 'Comunicación', icon: 'message' } as const] : []),
-    ...(ctx.can('checkins.manage') ? [{ href: `${base}/pases`, label: 'Pases e invitados', icon: 'ticket' } as const] : []),
-    ...(ctx.staff.role === 'trainer' || ctx.can('training.manage_all') ? [{ href: `${base}/maquinas`, label: 'Máquinas', icon: 'qr' } as const] : []),
-    ...(ctx.can('org.manage') ? [{ href: `${base}/accesos`, label: 'Accesos', icon: 'door' } as const] : []),
-    ...(ctx.can('org.manage') || ctx.can('training.manage_all') ? [{ href: `${base}/pantallas`, label: 'Pantallas', icon: 'images' } as const] : []),
-    ...(ctx.can('org.manage') ? [{ href: `${base}/web`, label: 'Web', icon: 'web' } as const] : []),
-  ]
+  const sections = buildAdminSections(ctx, base, { pendingRequests })
 
   const initials = ctx.staff.display_name
     .split(' ')
@@ -109,7 +86,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
         </Link>
         <div className="flex-1 px-4 py-6">
           <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">Menú</p>
-          <AdminNav items={items} variant="side" />
+          <AdminNav sections={sections} base={base} variant="side" />
         </div>
         <div className="space-y-3 border-t border-[#2c2c2c] px-5 py-5">
           <Link
@@ -165,7 +142,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
             </div>
           </details>
         </div>
-        <AdminNav items={items} variant="bar" />
+        <AdminNav sections={sections} base={base} variant="bar" />
       </header>
 
       {/* Panel de contenido: tarjeta gris redondeada sobre el fondo negro (compu) */}
@@ -215,7 +192,10 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[o
             </div>
           </div>
         </div>
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <SectionTabs sections={sections} base={base} />
+          {children}
+        </main>
         <HelpVideoButton />
       </div>
     </div>

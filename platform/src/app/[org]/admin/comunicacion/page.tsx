@@ -65,7 +65,7 @@ export default async function ComunicacionPage({ params }: PageProps<'/[org]/adm
       </div>
       <p className="text-xs text-zinc-500">
         Los días de regalo de cumpleaños, los días por referido y el tope de congelamiento se configuran en{' '}
-        <Link href={`${base}/reglas` as Route} className="text-[#edcc36] hover:underline">Reglas</Link>.
+        <Link href={`/${slug}/admin/pagos/reglas` as Route} className="text-[#edcc36] hover:underline">Caja → Regalos y congelamiento</Link>.
       </p>
     </div>
   )

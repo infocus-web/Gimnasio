@@ -154,21 +154,12 @@ function DashboardBody({ d, slug }: { d: Dashboard; slug: string }) {
       </Card>
 
       {d.debt.list.length > 0 && (
-        <Card title="Quiénes deben">
-          <ul className="divide-y divide-zinc-900">
-            {d.debt.list.map((m) => (
-              <li key={m.member_id}>
-                <Link
-                  href={`/${slug}/admin/socios/${m.member_id}` as Route}
-                  className="flex min-h-[44px] items-center justify-between gap-3 py-2 text-sm hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]"
-                >
-                  <span className="text-zinc-200">{m.name}</span>
-                  <span className="tabular-nums text-red-200">{m.open_cents ? formatMoney(m.open_cents) : 'cuota vencida'}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <p className="text-sm text-zinc-400">
+          {d.debt.list.length === 1 ? 'Hay 1 socio que debe.' : `Hay ${d.debt.list.length} socios que deben.`}{' '}
+          <Link href={`/${slug}/admin/socios/vencidos` as Route} className="font-semibold text-[#edcc36] hover:underline">
+            Ver la lista para cobrarles
+          </Link>
+        </p>
       )}
 
       <details className="rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4 text-sm text-zinc-400">

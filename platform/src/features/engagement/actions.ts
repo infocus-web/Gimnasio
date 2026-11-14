@@ -77,6 +77,7 @@ export async function saveRules(slug: string, _prev: ActionState, form: FormData
   })
   if (error) return { message: errorText(error) }
   revalidatePath(`/${slug}/admin/comunicacion`, 'layout')
+  revalidatePath(`/${slug}/admin/pagos/reglas`)
   return { ok: true, message: 'Reglas guardadas.' }
 }
 
@@ -110,7 +111,7 @@ export async function markContacted(slug: string, memberId: string): Promise<Act
   const supabase = await createClient()
   const { error } = await supabase.rpc('engagement_mark_contacted', { p_member: memberId })
   if (error) return { message: errorText(error) }
-  revalidatePath(`/${slug}/admin/comunicacion/riesgo`)
+  revalidatePath(`/${slug}/admin/socios/riesgo`)
   return { ok: true, message: 'Marcado como contactado: no aparece en la lista por 14 días.' }
 }
 
