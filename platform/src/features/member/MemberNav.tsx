@@ -10,7 +10,7 @@ const TABS = [
   { href: 'clases', label: 'Clases', Icon: CalendarDays },
   { href: 'entrenar', label: 'Entrenar', Icon: Dumbbell },
   { href: 'progreso', label: 'Progreso', Icon: TrendingUp },
-  // Concurrencia, Invitados y Retos se abren desde "Yo"
+  // Concurrencia, Invitados, Retos y Buffet se abren desde "Yo"
   { href: 'yo', label: 'Yo', Icon: UserRound },
 ] as const
 
@@ -28,7 +28,7 @@ export function MemberNav({ orgSlug }: { orgSlug: string }) {
           const url = `/${orgSlug}/app/${href}`
           const active =
             pathname?.startsWith(url) ||
-            (href === 'yo' && ['horarios', 'invitados', 'retos'].some((p) => pathname?.startsWith(`/${orgSlug}/app/${p}`)))
+            (href === 'yo' && ['horarios', 'invitados', 'retos', 'buffet'].some((p) => pathname?.startsWith(`/${orgSlug}/app/${p}`)))
           return (
             <li key={href}>
               <Link

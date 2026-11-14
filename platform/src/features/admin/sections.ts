@@ -8,7 +8,7 @@ import type { Permission } from './context'
  * sin pestañas visibles no aparece. Para agregar una pantalla nueva alcanza con sumarla acá.
  */
 
-export type SectionIcon = 'home' | 'users' | 'billing' | 'calendar' | 'dumbbell' | 'message' | 'chart' | 'settings'
+export type SectionIcon = 'home' | 'users' | 'billing' | 'calendar' | 'dumbbell' | 'message' | 'chart' | 'settings' | 'food'
 
 export interface SectionTab {
   href: string
@@ -48,7 +48,8 @@ export function buildAdminSections(ctx: SectionCtx, base: string, opts: { pendin
       label: 'Hoy',
       icon: 'home',
       tabs: [
-        { href: base, label: 'Inicio' },
+        // El concesionario del buffet entra directo a sus pedidos (no ve el inicio del gimnasio)
+        ...tab(ctx.staff.role !== 'buffet', '', 'Inicio'),
         ...tab(can('checkins.manage'), '/recepcion', 'Recepción'),
         ...tab(can('checkins.manage'), '/pases', 'Pases e invitados'),
       ],
@@ -103,6 +104,18 @@ export function buildAdminSections(ctx: SectionCtx, base: string, opts: { pendin
         ...tab(training, '/alumnos', isTrainer ? 'Mis alumnos' : 'Alumnos'),
         ...tab(training, '/rutinas', 'Rutinas'),
         ...tab(training, '/maquinas', 'Máquinas'),
+      ],
+    },
+    {
+      id: 'buffet',
+      label: 'Buffet',
+      icon: 'food',
+      tabs: [
+        ...tab(can('buffet.manage'), '/buffet', 'Pedidos'),
+        ...tab(can('buffet.manage'), '/buffet/menu', 'Menú del día'),
+        ...tab(can('buffet.manage'), '/buffet/carta', 'Carta'),
+        ...tab(can('buffet.manage') || can('billing.read'), '/buffet/rendicion', 'Rendición'),
+        ...tab(can('buffet.manage'), '/buffet/ajustes', 'Ajustes y publicidad'),
       ],
     },
     {

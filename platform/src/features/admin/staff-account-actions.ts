@@ -78,7 +78,7 @@ async function loadTarget(slug: string, staffId: string) {
 const createSchema = z.object({
   displayName: z.string().trim().min(1, 'Ingresá el nombre'),
   email: z.string().trim().toLowerCase().pipe(z.email('Email inválido')),
-  role: z.enum(['admin', 'staff', 'trainer']),
+  role: z.enum(['admin', 'staff', 'trainer', 'buffet']),
   password: z
     .string()
     .transform((v) => v.trim())
@@ -121,7 +121,7 @@ export async function createStaffAccount(slug: string, _prev: ActionState, form:
       const { data } = await supabase.rpc('link_existing_user', { p_org: ctx.org.id, p_email: email })
       revalidatePath(`/${slug}/admin/equipo`)
       return data === 'LINKED'
-        ? { ok: true, message: `${email} ya tenía cuenta: quedó habilitado como ${role === 'trainer' ? 'profesor' : role === 'staff' ? 'recepción' : 'administrador'} con su contraseña actual. Si no la recuerda, usá "Nueva contraseña".` }
+        ? { ok: true, message: `${email} ya tenía cuenta: quedó habilitado como ${role === 'trainer' ? 'profesor' : role === 'staff' ? 'recepción' : role === 'buffet' ? 'buffet' : 'administrador'} con su contraseña actual. Si no la recuerda, usá "Nueva contraseña".` }
         : { message: 'Ese email ya tiene cuenta pero no se pudo vincular.' }
     }
     if (/password/i.test(error.message)) return { fieldErrors: { password: 'Contraseña demasiado débil o filtrada en internet. Probá otra.' } }

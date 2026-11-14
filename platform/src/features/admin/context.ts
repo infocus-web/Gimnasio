@@ -9,6 +9,7 @@ export type Permission =
   | 'automations.manage' | 'reports.read'
   | 'schedule.own'   // 0040: el profe maneja SUS clases
   | 'sales.write'    // 0047: vender en el mostrador (sin ver caja ni pagos)
+  | 'buffet.manage'  // 0052: carta, menú del día y pedidos del buffet
 
 /** Staff logueado + sus permisos en el gimnasio. null = no es staff activo. */
 export const getAdminContext = cache(async (slug: string) => {
@@ -30,4 +31,5 @@ export const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrador',
   staff: 'Recepción',
   trainer: 'Profesor',
+  buffet: 'Buffet',
 }

@@ -9,6 +9,7 @@ import { InfoTip } from '@/components/InfoTip'
 const ROLE_OPTIONS = [
   { value: 'trainer', label: 'Profesor', hint: 'Ve sus clases y sus alumnos, asigna rutinas.' },
   { value: 'staff', label: 'Recepción', hint: 'Check-in, altas de socios y cobros.' },
+  { value: 'buffet', label: 'Buffet', hint: 'Concesionario del buffet: solo carta, menú del día y pedidos.' },
   { value: 'admin', label: 'Administrador', hint: 'Todo, menos gestionar al dueño.' },
 ] as const
 

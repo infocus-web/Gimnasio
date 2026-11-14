@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { Route } from 'next'
-import { Home, Users, CreditCard, CalendarDays, Dumbbell, MessageCircle, BarChart3, Settings } from 'lucide-react'
+import { Home, Users, CreditCard, CalendarDays, Dumbbell, MessageCircle, BarChart3, Settings, UtensilsCrossed } from 'lucide-react'
 import { findActiveTab, type AdminSection, type SectionIcon } from './sections'
 
 const ICONS: Record<SectionIcon, typeof Home> = {
@@ -15,6 +15,7 @@ const ICONS: Record<SectionIcon, typeof Home> = {
   message: MessageCircle,
   chart: BarChart3,
   settings: Settings,
+  food: UtensilsCrossed,
 }
 
 /** Menú principal: un botón por sección. Lleva a la primera pantalla de la sección. */

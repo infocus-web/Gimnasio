@@ -3844,7 +3844,7 @@ export type Database = {
         | "canceled"
       plan_kind: "recurring" | "class_pack" | "drop_in" | "trial"
       session_status: "scheduled" | "canceled" | "completed"
-      staff_role: "owner" | "admin" | "staff" | "trainer"
+      staff_role: "owner" | "admin" | "staff" | "trainer" | "buffet"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4009,7 +4009,7 @@ export const Constants = {
       ],
       plan_kind: ["recurring", "class_pack", "drop_in", "trial"],
       session_status: ["scheduled", "canceled", "completed"],
-      staff_role: ["owner", "admin", "staff", "trainer"],
+      staff_role: ["owner", "admin", "staff", "trainer", "buffet"],
     },
   },
 } as const

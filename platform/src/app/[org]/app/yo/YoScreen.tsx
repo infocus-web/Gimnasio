@@ -18,6 +18,7 @@ import {
   Ticket,
   Trophy,
   Users,
+  UtensilsCrossed,
 } from 'lucide-react'
 import { InfoTip } from '@/components/InfoTip'
 import { useMember } from '@/features/member/MemberProvider'
@@ -122,6 +123,7 @@ export function YoScreen() {
 
       <nav aria-label="Accesos" className="grid grid-cols-2 gap-3">
         {[
+          { href: `/${org.slug}/app/buffet`, label: 'Buffet', sub: 'Pedí tu vianda', Icon: UtensilsCrossed },
           { href: `/${org.slug}/app/horarios`, label: 'Concurrencia', sub: '¿Hay mucha gente?', Icon: Users },
           { href: `/${org.slug}/app/invitados`, label: 'Invitados', sub: 'Traé a alguien', Icon: Ticket },
           { href: `/${org.slug}/app/retos`, label: 'Retos', sub: 'Desafíos del mes', Icon: Trophy },

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import type { Metadata, Route } from 'next'
 import { Users, ScanLine, AlarmClock, UserX, UserPlus, ArrowRight } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
@@ -13,6 +14,7 @@ export default async function AdminHome({ params }: PageProps<'/[org]/admin'>) {
   const { org: slug } = await params
   const ctx = await getAdminContext(slug)
   if (!ctx) return null // sin sesión de staff: el layout ya muestra el aviso
+  if (ctx.staff.role === 'buffet') redirect(`/${slug}/admin/buffet` as Route)
   const supabase = await createClient()
   const orgId = ctx.org.id
   const canMembers = ctx.can('members.read')

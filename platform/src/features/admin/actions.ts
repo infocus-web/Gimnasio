@@ -238,7 +238,7 @@ export async function inviteMemberToApp(slug: string, memberId: string, _prev: A
 const inviteSchema = z.object({
   displayName: z.string().trim().min(1, 'Ingresá el nombre'),
   email: z.string().trim().toLowerCase().pipe(z.email('Email inválido')),
-  role: z.enum(['admin', 'staff', 'trainer']),
+  role: z.enum(['admin', 'staff', 'trainer', 'buffet']),
 })
 
 export async function inviteStaff(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
@@ -266,12 +266,12 @@ export async function updateStaff(slug: string, staffId: string, _prev: ActionSt
   const ctx = await getAdminContext(slug)
   if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
   const role = String(form.get('role') ?? '')
-  if (!['admin', 'staff', 'trainer'].includes(role)) return { message: 'Rol inválido.' }
+  if (!['admin', 'staff', 'trainer', 'buffet'].includes(role)) return { message: 'Rol inválido.' }
 
   const supabase = await createClient()
   const { error } = await supabase
     .from('staff')
-    .update({ role: role as 'admin' | 'staff' | 'trainer' })
+    .update({ role: role as 'admin' | 'staff' | 'trainer' | 'buffet' })
     .eq('id', staffId)
     .eq('org_id', ctx.org.id)
   if (error) return { message: dbMessage(error) }
