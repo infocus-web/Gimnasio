@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: PageProps<'/[org]'>): Promise
 }
 
 const NAV = [
-  ['#actividades', 'Actividades'],
   ['#app', 'La app'],
+  ['#actividades', 'Actividades'],
   ['#horarios', 'Horarios'],
   ['#planes', 'Planes'],
   ['#contacto', 'Contacto'],
@@ -130,45 +130,6 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
       <script dangerouslySetInnerHTML={{ __html: REVEAL_BOOT }} />
       <RevealObserver />
       <main>
-        {/* ---------- La app (primero: lo primero que ve el socio) ---------- */}
-        <section id="app" aria-labelledby="app-title" className="scroll-mt-4 bg-[#141414] pb-24 pt-32 sm:pb-32 sm:pt-40">
-          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-8 lg:grid-cols-2 lg:gap-20">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-lg lg:order-2">
-              <Image src={WEB_MEDIA.app} alt="Socia mirando su rutina en el celular en la sala" fill sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
-            </div>
-            <div>
-              <Heading id="app-title">Tu gimnasio<br />en el celular</Heading>
-              <p data-reveal-fade className="mt-5 max-w-md text-lg text-white/70">Cada socio tiene su cuenta: rutina, clases y pagos en un solo lugar.</p>
-              <ul className="mt-10 space-y-7">
-                {[
-                  { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones serie por serie.' },
-                  { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario, ves cuántos lugares quedan y listo.' },
-                  { Icon: QrCode, title: 'Pagás y ves tu plan', text: 'Cuándo vence, qué incluye y tus pagos, sin preguntar en recepción.' },
-                ].map(({ Icon, title, text: t }) => (
-                  <li key={title} className="flex gap-4">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-brand text-black">
-                      <Icon className="h-5 w-5" aria-hidden="true" />
-                    </span>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">{title}</h3>
-                      <p className="mt-1 text-white/65">{t}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-10 grid max-w-xl gap-3 sm:grid-cols-2">
-                <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight} className="sm:col-span-2">
-                  Entrar a la app
-                </TacticalButton>
-                <TacticalButton href="/descargas/evolution-fitness.apk" icon={Download}>
-                  App para Android
-                </TacticalButton>
-                <IosInstallButton appHref={`/${gym.slug}/app`} />
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ---------- Hero con video ---------- */}
         <section id="inicio" className="relative isolate flex min-h-[100svh] flex-col overflow-hidden">
           <video
@@ -225,6 +186,45 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                 </div>
               ))}
             </dl>
+          </div>
+        </section>
+
+        {/* ---------- La app (justo después del inicio) ---------- */}
+        <section id="app" aria-labelledby="app-title" className="scroll-mt-4 bg-[#141414] py-24 sm:py-32">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-8 lg:grid-cols-2 lg:gap-20">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-lg lg:order-2">
+              <Image src={WEB_MEDIA.app} alt="Socia mirando su rutina en el celular en la sala" fill sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
+            </div>
+            <div>
+              <Heading id="app-title">Tu gimnasio<br />en el celular</Heading>
+              <p data-reveal-fade className="mt-5 max-w-md text-lg text-white/70">Cada socio tiene su cuenta: rutina, clases y pagos en un solo lugar.</p>
+              <ul className="mt-10 space-y-7">
+                {[
+                  { Icon: Smartphone, title: 'Tu rutina con videos', text: 'Tu profe te la arma y vos anotás pesos y repeticiones serie por serie.' },
+                  { Icon: CalendarCheck, title: 'Reservás clases en un toque', text: 'Elegís el horario, ves cuántos lugares quedan y listo.' },
+                  { Icon: QrCode, title: 'Pagás y ves tu plan', text: 'Cuándo vence, qué incluye y tus pagos, sin preguntar en recepción.' },
+                ].map(({ Icon, title, text: t }) => (
+                  <li key={title} className="flex gap-4">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-brand text-black">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{title}</h3>
+                      <p className="mt-1 text-white/65">{t}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-10 grid max-w-xl gap-3 sm:grid-cols-2">
+                <TacticalButton href={loginHref} variant="solid" icon={ArrowUpRight} className="sm:col-span-2">
+                  Entrar a la app
+                </TacticalButton>
+                <TacticalButton href="/descargas/evolution-fitness.apk" icon={Download}>
+                  App para Android
+                </TacticalButton>
+                <IosInstallButton appHref={`/${gym.slug}/app`} />
+              </div>
+            </div>
           </div>
         </section>
 
