@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_supabase_migrations_0051_buffet_role_sql", "label": "0051_buffet_role.sql", "file_type": "code", "source_file": "supabase/migrations/0051_buffet_role.sql", "source_location": null}], "edges": []}

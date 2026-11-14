@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UserPlus, KeyRound, Copy, Lock, Unlock, Trash2 } from 'lucide-react'
+import { useFormStatus } from 'react-dom'
+import { UserPlus, KeyRound, Copy, Lock, Unlock, Trash2, Check, Loader2 } from 'lucide-react'
+import { PendingButton } from './ConfirmAction'
 import type { ActionState } from './errors'
-import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
-import { InfoTip } from '@/components/InfoTip'
+import { Notice, useActionForm } from './ui'
 
 const ROLE_OPTIONS = [
   { value: 'trainer', label: 'Profesor', hint: 'Ve sus clases y sus alumnos, asigna rutinas.' },
@@ -12,6 +13,45 @@ const ROLE_OPTIONS = [
   { value: 'buffet', label: 'Buffet', hint: 'Concesionario del buffet: solo carta, menú del día y pedidos.' },
   { value: 'admin', label: 'Administrador', hint: 'Todo, menos gestionar al dueño.' },
 ] as const
+
+const SMALL_INPUT =
+  'h-9 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-sm text-white placeholder:text-zinc-600 focus-visible:border-[#edcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]/20'
+
+function MiniField({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{label}</span>
+      {children}
+      {error && <span className="block text-xs text-red-300">{error}</span>}
+    </label>
+  )
+}
+
+function SmallSubmit({ children }: { children: React.ReactNode }) {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#edcc36] px-4 text-xs font-bold text-black disabled:opacity-60"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />}
+      {children}
+    </button>
+  )
+}
+
+function RoleSelect({ allowAdmin }: { allowAdmin: boolean }) {
+  return (
+    <select name="role" defaultValue="trainer" className={SMALL_INPUT}>
+      {ROLE_OPTIONS.filter((r) => allowAdmin || r.value !== 'admin').map((r) => (
+        <option key={r.value} value={r.value} title={r.hint}>
+          {r.label}
+        </option>
+      ))}
+    </select>
+  )
+}
 
 export function InviteStaffForm({
   action,
@@ -23,33 +63,22 @@ export function InviteStaffForm({
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
-    <form action={formAction} className="space-y-4" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nombre" name="displayName" error={err.displayName}>
-          <input id="displayName" name="displayName" className={inputClass} autoComplete="off" />
-        </Field>
-        <Field label="Email" name="email" error={err.email}>
-          <input id="email" name="email" type="email" inputMode="email" className={inputClass} autoComplete="off" />
-        </Field>
+    <form action={formAction} className="space-y-3" noValidate>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <MiniField label="Nombre" error={err.displayName}>
+          <input name="displayName" className={SMALL_INPUT} autoComplete="off" />
+        </MiniField>
+        <MiniField label="Email" error={err.email}>
+          <input name="email" type="email" inputMode="email" className={SMALL_INPUT} autoComplete="off" />
+        </MiniField>
+        <MiniField label="Rol">
+          <RoleSelect allowAdmin={allowAdmin} />
+        </MiniField>
+        <div className="flex items-end justify-end">
+          <SmallSubmit>Enviar invitación</SmallSubmit>
+        </div>
       </div>
-      <fieldset className="space-y-2">
-        <legend className="mb-1 text-xs font-medium text-zinc-400">Rol</legend>
-        {ROLE_OPTIONS.filter((r) => allowAdmin || r.value !== 'admin').map((r, i) => (
-          <label key={r.value} className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl border border-zinc-800 p-3 has-[:checked]:border-[#edcc36]/60">
-            <input type="radio" name="role" value={r.value} defaultChecked={i === 0} className="mt-0.5 h-4 w-4 accent-[#edcc36]" />
-            <span className="text-sm">
-              <span className="font-semibold text-white">{r.label}</span>
-              <span className="block text-xs text-zinc-400">{r.hint}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
       <Notice state={state} />
-      <div className="flex justify-end">
-        <SubmitButton>
-          <UserPlus className="h-4 w-4" aria-hidden="true" /> Enviar invitación
-        </SubmitButton>
-      </div>
     </form>
   )
 }
@@ -63,22 +92,37 @@ export function StaffRowForm({
   role: string
   allowAdmin: boolean
 }) {
-  const [state, formAction] = useActionForm(action, {})
+  const [state, formAction, pending] = useActionForm(action, {})
+  const [value, setValue] = useState(role)
+  useEffect(() => setValue(role), [role])
+  const changed = value !== role
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-2">
-      <label className="sr-only" htmlFor={`role-${role}`}>
-        Rol
-      </label>
-      <select name="role" defaultValue={role} className={`${inputClass} w-auto min-w-[150px]`}>
+    <form action={formAction} className="flex items-center gap-1.5">
+      <select
+        name="role"
+        aria-label="Rol"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="h-8 rounded-lg border border-zinc-800 bg-zinc-900 pl-2.5 pr-7 text-xs font-medium text-zinc-200 hover:border-zinc-600 focus-visible:border-[#edcc36] focus-visible:outline-none"
+      >
         {ROLE_OPTIONS.filter((r) => allowAdmin || r.value !== 'admin' || role === 'admin').map((r) => (
           <option key={r.value} value={r.value} disabled={r.value === 'admin' && !allowAdmin}>
             {r.label}
           </option>
         ))}
       </select>
-      <SubmitButton variant="ghost">Cambiar rol</SubmitButton>
-      {state.message && (
-        <span role={state.ok ? 'status' : 'alert'} className={`text-xs ${state.ok ? 'text-emerald-300' : 'text-red-300'}`}>
+      {changed && (
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#edcc36] px-2.5 text-xs font-bold text-black disabled:opacity-60"
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+          Guardar
+        </button>
+      )}
+      {state.message && !state.ok && (
+        <span role="alert" className="text-xs text-red-300">
           {state.message}
         </span>
       )}
@@ -123,41 +167,52 @@ export function CreateStaffAccountForm({
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
-    <form action={formAction} className="space-y-4" noValidate>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nombre" name="displayName" error={err.displayName}>
-          <input id="acc-name" name="displayName" className={inputClass} autoComplete="off" />
-        </Field>
-        <Field label="Email (será su usuario)" name="email" error={err.email}>
-          <input id="acc-email" name="email" type="email" inputMode="email" className={inputClass} autoComplete="off" />
-        </Field>
-        <Field label="Rol" name="role">
-          <select id="acc-role" name="role" defaultValue="trainer" className={inputClass}>
-            {ROLE_OPTIONS.filter((r) => allowAdmin || r.value !== 'admin').map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Contraseña inicial" name="password" error={err.password} hint="Vacío = la generamos segura. Al entrar la tiene que cambiar.">
-          <input id="acc-pass" name="password" type="text" autoComplete="new-password" className={inputClass} placeholder="Generar automáticamente" />
-        </Field>
+    <form action={formAction} className="space-y-3" noValidate>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <MiniField label="Nombre" error={err.displayName}>
+          <input name="displayName" className={SMALL_INPUT} autoComplete="off" />
+        </MiniField>
+        <MiniField label="Email (usuario)" error={err.email}>
+          <input name="email" type="email" inputMode="email" className={SMALL_INPUT} autoComplete="off" />
+        </MiniField>
+        <MiniField label="Rol">
+          <RoleSelect allowAdmin={allowAdmin} />
+        </MiniField>
+        <MiniField label="Contraseña" error={err.password}>
+          <input name="password" type="text" autoComplete="new-password" className={SMALL_INPUT} placeholder="Vacío = automática" />
+        </MiniField>
       </div>
       <Notice state={state} />
       <SecretBox secret={state.secret} />
-      <div className="flex justify-end">
-        <SubmitButton>
-          <UserPlus className="h-4 w-4" aria-hidden="true" /> Crear cuenta
-        </SubmitButton>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] text-zinc-500">Al entrar por primera vez la tiene que cambiar.</p>
+        <SmallSubmit>Crear cuenta</SmallSubmit>
       </div>
     </form>
   )
 }
 
-const GHOST =
-  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-[#edcc36]/60 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36]'
 
+const ICON_BTN =
+  'inline-flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#edcc36] disabled:opacity-60'
+const PANEL_BTN =
+  'inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold disabled:opacity-60'
+
+function PanelSubmit({ children, danger }: { children: React.ReactNode; danger?: boolean }) {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className={`${PANEL_BTN} ${danger ? 'bg-red-500 text-white hover:bg-red-400' : 'bg-[#edcc36] text-black'}`}
+    >
+      {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+      {children}
+    </button>
+  )
+}
+
+/** Acciones de la cuenta en íconos; las confirmaciones y avisos se abren en un panel flotante */
 export function StaffAccountActions({
   name,
   active,
@@ -174,77 +229,105 @@ export function StaffAccountActions({
   const [resetState, reset] = useActionForm(resetAction, {})
   const [blockState, block] = useActionForm(blockAction, {})
   const [delState, del] = useActionForm(deleteAction, {})
-  const [sure, setSure] = useState<'reset' | 'block' | null>(null)
+  const [sure, setSure] = useState<'reset' | 'block' | 'delete' | null>(null)
+  const [closed, setClosed] = useState<ActionState | null>(null)
   const shown = delState.message ? delState : blockState.message ? blockState : resetState
   useEffect(() => {
     if (resetState.ok || blockState.ok) setSure(null)
   }, [resetState, blockState])
+  const hasNews = Boolean(shown.message || resetState.secret) && closed !== shown
+  const open = sure !== null || hasNews
+  const close = () => {
+    setSure(null)
+    setClosed(shown)
+  }
+
   return (
-    <div className="w-full space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {sure === 'reset' ? (
-          <form action={reset} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
-            <span className="text-xs text-zinc-300">
-              <strong className="text-white">¿Seguro?</strong> La contraseña actual de {name} deja de andar.
-            </span>
-            <SubmitButton variant="ghost">
-              <KeyRound className="h-4 w-4" aria-hidden="true" /> Sí, generar nueva
-            </SubmitButton>
-            <button type="button" onClick={() => setSure(null)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
-              Cancelar
-            </button>
-          </form>
-        ) : (
-          <button type="button" onClick={() => setSure('reset')} className={GHOST}>
-            <KeyRound className="h-4 w-4" aria-hidden="true" /> Nueva contraseña
-          </button>
-        )}
-        {!active ? (
-          <form action={block}>
-            <SubmitButton variant="ghost">
-              <Unlock className="h-4 w-4" aria-hidden="true" /> Desbloquear
-            </SubmitButton>
-          </form>
-        ) : sure === 'block' ? (
-          <form action={block} className="flex flex-wrap items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-2">
-            <span className="text-xs text-zinc-300">
-              <strong className="text-white">¿Seguro?</strong> {name} no va a poder entrar hasta que lo desbloquees.
-            </span>
-            <SubmitButton variant="ghost">
-              <Lock className="h-4 w-4" aria-hidden="true" /> Sí, bloquear
-            </SubmitButton>
-            <button type="button" onClick={() => setSure(null)} className="min-h-[44px] px-3 text-sm text-zinc-400 hover:text-white">
-              Cancelar
-            </button>
-          </form>
-        ) : (
-          <button type="button" onClick={() => setSure('block')} className={GHOST}>
-            <Lock className="h-4 w-4" aria-hidden="true" /> Bloquear
-          </button>
-        )}
-        <span className="flex min-h-[44px] items-center">
-          <InfoTip label={active ? 'Bloquear' : 'Desbloquear'}>
-            <p>
-              <strong>Bloquear</strong> le corta a esta persona el acceso al panel del gimnasio. Si además es socio, puede seguir usando la app
-              como socio.
-            </p>
-            <p>Conserva su historial (clases, rutinas, alumnos, cobros) y se deshace con «Desbloquear». «Eliminar», en cambio, la saca del equipo.</p>
-          </InfoTip>
-        </span>
-        <details className="group">
-          <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-2 rounded-xl border border-red-500/30 px-4 text-sm font-semibold text-red-300 hover:bg-red-500/10">
-            <Trash2 className="h-4 w-4" aria-hidden="true" /> Eliminar
-          </summary>
-          <form action={del} className="mt-2 flex flex-wrap items-start gap-2">
-            <label className="sr-only" htmlFor={`confirm-${name}`}>Escribí ELIMINAR</label>
-            <input id={`confirm-${name}`} name="confirm" placeholder="Escribí ELIMINAR" autoComplete="off" className={`${inputClass} w-44`} />
-            <SubmitButton variant="ghost">Confirmar</SubmitButton>
-            {delState.fieldErrors?.confirm && <span className="w-full text-xs text-red-300">{delState.fieldErrors.confirm}</span>}
-          </form>
-        </details>
-      </div>
-      <Notice state={shown} />
-      <SecretBox secret={resetState.secret} />
+    <div className="relative flex items-center" onKeyDown={(e) => e.key === 'Escape' && close()}>
+      <button type="button" onClick={() => setSure('reset')} className={ICON_BTN} title="Nueva contraseña" aria-label={`Nueva contraseña para ${name}`}>
+        <KeyRound className="h-4 w-4" aria-hidden="true" />
+      </button>
+      {active ? (
+        <button type="button" onClick={() => setSure('block')} className={ICON_BTN} title="Bloquear acceso" aria-label={`Bloquear a ${name}`}>
+          <Lock className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
+        <form action={block}>
+          <PendingButton iconOnly className={`${ICON_BTN} text-emerald-300`} title="Desbloquear" ariaLabel={`Desbloquear a ${name}`}>
+            <Unlock className="h-4 w-4" aria-hidden="true" />
+          </PendingButton>
+        </form>
+      )}
+      <button
+        type="button"
+        onClick={() => setSure('delete')}
+        className={`${ICON_BTN} hover:bg-red-500/10 hover:text-red-300`}
+        title="Eliminar del equipo"
+        aria-label={`Eliminar a ${name} del equipo`}
+      >
+        <Trash2 className="h-4 w-4" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div
+          role="dialog"
+          aria-label={`Acciones de ${name}`}
+          className="absolute right-0 top-full z-30 mt-1.5 w-72 space-y-3 rounded-xl border border-zinc-800 bg-[#161616] p-3 text-xs text-zinc-300 shadow-2xl shadow-black/60"
+        >
+          {sure === 'reset' && (
+            <form action={reset} className="space-y-3">
+              <p>
+                <strong className="text-white">¿Generar nueva contraseña?</strong> La actual de {name} deja de andar.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={close} className={`${PANEL_BTN} text-zinc-400 hover:text-white`}>Cancelar</button>
+                <PanelSubmit>Generar</PanelSubmit>
+              </div>
+            </form>
+          )}
+          {sure === 'block' && (
+            <form action={block} className="space-y-3">
+              <p>
+                <strong className="text-white">¿Bloquear a {name}?</strong> No va a poder entrar al panel hasta que lo desbloquees. Conserva su historial.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={close} className={`${PANEL_BTN} text-zinc-400 hover:text-white`}>Cancelar</button>
+                <PanelSubmit danger>Bloquear</PanelSubmit>
+              </div>
+            </form>
+          )}
+          {sure === 'delete' && (
+            <form action={del} className="space-y-3">
+              <p>
+                <strong className="text-white">¿Sacar a {name} del equipo?</strong> Escribí ELIMINAR para confirmar.
+              </p>
+              <label className="sr-only" htmlFor={`confirm-${name}`}>Escribí ELIMINAR</label>
+              <input
+                id={`confirm-${name}`}
+                name="confirm"
+                placeholder="ELIMINAR"
+                autoComplete="off"
+                autoFocus
+                className="h-8 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 text-xs text-white placeholder:text-zinc-600 focus-visible:border-red-400 focus-visible:outline-none"
+              />
+              {delState.fieldErrors?.confirm && <p className="text-red-300">{delState.fieldErrors.confirm}</p>}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={close} className={`${PANEL_BTN} text-zinc-400 hover:text-white`}>Cancelar</button>
+                <PanelSubmit danger>Eliminar</PanelSubmit>
+              </div>
+            </form>
+          )}
+          {sure === null && hasNews && (
+            <>
+              <Notice state={shown} />
+              <SecretBox secret={resetState.secret} />
+              <div className="flex justify-end">
+                <button type="button" onClick={close} className={`${PANEL_BTN} text-zinc-400 hover:text-white`}>Cerrar</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }

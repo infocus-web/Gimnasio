@@ -1,26 +1,36 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Copy, Link2, Phone, IdCard, Mail } from 'lucide-react'
+import { useFormStatus } from 'react-dom'
+import { Check, X, Copy, Link2, Phone, IdCard, Mail, Loader2 } from 'lucide-react'
 import type { ActionState } from './errors'
-import { inputClass, Notice, SubmitButton, useActionForm } from './ui'
+import { Notice, useActionForm } from './ui'
 import { SecretBox } from './TeamForms'
 
 export function ShareLink({ url }: { url: string }) {
   const [copied, setCopied] = useState(false)
   const wa = `https://wa.me/?text=${encodeURIComponent(`Hola! Para sumarte al sistema del gimnasio completá tus datos acá: ${url}`)}`
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-800 bg-black p-2 pl-3">
-        <Link2 className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true" />
+    <div className="flex items-center gap-1.5">
+      <div className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-black/60 px-3">
+        <Link2 className="h-3.5 w-3.5 shrink-0 text-zinc-500" aria-hidden="true" />
         <code className="min-w-0 flex-1 truncate text-xs text-zinc-300">{url}</code>
-        <button type="button" onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true) }}
-          className="inline-flex min-h-[36px] items-center gap-1 rounded-lg border border-zinc-700 px-2.5 text-xs text-zinc-200 hover:text-white">
-          <Copy className="h-3.5 w-3.5" aria-hidden="true" /> {copied ? 'Copiado' : 'Copiar'}
-        </button>
       </div>
-      <a href={wa} target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-emerald-500/30 px-3 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/10">
-        Compartir por WhatsApp
+      <button
+        type="button"
+        onClick={() => { void navigator.clipboard?.writeText(url); setCopied(true) }}
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-700 px-3 text-xs font-semibold text-zinc-200 hover:border-zinc-500 hover:text-white"
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
+        {copied ? 'Copiado' : 'Copiar'}
+      </button>
+      <a
+        href={wa}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex h-9 shrink-0 items-center rounded-lg border border-emerald-500/30 px-3 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/10"
+      >
+        WhatsApp
       </a>
     </div>
   )
@@ -55,7 +65,7 @@ export function RequestCard({
   const [rState, rAction] = useActionForm(reject, {})
   if (aState.ok || rState.ok) {
     return (
-      <li className="space-y-2 py-4">
+      <li className="space-y-2 py-3">
         <p className="font-semibold text-white">{r.first_name} {r.last_name}</p>
         <Notice state={aState.ok ? aState : rState} />
         <SecretBox secret={aState.secret} />
@@ -63,10 +73,10 @@ export function RequestCard({
     )
   }
   return (
-    <li className="space-y-3 py-4">
+    <li className="space-y-2 py-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-white">{r.first_name} {r.last_name}</p>
+          <p className="text-sm font-semibold text-white">{r.first_name} {r.last_name}</p>
           <p className="text-xs text-zinc-500">Se anotó {when} como {r.requested_role === 'trainer' ? 'profesor/a' : 'recepción'}</p>
         </div>
       </div>
@@ -78,26 +88,36 @@ export function RequestCard({
       {r.message && <p className="rounded-lg bg-zinc-900 p-2 text-xs italic text-zinc-400">“{r.message}”</p>}
       <form action={aAction} className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor={`role-${r.id}`}>Rol</label>
-        <select id={`role-${r.id}`} name="role" defaultValue={r.requested_role} className={`${inputClass} w-auto`}>
+        <select id={`role-${r.id}`} name="role" defaultValue={r.requested_role} className="h-9 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-200 focus-visible:border-[#edcc36] focus-visible:outline-none">
           <option value="trainer">Profesor</option>
           <option value="staff">Recepción</option>
           {allowAdmin && <option value="admin">Administrador</option>}
         </select>
         <label className="sr-only" htmlFor={`method-${r.id}`}>Cómo recibe el acceso</label>
-        <select id={`method-${r.id}`} name="method" defaultValue="password" className={`${inputClass} w-auto`}>
+        <select id={`method-${r.id}`} name="method" defaultValue="password" className="h-9 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-200 focus-visible:border-[#edcc36] focus-visible:outline-none">
           <option value="password">Generar contraseña temporal (recomendado)</option>
           <option value="email">Mandarle un email (puede caer en spam)</option>
         </select>
-        <SubmitButton>
-          <Check className="h-4 w-4" aria-hidden="true" /> Aprobar
-        </SubmitButton>
-      </form>
-      <form action={rAction}>
-        <button type="submit" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-red-300">
+        <ApproveButton />
+        <button type="submit" formAction={rAction} formNoValidate className="inline-flex h-9 items-center gap-1 px-2 text-xs text-zinc-500 hover:text-red-300">
           <X className="h-3.5 w-3.5" aria-hidden="true" /> Rechazar
         </button>
       </form>
       <Notice state={aState.message ? aState : rState} />
     </li>
+  )
+}
+
+function ApproveButton() {
+  const { pending } = useFormStatus()
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#edcc36] px-3 text-xs font-bold text-black disabled:opacity-60"
+    >
+      {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : <Check className="h-3.5 w-3.5" aria-hidden="true" />}
+      Aprobar
+    </button>
   )
 }

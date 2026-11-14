@@ -6,8 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "graphify hook-guard search",
-            "timeout": 10
+            "command": "C:/Users/HunterPC/AppData/Local/Programs/Python/Python310/Scripts/graphify.EXE hook-guard search"
           }
         ]
       },
@@ -16,8 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "graphify hook-guard read",
-            "timeout": 10
+            "command": "C:/Users/HunterPC/AppData/Local/Programs/Python/Python310/Scripts/graphify.EXE hook-guard read"
           }
         ]
       }
