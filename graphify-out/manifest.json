@@ -1062,10 +1062,10 @@
     "semantic_hash": "54a4d9a1cd704d6aaea24277a167e45a"
   },
   "platform/src/features/admin/context.ts": {
-    "mtime": 1794616090.3215158,
-    "seen": 1794664507.5106487,
-    "ast_hash": "f79415ccf48da043cc5bc35b2709737c",
-    "semantic_hash": "f79415ccf48da043cc5bc35b2709737c"
+    "mtime": 1794872304.4438105,
+    "seen": 1794872576.8303895,
+    "ast_hash": "a108132d25186450ad1a640ed8c5ade0",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/equipment.ts": {
     "mtime": 1792594930.6239333,
@@ -2298,10 +2298,10 @@
     "semantic_hash": "2d4aecebc23189a43c83f807c76f084c"
   },
   "platform/src/features/admin/sections.ts": {
-    "mtime": 1794616099.9253132,
-    "seen": 1794664507.5111754,
-    "ast_hash": "d9a492d389ccb2975a71c67dca4b5227",
-    "semantic_hash": "d9a492d389ccb2975a71c67dca4b5227"
+    "mtime": 1794872304.4532564,
+    "seen": 1794872576.8303895,
+    "ast_hash": "be68e1e2205fbefe9cb8be3803e02995",
+    "semantic_hash": ""
   },
   "platform/src/features/buffet/AdminForms.tsx": {
     "mtime": 1794616414.7080169,
@@ -3651,6 +3651,72 @@
     "mtime": 1794870828.8055754,
     "seen": 1794871139.883242,
     "ast_hash": "b1b6cb62a1d0fbdbed93803e21dc246b",
+    "semantic_hash": ""
+  },
+  "platform/src/app/[org]/admin/camaras/page.tsx": {
+    "mtime": 1794872304.4228337,
+    "seen": 1794872576.8303895,
+    "ast_hash": "9c0d0d46c97c732d92ab853b284ad044",
+    "semantic_hash": ""
+  },
+  "platform/src/app/api/cameras/agent/route.ts": {
+    "mtime": 1794872242.891646,
+    "seen": 1794872576.8303895,
+    "ast_hash": "d4198b4aa89b4ff1f10bd36a49f445d9",
+    "semantic_hash": ""
+  },
+  "platform/src/features/cameras/CameraKeyPanel.tsx": {
+    "mtime": 1794872279.7795396,
+    "seen": 1794872576.8303895,
+    "ast_hash": "4a5f83bba25fb0c9f767fb8d7f808268",
+    "semantic_hash": ""
+  },
+  "platform/src/features/cameras/CameraPlayer.tsx": {
+    "mtime": 1794872279.7669277,
+    "seen": 1794872576.8303895,
+    "ast_hash": "f42e5dbbd8762dc55dd8fdb9b0dbdecb",
+    "semantic_hash": ""
+  },
+  "platform/src/features/cameras/CamerasView.tsx": {
+    "mtime": 1794872279.774028,
+    "seen": 1794872576.8303895,
+    "ast_hash": "d0c0f28c86b1cf61235284e1743c86e5",
+    "semantic_hash": ""
+  },
+  "platform/src/features/cameras/actions.ts": {
+    "mtime": 1794872242.8997023,
+    "seen": 1794872576.8303895,
+    "ast_hash": "aaa1e97f93f2e3dbfa8fe0c0758815e5",
+    "semantic_hash": ""
+  },
+  "platform/src/features/cameras/video-rtc.js": {
+    "mtime": 1794872253.3202894,
+    "seen": 1794872576.8303895,
+    "ast_hash": "e761bb7130b9b753466176b9201e92e8",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0061_cameras.sql": {
+    "mtime": 1794872328.823929,
+    "seen": 1794872576.8313816,
+    "ast_hash": "d22c4352862624ced08b43373ca6d05f",
+    "semantic_hash": ""
+  },
+  "tools/camaras/camaras.py": {
+    "mtime": 1794872327.9023857,
+    "seen": 1794872576.8313816,
+    "ast_hash": "b0991f14b0325b1dd54d7073cece5b05",
+    "semantic_hash": ""
+  },
+  "tools/camaras/LEEME.md": {
+    "mtime": 1794872328.2206552,
+    "seen": 1794872576.8313816,
+    "ast_hash": "2e97af5ac5218d6c8a56158488ce0415",
+    "semantic_hash": ""
+  },
+  "tools/camaras/camaras-exe.yml": {
+    "mtime": 1794872340.6893864,
+    "seen": 1794872576.8313816,
+    "ast_hash": "207140f69c9649a329a65b1c6ff413fa",
     "semantic_hash": ""
   }
 }

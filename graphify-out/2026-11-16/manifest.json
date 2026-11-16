@@ -300,10 +300,10 @@
     "semantic_hash": "537bf2728069718de97bdcb9c9a5379f"
   },
   "platform/src/app/[org]/admin/pagos/planes/page.tsx": {
-    "mtime": 1793836317.0241709,
-    "seen": 1793838985.639558,
-    "ast_hash": "2fc410336e7647188ebb377ac6d1ba38",
-    "semantic_hash": "2fc410336e7647188ebb377ac6d1ba38"
+    "mtime": 1794870649.1205328,
+    "seen": 1794871139.883242,
+    "ast_hash": "2d58dab752d00a7945f942be5239d345",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/pagos/productos/page.tsx": {
     "mtime": 1792623733.7086375,
@@ -354,9 +354,9 @@
     "semantic_hash": "8adaab87a36d9b348679b05ff5fc2202"
   },
   "platform/src/app/[org]/admin/socios/[memberId]/page.tsx": {
-    "mtime": 1794666968.5812535,
-    "seen": 1794667531.7279122,
-    "ast_hash": "734ab584c5960d6e5fc74f1e2800c36d",
+    "mtime": 1794870776.20524,
+    "seen": 1794871139.883242,
+    "ast_hash": "e412d42aca2cc2fd3f0c369e5e913f5d",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/socios/nuevo/page.tsx": {
@@ -432,9 +432,9 @@
     "semantic_hash": "ebc1e9e3cc327d5f5e9778a779eecd9d"
   },
   "platform/src/app/[org]/app/pagar/page.tsx": {
-    "mtime": 1794870070.2114513,
-    "seen": 1794870480.584404,
-    "ast_hash": "3690d5151adb3a96873a71f47ee20dbf",
+    "mtime": 1794870758.6312025,
+    "seen": 1794871139.883242,
+    "ast_hash": "4801f033daa19b7ac214a8f580546c1d",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/app/page.tsx": {
@@ -540,9 +540,9 @@
     "semantic_hash": "95f8538cecedf032df7961c27ee0423a"
   },
   "platform/src/app/[org]/page.tsx": {
-    "mtime": 1794870051.5266466,
-    "seen": 1794870480.584404,
-    "ast_hash": "a90612db07156e5c41812a81feb28f9e",
+    "mtime": 1794870758.6168938,
+    "seen": 1794871139.883242,
+    "ast_hash": "43f8a642e0740d6c54997b990239a389",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/pase/[code]/page.tsx": {
@@ -960,10 +960,10 @@
     "semantic_hash": "4291b07f969c10245a049efae56b0398"
   },
   "platform/src/features/admin/PaymentForms.tsx": {
-    "mtime": 1794595026.4953592,
-    "seen": 1794664507.5096564,
-    "ast_hash": "6d076e231369503f80c8bca0962bacf2",
-    "semantic_hash": "6d076e231369503f80c8bca0962bacf2"
+    "mtime": 1794870771.1282942,
+    "seen": 1794871139.883242,
+    "ast_hash": "5d59cda4ed07efebb0c07bd23511a77a",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/PlanForm.tsx": {
     "mtime": 1793834984.838141,
@@ -972,10 +972,10 @@
     "semantic_hash": "5d02f35a3d0fc414ab0c68631357665b"
   },
   "platform/src/features/admin/RatesForm.tsx": {
-    "mtime": 1793836311.400782,
-    "seen": 1793838985.8428106,
-    "ast_hash": "215bc13a2acbe5a2098e4b8b2f3e3592",
-    "semantic_hash": "215bc13a2acbe5a2098e4b8b2f3e3592"
+    "mtime": 1794870758.6392634,
+    "seen": 1794871139.883242,
+    "ast_hash": "7d9b4e81e6ea0a098c0c706d57d3d8c8",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/ReportCharts.tsx": {
     "mtime": 1794614901.1730373,
@@ -1428,9 +1428,9 @@
     "semantic_hash": "c42dce033ba751c4886014eec99d1af5"
   },
   "platform/src/features/payments/actions.ts": {
-    "mtime": 1794870202.1681128,
-    "seen": 1794870480.5854213,
-    "ast_hash": "b09f0c0c800b678db73c6273cbd68bbd",
+    "mtime": 1794870758.6528695,
+    "seen": 1794871139.883242,
+    "ast_hash": "63fcc734fd9defe8048086400dd88edf",
     "semantic_hash": ""
   },
   "platform/src/features/payments/day-pass.ts": {
@@ -1494,9 +1494,9 @@
     "semantic_hash": ""
   },
   "platform/src/features/public/SignupForm.tsx": {
-    "mtime": 1794870066.2408755,
-    "seen": 1794870480.5854213,
-    "ast_hash": "11f505d80ffa0253126b2ed76250e3c3",
+    "mtime": 1794870758.6230834,
+    "seen": 1794871139.883242,
+    "ast_hash": "3d6b1f57b39eff575ff14cddf04a2b54",
     "semantic_hash": ""
   },
   "platform/src/features/public/TodayLive.tsx": {
@@ -3618,9 +3618,9 @@
     "semantic_hash": ""
   },
   "platform/src/features/payments/CashDiscountForm.tsx": {
-    "mtime": 1794870202.128968,
-    "seen": 1794870480.5854213,
-    "ast_hash": "38ae4379c79d1bbd8debbfb3dc19354f",
+    "mtime": 1794870758.644666,
+    "seen": 1794871139.883242,
+    "ast_hash": "41a99efcac25f5983aed7f6967eb8f5f",
     "semantic_hash": ""
   },
   "platform/src/features/payments/cash-discount-server.ts": {
@@ -3630,9 +3630,9 @@
     "semantic_hash": ""
   },
   "platform/src/features/payments/cash-discount.ts": {
-    "mtime": 1794870040.3921764,
-    "seen": 1794870480.5854213,
-    "ast_hash": "cfefa871dce7afb8801000da8658b527",
+    "mtime": 1794870758.5992558,
+    "seen": 1794871139.883242,
+    "ast_hash": "18340ddf632a2565b1af4731d969d91d",
     "semantic_hash": ""
   },
   "supabase/migrations/0058_mp_surcharge.sql": {
@@ -3645,6 +3645,12 @@
     "mtime": 1794870325.61878,
     "seen": 1794870480.5854213,
     "ast_hash": "57ee55cf9f4035f79ee7d225cd5ed565",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0060_cash_discount_list_price.sql": {
+    "mtime": 1794870828.8055754,
+    "seen": 1794871139.883242,
+    "ast_hash": "b1b6cb62a1d0fbdbed93803e21dc246b",
     "semantic_hash": ""
   }
 }
