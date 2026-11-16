@@ -52,6 +52,7 @@ export function buildAdminSections(ctx: SectionCtx, base: string, opts: { pendin
         ...tab(ctx.staff.role !== 'buffet', '', 'Inicio'),
         ...tab(can('checkins.manage'), '/recepcion', 'Recepción'),
         ...tab(can('checkins.manage'), '/pases', 'Pases e invitados'),
+        ...tab(can('cameras.view') || can('org.manage'), '/camaras', 'Cámaras'),
       ],
     },
     {

@@ -1,0 +1,10 @@
+config.json
+*.log
+go2rtc.exe
+go2rtc.zip
+go2rtc_tmp/
+cloudflared.exe
+build/
+dist/
+prueba/
+*.spec
