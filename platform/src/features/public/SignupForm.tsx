@@ -4,7 +4,7 @@ import { startTransition, useActionState, useState } from 'react'
 import { Check, Gift, Loader2 } from 'lucide-react'
 import type { SignupState } from './signup-actions'
 import type { FriendPromo, ReferralInfo } from './referral-types'
-import { cashDiscountPct, onlinePrice, type CashDiscount } from '@/features/payments/cash-discount'
+import { cashDiscountPct, cashPrice, onlinePrice, type CashDiscount } from '@/features/payments/cash-discount'
 
 export interface SignupPlan {
   id: string
@@ -296,7 +296,7 @@ export function SignupForm({
                 </span>
                 {cashPct > 0 && (
                   <span className="mt-1 text-sm font-semibold text-brand">
-                    {cashPct}% off abonando en efectivo en recepción: {money(promoCash(p.price_cents), p.currency)}
+                    {cashPct}% off abonando en efectivo en recepción: {money(cashPrice(promoCash(p.price_cents), cashDiscount), p.currency)}
                   </span>
                 )}
                 <span

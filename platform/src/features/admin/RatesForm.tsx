@@ -1,9 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { Plus, Trash2, Undo2 } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Notice, SubmitButton, useActionForm, inputClass } from './ui'
+import { cashDiscountPct, cashPrice, type CashDiscount } from '@/features/payments/cash-discount'
+
+/** Descuento en efectivo: el precio que se carga es la cuota; abajo se muestra cuánto queda en efectivo. */
+const OnlineCtx = createContext<CashDiscount | null>(null)
+const money = (cents: number) =>
+  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(cents / 100)
 
 export interface RateOption {
   id: string
@@ -54,6 +60,10 @@ function PeriodSelect({ name, value }: { name: string; value: Period }) {
 }
 
 function PriceInput({ name, cents, error }: { name: string; cents?: number; error?: string }) {
+  const cd = useContext(OnlineCtx)
+  const pct = cashDiscountPct(cd)
+  const [val, setVal] = useState(cents && cents > 0 ? String(cents / 100) : '')
+  const typed = Math.round(Number(val.replace(/\./g, '').replace(',', '.')) * 100)
   return (
     <div className="w-36 shrink-0">
       <div className="relative">
@@ -62,12 +72,18 @@ function PriceInput({ name, cents, error }: { name: string; cents?: number; erro
           name={name}
           aria-label="Precio por mes"
           inputMode="decimal"
-          defaultValue={cents && cents > 0 ? String(cents / 100) : ''}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
           placeholder="Sin tarifa"
           aria-invalid={!!error}
           className={`${inputClass} pl-7 text-right tabular-nums`}
         />
       </div>
+      {pct > 0 && typed > 0 && (
+        <p className="mt-1 text-right text-[11px] text-zinc-400">
+          Efectivo: <span className="font-semibold tabular-nums text-[#edcc36]">{money(cashPrice(typed, cd))}</span>
+        </p>
+      )}
       {error && <p className="mt-1 text-xs text-red-300">{error}</p>}
     </div>
   )
@@ -94,10 +110,13 @@ export function RatesForm({
   action,
   groups,
   others,
+  cashDiscount = null,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   groups: RateGroup[]
   others: RateOther[]
+  /** Si hay descuento en efectivo, cada precio muestra abajo cuánto sale pagando online */
+  cashDiscount?: CashDiscount | null
 }) {
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
@@ -117,8 +136,17 @@ export function RatesForm({
   const drop = (typeId: string, key: number) =>
     setAdded((a) => ({ ...a, [typeId]: (a[typeId] ?? []).filter((k) => k !== key) }))
 
+  const pct = cashDiscountPct(cashDiscount)
   return (
+    <OnlineCtx.Provider value={cashDiscount}>
     <form action={formAction} className="space-y-5" noValidate>
+      {pct > 0 && (
+        <p className="rounded-xl border border-[#edcc36]/30 bg-[#edcc36]/5 p-3 text-sm text-zinc-200">
+          El precio que cargás acá es la <b>cuota</b> (lo que se paga online con Mercado Pago). Abonando en efectivo tiene
+          {' '}{pct}% off: abajo de cada precio ves cuánto queda, y al registrar un cobro en efectivo el monto se pone solo.
+          Se cambia en Pagos online → Descuento en efectivo.
+        </p>
+      )}
       {groups.map((g) => (
         <section key={g.typeId} className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
           <header className="flex items-center gap-3 border-b border-zinc-900 px-4 py-3">
@@ -275,5 +303,6 @@ export function RatesForm({
         <SubmitButton>Guardar tarifas</SubmitButton>
       </div>
     </form>
+    </OnlineCtx.Provider>
   )
 }

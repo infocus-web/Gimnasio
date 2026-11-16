@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
 import { getCashDiscount } from '@/features/payments/cash-discount-server'
-import { cashDiscountPct, onlinePrice } from '@/features/payments/cash-discount'
+import { cashDiscountPct, cashPrice, onlinePrice } from '@/features/payments/cash-discount'
 import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
@@ -376,7 +376,7 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
               <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan, i) => {
                   const price = formatPrice({ ...plan, price_cents: onlinePrice(plan.price_cents, cashDiscount) })
-                  const cash = cashPct ? formatPrice(plan).amount : null
+                  const cash = cashPct ? formatPrice({ ...plan, price_cents: cashPrice(plan.price_cents, cashDiscount) }).amount : null
                   const featured = plans.length >= 3 && i === 0
                   return (
                     <article

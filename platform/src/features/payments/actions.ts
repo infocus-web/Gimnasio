@@ -366,8 +366,8 @@ export async function saveCashDiscount(slug: string, _prev: ActionState, form: F
   return {
     ok: true,
     message: enabled
-      ? `Listo: pagando online se cobra el precio del plan + ${pct}% y se muestra "${pct}% off abonando en efectivo".`
-      : 'Guardado. Online se cobra el mismo precio que en efectivo.',
+      ? `Listo: los cobros en efectivo llevan ${pct}% de descuento y se muestra "${pct}% off abonando en efectivo".`
+      : 'Guardado. El efectivo se cobra al mismo precio que la cuota.',
   }
 }
 

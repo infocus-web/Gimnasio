@@ -1,9 +1,9 @@
 /**
- * Precio online vs. precio en efectivo.
- * El precio cargado en cada plan es el de EFECTIVO (lo que cobra recepción).
- * Pagando online (Mercado Pago) se cobra el precio de lista = efectivo + el % configurado
- * (ej. $60.000 en efectivo → $66.000 online). Al socio se le comunica como
- * "10% de descuento abonando en efectivo". La misma cuenta la hace la base (private.mp_surcharge).
+ * Descuento por pagar en efectivo.
+ * El precio cargado en cada plan ES la cuota (ej. $66.000) y es lo que se cobra online (Mercado Pago).
+ * Abonando en efectivo en recepción se aplica el descuento al registrar el cobro en el panel:
+ * efectivo = cuota / (1 + %), redondeado a los $100 (ej. 10%: $66.000 → $60.000).
+ * Al socio se le muestra como "10% off abonando en efectivo".
  */
 export interface CashDiscount {
   mode: 'none' | 'fixed' | 'percent' | 'cash_discount'
@@ -13,13 +13,11 @@ export interface CashDiscount {
 
 export const NO_CASH_DISCOUNT: CashDiscount = { mode: 'none', fixed_cents: 0, pct: 0 }
 
-/** Lo que se suma al pagar online (redondeado hacia arriba a los $100, igual que en la base). */
+/** Recargo online (modos viejos 'fixed' / 'percent'; con 'cash_discount' no hay recargo). Igual que private.mp_surcharge. */
 export function onlineExtra(baseCents: number, cd: CashDiscount | null | undefined) {
   if (!cd) return 0
   if (cd.mode === 'fixed') return Number(cd.fixed_cents) || 0
-  if (cd.mode === 'percent' || cd.mode === 'cash_discount') {
-    return Math.ceil((baseCents * Number(cd.pct)) / 100 / 10000) * 10000
-  }
+  if (cd.mode === 'percent') return Math.ceil((baseCents * Number(cd.pct)) / 100 / 10000) * 10000
   return 0
 }
 
@@ -28,7 +26,14 @@ export function onlinePrice(baseCents: number, cd: CashDiscount | null | undefin
   return baseCents + onlineExtra(baseCents, cd)
 }
 
-/** % de descuento en efectivo para mostrar (solo en el modo "descuento en efectivo"). */
+/** % de descuento en efectivo (0 si no está activado). */
 export function cashDiscountPct(cd: CashDiscount | null | undefined) {
   return cd?.mode === 'cash_discount' && Number(cd.pct) > 0 ? Number(cd.pct) : 0
+}
+
+/** Precio abonando en efectivo (la cuota si no hay descuento). */
+export function cashPrice(listCents: number, cd: CashDiscount | null | undefined) {
+  const pct = cashDiscountPct(cd)
+  if (!pct || listCents <= 0) return listCents
+  return Math.round(listCents / (1 + pct / 100) / 10000) * 10000
 }

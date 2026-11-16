@@ -21,6 +21,7 @@ import { MemberForm } from '@/features/admin/MemberForm'
 import { AdjustEndForm, AssignPlanForm, InviteButton } from '@/features/admin/MemberPanels'
 import { Card } from '@/features/admin/ui'
 import { InfoTip } from '@/components/InfoTip'
+import { getCashDiscount } from '@/features/payments/cash-discount-server'
 import { EnrollForm } from '@/features/admin/AccessForms'
 import { enrollMember } from '@/features/admin/access-actions'
 
@@ -294,6 +295,7 @@ export default async function MemberDetailPage({ params, searchParams }: PagePro
                   action={recordPayment.bind(null, slug, memberId)}
                   plans={(plans.data ?? []).map((p) => ({ id: p.id, label: `${p.name} · ${formatMoney(p.price_cents, p.currency)}`, priceCents: p.price_cents }))}
                   currentPlanId={m.plan_id}
+                  cashDiscount={await getCashDiscount(slug)}
                   extra={
                     mpConfigured() ? (
                       <div className="mt-4 border-t border-zinc-900 pt-4">

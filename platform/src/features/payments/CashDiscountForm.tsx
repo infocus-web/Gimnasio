@@ -29,8 +29,8 @@ export function CashDiscountForm({
         </Field>
       </div>
       <p className="text-xs text-zinc-400">
-        El precio que cargás en cada plan es el de <b>efectivo</b>. Pagando con Mercado Pago (app, link de pago, inscripción web o
-        débito automático) se cobra ese precio más el %, redondeado a los $100. Ej.: plan de $60.000 con 10% → $66.000 online.
+        El precio de cada plan es la <b>cuota</b> y es lo que se cobra con Mercado Pago. Al registrar un cobro <b>en efectivo</b>
+        en el panel, el monto se pone solo con el descuento (redondeado a los $100). Ej.: cuota de $66.000 con 10% → $60.000 en efectivo.
         En la web y en la app se muestra como &ldquo;10% off abonando en efectivo&rdquo;.
       </p>
       <Notice state={state} />

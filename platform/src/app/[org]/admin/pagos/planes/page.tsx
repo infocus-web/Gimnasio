@@ -3,6 +3,7 @@ import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { saveRates } from '@/features/admin/billing-actions'
 import { RatesForm, type RateGroup, type RateOther } from '@/features/admin/RatesForm'
+import { getCashDiscount } from '@/features/payments/cash-discount-server'
 import { periodOf } from '@/features/admin/rates'
 import { Card } from '@/features/admin/ui'
 
@@ -71,7 +72,7 @@ export default async function PlansPage({ params }: PageProps<'/[org]/admin/pago
     <div className="space-y-4">
       {canEdit && (
         <Card title="Tarifas">
-          <RatesForm action={saveRates.bind(null, slug)} groups={groups} others={others} />
+          <RatesForm action={saveRates.bind(null, slug)} groups={groups} others={others} cashDiscount={await getCashDiscount(slug)} />
         </Card>
       )}
 

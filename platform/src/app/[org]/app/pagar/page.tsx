@@ -13,7 +13,7 @@ import { syncPreapproval } from '@/features/payments/subscriptions'
 import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { formatMoney } from '@/features/admin/format'
 import { getCashDiscount } from '@/features/payments/cash-discount-server'
-import { cashDiscountPct, onlinePrice } from '@/features/payments/cash-discount'
+import { cashDiscountPct, cashPrice, onlinePrice } from '@/features/payments/cash-discount'
 
 export const metadata: Metadata = { title: 'Pagar mi plan' }
 export const dynamic = 'force-dynamic'
@@ -164,7 +164,7 @@ export default async function PagarPage({
                 name: p.name,
                 description: p.description,
                 priceCents: onlinePrice(Number(p.price_cents), cashDiscount),
-                cashCents: cashPct ? Number(p.price_cents) : undefined,
+                cashCents: cashPct ? cashPrice(Number(p.price_cents), cashDiscount) : undefined,
                 cashPct,
                 currency: p.currency,
                 current: p.plan_id === opts.current?.plan_id,
@@ -242,7 +242,7 @@ export default async function PagarPage({
                   name: p.name,
                   description: p.description,
                   priceCents: onlinePrice(Number(p.price_cents), cashDiscount),
-                cashCents: cashPct ? Number(p.price_cents) : undefined,
+                cashCents: cashPct ? cashPrice(Number(p.price_cents), cashDiscount) : undefined,
                 cashPct,
                   currency: p.currency,
                   current: p.plan_id === opts.current?.plan_id,

@@ -5,6 +5,7 @@ import { Banknote, Ban, Copy, MessageCircle } from 'lucide-react'
 import type { ActionState } from './errors'
 import { Field, inputClass, Notice, SubmitButton, useActionForm } from './ui'
 import { InfoTip } from '@/components/InfoTip'
+import { cashDiscountPct, cashPrice, type CashDiscount } from '@/features/payments/cash-discount'
 
 export const METHOD_LABELS: Record<string, string> = {
   cash: 'Efectivo',
@@ -27,19 +28,27 @@ function PaymentFormInner({
   currentPlanId,
   onDone,
   extra,
+  cashDiscount,
 }: {
   action: (prev: ActionState, form: FormData) => Promise<ActionState>
   plans: PlanOption[]
   currentPlanId: string | null
   onDone: () => void
   extra?: ReactNode
+  cashDiscount?: CashDiscount | null
 }) {
   const [copied, setCopied] = useState(false)
   const [state, formAction] = useActionForm(action, {})
   const initial = plans.find((p) => p.id === currentPlanId) ?? plans[0]
   const [planId, setPlanId] = useState(initial?.id ?? '')
   const [renew, setRenew] = useState(true)
-  const [amount, setAmount] = useState(initial ? String(initial.priceCents / 100) : '')
+  const [method, setMethod] = useState('cash')
+  const pct = cashDiscountPct(cashDiscount)
+  // Efectivo: la cuota con el descuento ya aplicado (ej. $66.000 → $60.000). Otros medios: la cuota.
+  const priceFor = (p: PlanOption | undefined, m: string) =>
+    p ? String((m === 'cash' ? cashPrice(p.priceCents, cashDiscount) : p.priceCents) / 100) : ''
+  const [amount, setAmount] = useState(priceFor(initial, 'cash'))
+  const chosen = plans.find((p) => p.id === planId)
   const err = state.fieldErrors ?? {}
 
   // Cobro registrado: el formulario se cierra para que un segundo toque no cobre dos veces
@@ -95,7 +104,7 @@ function PaymentFormInner({
               onChange={(e) => {
                 setPlanId(e.target.value)
                 const p = plans.find((x) => x.id === e.target.value)
-                if (p) setAmount(String(p.priceCents / 100))
+                if (p) setAmount(priceFor(p, method))
               }}
               className={inputClass}
             >
@@ -111,7 +120,16 @@ function PaymentFormInner({
           <input id="amount" name="amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} />
         </Field>
         <Field label="Medio de pago" name="method" error={err.method}>
-          <select id="method" name="method" defaultValue="cash" className={inputClass}>
+          <select
+            id="method"
+            name="method"
+            value={method}
+            onChange={(e) => {
+              setMethod(e.target.value)
+              if (renew && chosen) setAmount(priceFor(chosen, e.target.value))
+            }}
+            className={inputClass}
+          >
             {['cash', 'transfer', 'mercadopago', 'card_terminal', 'other'].map((m) => (
               <option key={m} value={m}>
                 {METHOD_LABELS[m]}
@@ -123,6 +141,13 @@ function PaymentFormInner({
           <input id="note" name="note" placeholder="Ej. matrícula, descuento…" className={inputClass} />
         </Field>
       </div>
+      {renew && pct > 0 && chosen && (
+        <p className="text-xs text-[#edcc36]">
+          {method === 'cash'
+            ? `Efectivo: ${pct}% off aplicado (cuota $${(chosen.priceCents / 100).toLocaleString('es-AR')} → $${(cashPrice(chosen.priceCents, cashDiscount) / 100).toLocaleString('es-AR')}).`
+            : `Cuota completa. Si paga en efectivo, elegí "Efectivo" y se aplica el ${pct}% off.`}
+        </p>
+      )}
       {renew && (
         <p className="text-xs text-zinc-500">
           Si paga el mismo plan, se extiende desde el vencimiento actual (no pierde días). Si cambia de plan, arranca hoy.
@@ -180,6 +205,8 @@ export function PaymentForm(props: {
   currentPlanId: string | null
   /** Se muestra debajo del formulario y se oculta al registrar el cobro */
   extra?: ReactNode
+  /** Descuento en efectivo: el monto se ajusta solo al elegir "Efectivo" */
+  cashDiscount?: CashDiscount | null
 }) {
   const [round, setRound] = useState(0)
   return <PaymentFormInner key={round} {...props} onDone={() => setRound((r) => r + 1)} />
