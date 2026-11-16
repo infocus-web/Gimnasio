@@ -7,8 +7,9 @@ import { fmtDate, fmtDateTime, formatMoney } from '@/features/admin/format'
 import { mpConfigured, mpWebhookConfigured } from '@/features/payments/mercadopago'
 import { MpNotice } from '@/features/payments/MpNotice'
 import { Card } from '@/features/admin/ui'
-import { saveDayPassSettings } from '@/features/payments/actions'
+import { saveCashDiscount, saveDayPassSettings } from '@/features/payments/actions'
 import { DayPassSettingsForm } from '@/features/payments/DayPassSettingsForm'
+import { CashDiscountForm } from '@/features/payments/CashDiscountForm'
 import { publicSiteUrl } from '@/features/payments/mercadopago'
 
 export const metadata: Metadata = { title: 'Pagos online' }
@@ -90,6 +91,18 @@ export default async function OnlinePage({ params }: { params: Promise<{ org: st
             {configured && !webhook && <p className="mt-2 text-amber-200">Falta la clave secreta del webhook: sin ella los pagos no se acreditan solos.</p>}
           </section>
         </>
+      )}
+
+      {canEdit && (
+        <Card title="Descuento en efectivo">
+          <CashDiscountForm
+            action={saveCashDiscount.bind(null, slug)}
+            initial={{
+              enabled: settings?.mp_surcharge_mode === 'cash_discount',
+              pct: settings?.mp_surcharge_mode === 'cash_discount' ? String(Number(settings.mp_surcharge_pct)) : '10',
+            }}
+          />
+        </Card>
       )}
 
       {canEdit && (

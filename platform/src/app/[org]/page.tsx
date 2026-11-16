@@ -6,6 +6,8 @@ import {
   ArrowUpRight, AtSign, Download, CalendarCheck, Clock, Mail, MapPin, Menu, MessageCircle, Navigation, Phone, QrCode, Smartphone, UserPlus, Users, X,
 } from 'lucide-react'
 import { DAY_NAMES, formatPrice, getPublicGym, openStatus } from '@/features/public/profile'
+import { getCashDiscount } from '@/features/payments/cash-discount-server'
+import { cashDiscountPct, onlinePrice } from '@/features/payments/cash-discount'
 import { BRAND, WEB_MEDIA, activityImage } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { TacticalButton } from '@/components/TacticalButton'
@@ -51,7 +53,8 @@ function Heading({ id, children, className = '' }: { id?: string; children: Reac
 
 export default async function GymHome({ params }: PageProps<'/[org]'>) {
   const { org } = await params
-  const [gym, buffet] = await Promise.all([getPublicGym(org), getBuffetPublic(org)])
+  const [gym, buffet, cashDiscount] = await Promise.all([getPublicGym(org), getBuffetPublic(org), getCashDiscount(org)])
+  const cashPct = cashDiscountPct(cashDiscount)
   if (!gym) notFound()
 
   const p = gym.profile
@@ -372,7 +375,8 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
             ) : (
               <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {plans.map((plan, i) => {
-                  const price = formatPrice(plan)
+                  const price = formatPrice({ ...plan, price_cents: onlinePrice(plan.price_cents, cashDiscount) })
+                  const cash = cashPct ? formatPrice(plan).amount : null
                   const featured = plans.length >= 3 && i === 0
                   return (
                     <article
@@ -387,6 +391,11 @@ export default async function GymHome({ params }: PageProps<'/[org]'>) {
                         <span className="font-display text-5xl font-bold tabular-nums leading-none tracking-[-0.03em]">{price.amount}</span>
                         <span className={`text-sm font-semibold ${featured ? 'text-black/70' : 'text-white/55'}`}>{price.period}</span>
                       </p>
+                      {cash && (
+                        <p className={`-mt-5 mb-8 text-sm font-semibold ${featured ? 'text-black/80' : 'text-brand'}`}>
+                          {cashPct}% off abonando en efectivo: {cash}
+                        </p>
+                      )}
                       {plan.max_members > 1 && (
                         <p className={`-mt-5 mb-8 flex items-center gap-1.5 text-sm font-semibold ${featured ? 'text-black/80' : 'text-white/75'}`}>
                           <Users className="h-4 w-4" aria-hidden="true" /> Hasta {plan.max_members} personas

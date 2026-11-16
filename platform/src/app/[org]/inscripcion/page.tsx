@@ -10,6 +10,7 @@ import { BRAND } from '@/features/public/media'
 import { display, text } from '@/features/public/fonts'
 import { mpConfigured } from '@/features/payments/mercadopago'
 import { SignupForm, type SignupPlan } from '@/features/public/SignupForm'
+import { getCashDiscount } from '@/features/payments/cash-discount-server'
 import { checkSignupDuplicate, saveSignupProfile, startSignup } from '@/features/public/signup-actions'
 import { SignupProfileForm } from '@/features/public/SignupProfileForm'
 import { getSignupProfile } from '@/features/public/signup-profile'
@@ -155,6 +156,7 @@ export default async function SignupPage({ params, searchParams }: PageProps<'/[
             slug={gym.slug}
             initialReferral={referral}
             accountEmail={accountEmail}
+            cashDiscount={await getCashDiscount(gym.slug)}
             profileDone
           />
         ) : (

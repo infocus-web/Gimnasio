@@ -4,6 +4,7 @@ import { startTransition, useActionState, useState } from 'react'
 import { Check, Gift, Loader2 } from 'lucide-react'
 import type { SignupState } from './signup-actions'
 import type { FriendPromo, ReferralInfo } from './referral-types'
+import { cashDiscountPct, onlinePrice, type CashDiscount } from '@/features/payments/cash-discount'
 
 export interface SignupPlan {
   id: string
@@ -233,6 +234,7 @@ export function SignupForm({
   slug,
   initialReferral,
   accountEmail,
+  cashDiscount,
   profileDone = false,
 }: {
   action: (prev: SignupState, form: FormData) => Promise<SignupState>
@@ -242,6 +244,8 @@ export function SignupForm({
   initialReferral: ReferralInfo | null
   /** Email de la cuenta con la que entró (la inscripción queda a nombre de esa cuenta) */
   accountEmail: string
+  /** Precio online vs. efectivo (el precio del plan es el de efectivo) */
+  cashDiscount?: CashDiscount
   /** Ya completó sus datos y su foto (paso 1): acá solo elige el plan y paga */
   profileDone?: boolean
 }) {
@@ -252,7 +256,10 @@ export function SignupForm({
   const [referral, setReferral] = useState<ReferralInfo | null>(initialReferral?.valid ? initialReferral : null)
   const [promo, setPromo] = useState<FriendPromo | null>(null)
   const pct = promo === 'duo' ? (referral?.promos?.duo ?? 0) : promo === 'welcome' ? (referral?.promos?.welcome?.pct ?? 0) : 0
-  const final = (cents: number) => Math.max(Math.round((cents * (100 - pct)) / 100), 1)
+  // Mismo orden que la base: primero la promo, después el precio online (Mercado Pago)
+  const promoCash = (cents: number) => Math.max(Math.round((cents * (100 - pct)) / 100), 1)
+  const final = (cents: number) => onlinePrice(promoCash(cents), cashDiscount)
+  const cashPct = cashDiscountPct(cashDiscount)
 
   return (
     <form
@@ -283,10 +290,15 @@ export function SignupForm({
                 <span className="pr-8 font-display text-xl font-bold leading-tight text-white">{p.name}</span>
                 {p.description && <span className="mt-1 text-sm text-white/55">{p.description}</span>}
                 <span className="mt-4 flex items-baseline gap-1.5">
-                  {pct > 0 && <span className="text-base font-semibold tabular-nums text-white/40 line-through">{money(p.price_cents, p.currency)}</span>}
+                  {pct > 0 && <span className="text-base font-semibold tabular-nums text-white/40 line-through">{money(onlinePrice(p.price_cents, cashDiscount), p.currency)}</span>}
                   <span className="font-display text-3xl font-bold tabular-nums text-white">{money(final(p.price_cents), p.currency)}</span>
                   <span className="text-sm font-semibold text-white/50">{period(p)}</span>
                 </span>
+                {cashPct > 0 && (
+                  <span className="mt-1 text-sm font-semibold text-brand">
+                    {cashPct}% off abonando en efectivo en recepción: {money(promoCash(p.price_cents), p.currency)}
+                  </span>
+                )}
                 <span
                   className={`absolute right-4 top-4 grid h-6 w-6 place-items-center rounded-full border ${on ? 'border-brand bg-brand text-black' : 'border-white/30'}`}
                   aria-hidden="true"

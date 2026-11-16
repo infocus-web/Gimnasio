@@ -374,6 +374,9 @@ export type Database = {
           day_pass_enabled: boolean
           day_pass_entries: number
           day_pass_price_cents: number
+          mp_surcharge_fixed_cents: number
+          mp_surcharge_mode: string
+          mp_surcharge_pct: number
           org_id: string
           updated_at: string
         }
@@ -382,6 +385,9 @@ export type Database = {
           day_pass_enabled?: boolean
           day_pass_entries?: number
           day_pass_price_cents?: number
+          mp_surcharge_fixed_cents?: number
+          mp_surcharge_mode?: string
+          mp_surcharge_pct?: number
           org_id: string
         }
         Update: {
@@ -389,6 +395,9 @@ export type Database = {
           day_pass_enabled?: boolean
           day_pass_entries?: number
           day_pass_price_cents?: number
+          mp_surcharge_fixed_cents?: number
+          mp_surcharge_mode?: string
+          mp_surcharge_pct?: number
         }
         Relationships: []
       }

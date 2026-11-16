@@ -12,6 +12,9 @@ export interface PayPlanOption {
   priceCents: number
   currency: string
   current: boolean
+  /** Precio abonando en efectivo en recepción (si hay descuento en efectivo) */
+  cashCents?: number
+  cashPct?: number
 }
 
 /** Elegir plan y pagar (redirige a Mercado Pago). */
@@ -39,7 +42,14 @@ export function PayPlanForm({
               </span>
               {p.description && <span className="block text-xs text-zinc-400">{p.description}</span>}
             </span>
-            <span className="font-bold tabular-nums text-white">{formatMoney(p.priceCents, p.currency)}</span>
+            <span className="text-right">
+              <span className="block font-bold tabular-nums text-white">{formatMoney(p.priceCents, p.currency)}</span>
+              {p.cashCents != null && (
+                <span className="block text-[11px] font-semibold text-[#edcc36]">
+                  {p.cashPct}% off en efectivo: {formatMoney(p.cashCents, p.currency)}
+                </span>
+              )}
+            </span>
           </label>
         ))}
       </fieldset>

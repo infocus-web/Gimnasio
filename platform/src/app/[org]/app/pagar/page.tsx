@@ -12,6 +12,8 @@ import { AutoDebitForm } from '@/features/payments/AutoDebitForm'
 import { syncPreapproval } from '@/features/payments/subscriptions'
 import { ConfirmAction } from '@/features/admin/ConfirmAction'
 import { formatMoney } from '@/features/admin/format'
+import { getCashDiscount } from '@/features/payments/cash-discount-server'
+import { cashDiscountPct, onlinePrice } from '@/features/payments/cash-discount'
 
 export const metadata: Metadata = { title: 'Pagar mi plan' }
 export const dynamic = 'force-dynamic'
@@ -32,6 +34,8 @@ export default async function PagarPage({
   const { org: slug } = await params
   const sp = await searchParams
   const ctx = await getMemberContext(slug)
+  const cashDiscount = await getCashDiscount(slug)
+  const cashPct = cashDiscountPct(cashDiscount)
   if ('error' in ctx) return null // el layout ya muestra el aviso
   const tz = ctx.org.timezone
   const supabase = await createClient()
@@ -159,7 +163,9 @@ export default async function PagarPage({
                 id: p.plan_id,
                 name: p.name,
                 description: p.description,
-                priceCents: Number(p.price_cents),
+                priceCents: onlinePrice(Number(p.price_cents), cashDiscount),
+                cashCents: cashPct ? Number(p.price_cents) : undefined,
+                cashPct,
                 currency: p.currency,
                 current: p.plan_id === opts.current?.plan_id,
               }))}
@@ -235,7 +241,9 @@ export default async function PagarPage({
                   id: p.plan_id,
                   name: p.name,
                   description: p.description,
-                  priceCents: Number(p.price_cents),
+                  priceCents: onlinePrice(Number(p.price_cents), cashDiscount),
+                cashCents: cashPct ? Number(p.price_cents) : undefined,
+                cashPct,
                   currency: p.currency,
                   current: p.plan_id === opts.current?.plan_id,
                 }))}

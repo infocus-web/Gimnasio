@@ -346,6 +346,32 @@ export async function closeShift(slug: string, to: string, _prev: ActionState, f
 }
 
 // ---------------------------------------------------------------------
+// Descuento por pagar en efectivo (precio online = precio del plan + %)
+// ---------------------------------------------------------------------
+export async function saveCashDiscount(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('billing.write')) return { message: ERRORS.FORBIDDEN }
+  const enabled = form.get('enabled') === 'on'
+  const pct = Number(String(form.get('pct') ?? '').replace(',', '.').replace('%', '').trim() || 0)
+  if (enabled && (!Number.isFinite(pct) || pct <= 0 || pct > 50)) return { fieldErrors: { pct: 'Entre 1 y 50 %' } }
+  const supabase = await createClient()
+  const { error } = await supabase.from('online_sale_settings').upsert({
+    org_id: ctx.org.id,
+    mp_surcharge_mode: enabled ? 'cash_discount' : 'none',
+    mp_surcharge_pct: enabled ? Math.round(pct * 100) / 100 : 0,
+  })
+  if (error) return { message: payMessage(error) }
+  revalidatePath(`/${slug}/admin/pagos/online`)
+  revalidatePath(`/${slug}`)
+  return {
+    ok: true,
+    message: enabled
+      ? `Listo: pagando online se cobra el precio del plan + ${pct}% y se muestra "${pct}% off abonando en efectivo".`
+      : 'Guardado. Online se cobra el mismo precio que en efectivo.',
+  }
+}
+
+// ---------------------------------------------------------------------
 // Pase por día online (web pública)
 // ---------------------------------------------------------------------
 export async function saveDayPassSettings(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
