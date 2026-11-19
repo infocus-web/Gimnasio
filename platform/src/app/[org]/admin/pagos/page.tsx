@@ -38,7 +38,7 @@ export default async function CajaPage({ params, searchParams }: PageProps<'/[or
   const [{ data: payRows }, { data: saleRows }] = await Promise.all([
     supabase
       .from('payment_ledger')
-      .select('id, paid_at, amount_cents, currency, provider, status, note, payer_member_id, payer_name, plan_name, recorded_by_name')
+      .select('id, paid_at, amount_cents, currency, provider, status, note, payer_member_id, payer_name, plan_name, recorded_by_name, voided_by_name, voided_at')
       .eq('org_id', ctx.org.id)
       .gte('paid_at', from)
       .lt('paid_at', to)
@@ -70,7 +70,10 @@ export default async function CajaPage({ params, searchParams }: PageProps<'/[or
       kind: 'payment', id: r.id!, at: r.paid_at, amount: Number(r.amount_cents), currency: r.currency ?? 'ARS',
       method: r.provider!, ok: r.status === 'succeeded', who: r.payer_name, memberId: r.payer_member_id,
       detail: [r.plan_name ?? 'Cuota', METHOD_LABELS[r.provider!] ?? r.provider, r.note,
-        r.recorded_by_name ? `cobró ${r.recorded_by_name}` : r.provider === 'mercadopago' && 'pago online'],
+        r.recorded_by_name ? `cobró ${r.recorded_by_name}` : r.provider === 'mercadopago' && 'pago online',
+        // 0063: quién anuló y a qué hora
+        r.status === 'canceled' && r.voided_at &&
+          `anuló ${r.voided_by_name ?? 'sin nombre'} a las ${new Intl.DateTimeFormat('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(new Date(r.voided_at))}`],
     })),
     ...(saleRows ?? []).map((r): Row => ({
       kind: 'sale', id: r.id, at: r.sold_at, amount: Number(r.total_cents), currency: 'ARS',

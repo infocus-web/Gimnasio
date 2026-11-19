@@ -2376,6 +2376,8 @@ export type Database = {
           recorded_by: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           amount_cents: number
@@ -2393,6 +2395,8 @@ export type Database = {
           recorded_by?: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           amount_cents?: number
@@ -2410,6 +2414,8 @@ export type Database = {
           recorded_by?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {
@@ -3307,6 +3313,8 @@ export type Database = {
           provider: Database["public"]["Enums"]["payment_provider"] | null
           recorded_by_name: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          voided_at: string | null
+          voided_by_name: string | null
         }
         Relationships: [
           {
