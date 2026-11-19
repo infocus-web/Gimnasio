@@ -476,3 +476,29 @@ export async function setTrainerSalesAccess(slug: string, staffId: string, allow
   revalidatePath(`/${slug}/admin`, 'layout')
   return { ok: true, message: allow ? 'Ahora puede vender.' : 'Ya no puede vender.' }
 }
+
+/**
+ * 0062 · ¿El profe puede cobrar cuotas? Por defecto no.
+ * Se le dan juntos billing.write (registrar cobros) y members.read (abrir la ficha de cualquier socio).
+ * Sigue siendo profe: no pierde su panel ni ve la caja (no tiene billing.read).
+ */
+const BILLING_PERMS = ['billing.write', 'members.read'] as const
+
+export async function setTrainerBillingAccess(slug: string, staffId: string, allow: boolean, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: target } = await supabase.from('staff').select('id, role').eq('id', staffId).eq('org_id', ctx.org.id).maybeSingle()
+  if (!target || target.role !== 'trainer') return { message: 'Esa opción es solo para profesores.' }
+  const { error } = allow
+    ? await supabase
+        .from('staff_permission_overrides')
+        .upsert(
+          BILLING_PERMS.map((permission) => ({ staff_id: staffId, permission, granted: true })),
+          { onConflict: 'staff_id,permission' },
+        )
+    : await supabase.from('staff_permission_overrides').delete().eq('staff_id', staffId).in('permission', [...BILLING_PERMS])
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: allow ? 'Ahora puede cobrar cuotas.' : 'Ya no puede cobrar cuotas.' }
+}
