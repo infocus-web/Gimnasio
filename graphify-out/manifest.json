@@ -294,10 +294,10 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/pagos/page.tsx": {
-    "mtime": 1792989236.938273,
-    "seen": 1793838985.6376338,
-    "ast_hash": "537bf2728069718de97bdcb9c9a5379f",
-    "semantic_hash": "537bf2728069718de97bdcb9c9a5379f"
+    "mtime": 1795118276.0199342,
+    "seen": 1795118521.759823,
+    "ast_hash": "34261c5a5297f53564bdcd1dd0e82d32",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/pagos/planes/page.tsx": {
     "mtime": 1794870649.1205328,
@@ -1602,9 +1602,9 @@
     "semantic_hash": "d064dab0d36b0579f54ef255dc464909"
   },
   "platform/src/types/database.types.ts": {
-    "mtime": 1794870219.9765785,
-    "seen": 1794870480.5854213,
-    "ast_hash": "402b548f914d609f7a01042992a7f138",
+    "mtime": 1795118286.7806082,
+    "seen": 1795118521.759823,
+    "ast_hash": "bec46370e24ca48f5dae362b6aec6f27",
     "semantic_hash": ""
   },
   "platform/src/types/platform.ts": {
@@ -3729,6 +3729,18 @@
     "mtime": 1794872340.6893864,
     "seen": 1795116667.5941138,
     "ast_hash": "207140f69c9649a329a65b1c6ff413fa",
+    "semantic_hash": ""
+  },
+  "Claude outputs/aplicar_0063_control_pagos.sql": {
+    "mtime": 1795118287.065304,
+    "seen": 1795118521.7588165,
+    "ast_hash": "00a23491d470b4087f5920971da29925",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0063_payments_audit.sql": {
+    "mtime": 1795118275.6740487,
+    "seen": 1795118521.759823,
+    "ast_hash": "00a23491d470b4087f5920971da29925",
     "semantic_hash": ""
   }
 }
