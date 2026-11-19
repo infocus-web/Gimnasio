@@ -192,10 +192,10 @@
     "semantic_hash": "c2257e5e239f847b4d1369c99dc2ae67"
   },
   "platform/src/app/[org]/admin/equipo/page.tsx": {
-    "mtime": 1794664240.547619,
-    "seen": 1794664507.497581,
-    "ast_hash": "ff3c04c771d1507ce8c5161d1fe1f4bb",
-    "semantic_hash": "ff3c04c771d1507ce8c5161d1fe1f4bb"
+    "mtime": 1795116607.3680718,
+    "seen": 1795116667.593114,
+    "ast_hash": "7c2ce69b44b9d25eff894545cedcf904",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/layout.tsx": {
     "mtime": 1794614851.9962094,
@@ -1038,10 +1038,10 @@
     "semantic_hash": "30fc79d6b93b5e823a396de08164e292"
   },
   "platform/src/features/admin/actions.ts": {
-    "mtime": 1794616090.3055043,
-    "seen": 1794664507.5096564,
-    "ast_hash": "a2740737dcdf2b69a6967f8baf7ba097",
-    "semantic_hash": "a2740737dcdf2b69a6967f8baf7ba097"
+    "mtime": 1795116607.356055,
+    "seen": 1795116667.593114,
+    "ast_hash": "d8095e1deadedd93a43f98d44d74ed0b",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/assessment-actions.ts": {
     "mtime": 1793676082.0968127,
@@ -3713,9 +3713,21 @@
     "ast_hash": "2e97af5ac5218d6c8a56158488ce0415",
     "semantic_hash": ""
   },
-  "tools/camaras/camaras-exe.yml": {
+  "Claude outputs/aplicar_0062_profes_cobran.sql": {
+    "mtime": 1795116621.378124,
+    "seen": 1795116667.593114,
+    "ast_hash": "a9a88e6db1ff050857c38215c6fafbf2",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0062_trainer_billing.sql": {
+    "mtime": 1795116607.3328035,
+    "seen": 1795116667.5941138,
+    "ast_hash": "a9a88e6db1ff050857c38215c6fafbf2",
+    "semantic_hash": ""
+  },
+  ".github/workflows/camaras-exe.yml": {
     "mtime": 1794872340.6893864,
-    "seen": 1794872576.8313816,
+    "seen": 1795116667.5941138,
     "ast_hash": "207140f69c9649a329a65b1c6ff413fa",
     "semantic_hash": ""
   }
