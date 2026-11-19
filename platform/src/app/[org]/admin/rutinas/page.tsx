@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import type { Metadata, Route } from 'next'
-import { Plus, PlayCircle, Dumbbell } from 'lucide-react'
+import { Plus, PlayCircle, Dumbbell, Pencil } from 'lucide-react'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
-import { createExercise, createProgram } from '@/features/admin/coach-actions'
+import { createExercise, createProgram, updateExercise } from '@/features/admin/coach-actions'
 import { LEVELS, NewExerciseForm, ProgramForm } from '@/features/admin/CoachForms'
 import { Card } from '@/features/admin/ui'
 import { AiRoutineButton } from '@/features/floor/AiRoutineButton'
@@ -31,7 +31,7 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
       .eq('org_id', ctx.org.id)
       .order('created_at', { ascending: false }),
     supabase.from('program_assignments').select('program_id').eq('org_id', ctx.org.id).eq('status', 'active'),
-    supabase.from('exercises').select('id, name, muscle_group, video_url').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('muscle_group').order('name'),
+    supabase.from('exercises').select('id, org_id, name, muscle_group, equipment, video_url, instructions').or(`org_id.eq.${ctx.org.id},org_id.is.null`).order('muscle_group').order('name'),
     supabase.from('machines').select('id, name').eq('org_id', ctx.org.id).eq('active', true).order('name'),
     supabase.rpc('ai_routine_usage', { p_org: ctx.org.id }),
     studentsQ,
@@ -111,18 +111,48 @@ export default async function ProgramsPage({ params }: PageProps<'/[org]/admin/r
           </div>
         </details>
         <ul className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          {(exercises ?? []).map((e) => (
-            <li key={e.id} className="flex items-center gap-2 py-1">
-              <Dumbbell className="h-3.5 w-3.5 shrink-0 text-zinc-600" aria-hidden="true" />
-              <span className="truncate text-zinc-200">{e.name}</span>
-              <span className="text-xs text-zinc-500">{e.muscle_group}</span>
-              {e.video_url && (
-                <a href={e.video_url} target="_blank" rel="noreferrer" aria-label={`Video de ${e.name}`} className="text-[#edcc36]">
-                  <PlayCircle className="h-4 w-4" aria-hidden="true" />
-                </a>
-              )}
+          {(exercises ?? []).map((e) =>
+            !e.org_id ? (
+              // Ejercicio base del sistema: no se edita
+              <li key={e.id} className="flex items-center gap-2 py-1">
+                <Dumbbell className="h-3.5 w-3.5 shrink-0 text-zinc-600" aria-hidden="true" />
+                <span className="truncate text-zinc-200">{e.name}</span>
+                <span className="text-xs text-zinc-500">{e.muscle_group}</span>
+                {e.video_url && (
+                  <a href={e.video_url} target="_blank" rel="noreferrer" aria-label={`Video de ${e.name}`} className="text-[#edcc36]">
+                    <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                )}
+              </li>
+            ) : (
+            // Al abrir «Editar», el ejercicio ocupa todo el ancho para que el formulario respire
+            <li key={e.id} className="py-1 has-[details[open]]:col-span-full">
+              <details className="group">
+                <summary className="flex cursor-default list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+                  <Dumbbell className="h-3.5 w-3.5 shrink-0 text-zinc-600" aria-hidden="true" />
+                  <span className="truncate text-zinc-200">{e.name}</span>
+                  <span className="text-xs text-zinc-500">{e.muscle_group}</span>
+                  {e.video_url && (
+                    <a href={e.video_url} target="_blank" rel="noreferrer" aria-label={`Video de ${e.name}`} className="text-[#edcc36]">
+                      <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  )}
+                  <span
+                      className="ml-auto inline-flex min-h-[32px] cursor-pointer items-center gap-1 rounded-lg px-2 text-xs text-zinc-400 hover:bg-[#3a3a3a] hover:text-white group-open:text-[#edcc36]"
+                      aria-label={`Editar ${e.name}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="group-open:hidden">Editar</span>
+                      <span className="hidden group-open:inline">Cerrar</span>
+                  </span>
+                </summary>
+                <div className="mt-2 rounded-xl border border-[#3a3a3a] bg-black/30 p-3">
+                  <NewExerciseForm action={updateExercise.bind(null, slug, e.id)} initial={e} />
+                </div>
+              </details>
             </li>
-          ))}
+            ),
+          )}
         </ul>
       </Card>
     </div>

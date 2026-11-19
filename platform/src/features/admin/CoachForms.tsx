@@ -215,17 +215,26 @@ function AddExerciseFields({
   )
 }
 
-export function NewExerciseForm({ action }: { action: Action }) {
+export type ExerciseInitial = {
+  name: string
+  muscle_group: string | null
+  equipment: string | null
+  video_url: string | null
+  instructions: string | null
+}
+
+/** Sirve para crear (sin `initial`) y para editar un ejercicio ya cargado (con `initial`). */
+export function NewExerciseForm({ action, initial }: { action: Action; initial?: ExerciseInitial }) {
   const [state, formAction] = useActionForm(action, {})
   const err = state.fieldErrors ?? {}
   return (
     <form action={formAction} className="space-y-3" noValidate>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Nombre" name="name" error={err.name}>
-          <input id="ex-name" name="name" className={inputClass} placeholder="Ej. Hip thrust" />
+          <input name="name" defaultValue={initial?.name ?? ''} className={inputClass} placeholder="Ej. Hip thrust" />
         </Field>
         <Field label="Grupo muscular" name="muscleGroup">
-          <input id="muscleGroup" name="muscleGroup" list="muscles" className={inputClass} />
+          <input name="muscleGroup" list="muscles" defaultValue={initial?.muscle_group ?? ''} className={inputClass} />
           <datalist id="muscles">
             {['Pecho', 'Espalda', 'Piernas', 'Glúteos', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Cardio'].map((m) => (
               <option key={m} value={m} />
@@ -233,18 +242,18 @@ export function NewExerciseForm({ action }: { action: Action }) {
           </datalist>
         </Field>
         <Field label="Equipo" name="equipment">
-          <input id="equipment" name="equipment" placeholder="Barra, mancuerna…" className={inputClass} />
+          <input name="equipment" defaultValue={initial?.equipment ?? ''} placeholder="Barra, mancuerna…" className={inputClass} />
         </Field>
       </div>
       <Field label="Video (YouTube / Instagram)" name="videoUrl" error={err.videoUrl} hint="El alumno lo ve desde la app mientras entrena">
-        <input id="videoUrl" name="videoUrl" inputMode="url" className={inputClass} />
+        <input name="videoUrl" inputMode="url" defaultValue={initial?.video_url ?? ''} className={inputClass} />
       </Field>
       <Field label="Cómo se hace" name="instructions">
-        <textarea id="instructions" name="instructions" rows={2} className={`${inputClass} py-2`} />
+        <textarea name="instructions" rows={initial ? 3 : 2} defaultValue={initial?.instructions ?? ''} className={`${inputClass} py-2`} />
       </Field>
       <Notice state={state} />
       <div className="flex justify-end">
-        <SubmitButton variant="ghost">Guardar ejercicio</SubmitButton>
+        <SubmitButton variant="ghost">{initial ? 'Guardar cambios' : 'Guardar ejercicio'}</SubmitButton>
       </div>
     </form>
   )

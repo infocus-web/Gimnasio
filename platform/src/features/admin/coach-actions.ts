@@ -271,22 +271,22 @@ export async function moveProgramExercise(slug: string, programId: string, worko
   revalidatePath(`/${slug}/admin/rutinas/${programId}`)
 }
 
+const exerciseSchema = z.object({
+  name: z.string().trim().min(2, 'Poné un nombre'),
+  muscleGroup: z.string().trim().optional(),
+  equipment: z.string().trim().optional(),
+  videoUrl: z
+    .string()
+    .trim()
+    .transform((v) => (v === '' ? undefined : v))
+    .pipe(z.url('Link inválido').optional()),
+  instructions: z.string().trim().max(600).optional(),
+})
+
 export async function createExercise(slug: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const ctx = await coach(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
-  const parsed = z
-    .object({
-      name: z.string().trim().min(2, 'Poné un nombre'),
-      muscleGroup: z.string().trim().optional(),
-      equipment: z.string().trim().optional(),
-      videoUrl: z
-        .string()
-        .trim()
-        .transform((v) => (v === '' ? undefined : v))
-        .pipe(z.url('Link inválido').optional()),
-      instructions: z.string().trim().max(600).optional(),
-    })
-    .safeParse(formObject(form))
+  const parsed = exerciseSchema.safeParse(formObject(form))
   if (!parsed.success) {
     const fe: Record<string, string> = {}
     for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message
@@ -305,6 +305,41 @@ export async function createExercise(slug: string, _prev: ActionState, form: For
   if (error) return { message: dbMessage(error) }
   revalidatePath(`/${slug}/admin/rutinas`, 'layout')
   return { ok: true, message: `"${e.name}" quedó en la biblioteca.` }
+}
+
+/**
+ * Editar un ejercicio ya cargado (link del video vencido, mejorar la explicación, etc.).
+ * Solo los del gimnasio: los ejercicios base del sistema (org_id null) no se tocan.
+ * La base también lo controla (exercises_write en 0008): profes activos y quien tenga training.manage_all.
+ * Los cambios se ven en todas las rutinas que usan el ejercicio.
+ */
+export async function updateExercise(slug: string, exerciseId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await coach(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const parsed = exerciseSchema.safeParse(formObject(form))
+  if (!parsed.success) {
+    const fe: Record<string, string> = {}
+    for (const i of parsed.error.issues) fe[String(i.path[0])] ??= i.message
+    return { fieldErrors: fe }
+  }
+  const e = parsed.data
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('exercises')
+    .update({
+      name: e.name,
+      muscle_group: e.muscleGroup || null,
+      equipment: e.equipment || null,
+      video_url: e.videoUrl ?? null,
+      instructions: e.instructions || null,
+    })
+    .eq('id', exerciseId)
+    .eq('org_id', ctx.org.id)
+    .select('id')
+  if (error) return { message: dbMessage(error) }
+  if (!data?.length) return { message: 'Ese ejercicio no se puede editar.' }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: `"${e.name}" quedó actualizado.` }
 }
 
 // ---------------------------------------------------------------------
