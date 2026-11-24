@@ -540,6 +540,97 @@
       "source_location": "L252"
     },
     {
+      "id": "platform_src_features_floor_types_dashboardtotals",
+      "label": "DashboardTotals",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "dashboardtotals",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L65"
+    },
+    {
+      "id": "platform_src_features_floor_types_goal",
+      "label": "Goal",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "goal",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L96"
+    },
+    {
+      "id": "platform_src_features_floor_types_machineexerciseview",
+      "label": "MachineExerciseView",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "machineexerciseview",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "platform_src_features_floor_types_machineset",
+      "label": "MachineSet",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "machineset",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L3"
+    },
+    {
+      "id": "platform_src_features_floor_types_machineviewresult",
+      "label": "MachineViewResult",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "machineviewresult",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L29"
+    },
+    {
+      "id": "platform_src_features_floor_types_tvclass",
+      "label": "TvClass",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "tvclass",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L38"
+    },
+    {
+      "id": "platform_src_features_floor_types_tvfeed",
+      "label": "TvFeed",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "tvfeed",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L49"
+    },
+    {
       "id": "platform_src_features_payments_day_pass_daypassinfo",
       "label": "DayPassInfo",
       "_callable": true,
@@ -603,32 +694,6 @@
       "norm_label": "opt",
       "source_file": "platform/src/features/admin/ScheduleForms.tsx",
       "source_location": "L200"
-    },
-    {
-      "id": "platform_src_features_floor_period_period",
-      "label": "Period",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "period",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L5"
-    },
-    {
-      "id": "platform_src_features_floor_period_periodkey",
-      "label": "PeriodKey",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "periodkey",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L3"
     },
     {
       "id": "platform_src_features_floor_types_dashboard",
@@ -1034,6 +1099,84 @@
       "source_location": "L217"
     },
     {
+      "id": "platform_src_components_assessment_assessmentview_assessmentrow",
+      "label": "AssessmentRow",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "assessmentrow",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L3"
+    },
+    {
+      "id": "platform_src_features_assessment_scoring_areakey",
+      "label": "AreaKey",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "areakey",
+      "source_file": "platform/src/features/assessment/scoring.ts",
+      "source_location": "L28"
+    },
+    {
+      "id": "platform_src_features_assessment_scoring_assessmentinput",
+      "label": "AssessmentInput",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "assessmentinput",
+      "source_file": "platform/src/features/assessment/scoring.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "platform_src_features_member_progressextras_metric",
+      "label": "Metric",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "metric",
+      "source_file": "platform/src/features/member/ProgressExtras.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "platform_src_features_member_progression_lastset",
+      "label": "LastSet",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "lastset",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L12"
+    },
+    {
+      "id": "platform_src_features_member_progression_loadsuggestion",
+      "label": "LoadSuggestion",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "loadsuggestion",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L18"
+    },
+    {
       "id": "platform_src_features_admin_assessment_actions_scaleimportstate",
       "label": "ScaleImportState",
       "_callable": true,
@@ -1071,6 +1214,58 @@
       "norm_label": "textfieldprops",
       "source_file": "platform/src/features/admin/WebEditor.tsx",
       "source_location": "L184"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_parsedscale",
+      "label": "ParsedScale",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "parsedscale",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L19"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_scalerow",
+      "label": "ScaleRow",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "scalerow",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L8"
+    },
+    {
+      "id": "platform_src_features_floor_period_period",
+      "label": "Period",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "period",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L5"
+    },
+    {
+      "id": "platform_src_features_floor_period_periodkey",
+      "label": "PeriodKey",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "periodkey",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L3"
     },
     {
       "id": "platform_src_app_login_actions_result",
@@ -1279,19 +1474,6 @@
       "norm_label": "platecalculatorprops",
       "source_file": "platform/src/components/workout/PlateCalculator.tsx",
       "source_location": "L8"
-    },
-    {
-      "id": "platform_src_components_workout_strengthprogress_strengthprogressprops",
-      "label": "StrengthProgressProps",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 35,
-      "community_name": "ActiveWorkout.tsx",
-      "file_type": "code",
-      "norm_label": "strengthprogressprops",
-      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
-      "source_location": "L31"
     },
     {
       "id": "platform_src_features_member_usepreviousperformance_previousexercise",
@@ -2217,19 +2399,6 @@
       "source_location": "L25"
     },
     {
-      "id": "platform_src_types_platform_membershipstatus",
-      "label": "MembershipStatus",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 54,
-      "community_name": "platform.ts",
-      "file_type": "code",
-      "norm_label": "membershipstatus",
-      "source_file": "platform/src/types/platform.ts",
-      "source_location": "L2"
-    },
-    {
       "id": "platform_src_types_platform_openinghours",
       "label": "OpeningHours",
       "_callable": true,
@@ -2423,6 +2592,19 @@
       "norm_label": "checkintoken",
       "source_file": "platform/src/types/platform.ts",
       "source_location": "L33"
+    },
+    {
+      "id": "platform_src_types_platform_membershipstatus",
+      "label": "MembershipStatus",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 64,
+      "community_name": "PassScreen.tsx",
+      "file_type": "code",
+      "norm_label": "membershipstatus",
+      "source_file": "platform/src/types/platform.ts",
+      "source_location": "L2"
     },
     {
       "id": "platform_src_types_platform_membershipsummary",
@@ -2763,97 +2945,6 @@
       "source_location": "L18"
     },
     {
-      "id": "platform_src_features_floor_types_dashboardtotals",
-      "label": "DashboardTotals",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "dashboardtotals",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L65"
-    },
-    {
-      "id": "platform_src_features_floor_types_goal",
-      "label": "Goal",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "goal",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L96"
-    },
-    {
-      "id": "platform_src_features_floor_types_machineexerciseview",
-      "label": "MachineExerciseView",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "machineexerciseview",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L9"
-    },
-    {
-      "id": "platform_src_features_floor_types_machineset",
-      "label": "MachineSet",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "machineset",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L3"
-    },
-    {
-      "id": "platform_src_features_floor_types_machineviewresult",
-      "label": "MachineViewResult",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "machineviewresult",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L29"
-    },
-    {
-      "id": "platform_src_features_floor_types_tvclass",
-      "label": "TvClass",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "tvclass",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L38"
-    },
-    {
-      "id": "platform_src_features_floor_types_tvfeed",
-      "label": "TvFeed",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "tvfeed",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L49"
-    },
-    {
       "id": "platform_src_app_org_admin_recepcion_receptionscreen_entry",
       "label": "Entry",
       "_callable": true,
@@ -3075,32 +3166,6 @@
       "source_location": "L10"
     },
     {
-      "id": "platform_src_components_assessment_assessmentview_assessmentrow",
-      "label": "AssessmentRow",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "assessmentrow",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L3"
-    },
-    {
-      "id": "platform_src_features_assessment_scoring_areakey",
-      "label": "AreaKey",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "areakey",
-      "source_file": "platform/src/features/assessment/scoring.ts",
-      "source_location": "L28"
-    },
-    {
       "id": "platform_src_features_assessment_scoring_areascore",
       "label": "AreaScore",
       "_callable": true,
@@ -3112,19 +3177,6 @@
       "norm_label": "areascore",
       "source_file": "platform/src/features/assessment/scoring.ts",
       "source_location": "L63"
-    },
-    {
-      "id": "platform_src_features_assessment_scoring_assessmentinput",
-      "label": "AssessmentInput",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "assessmentinput",
-      "source_file": "platform/src/features/assessment/scoring.ts",
-      "source_location": "L12"
     },
     {
       "id": "platform_src_features_assessment_scoring_assessmentscores",
@@ -3164,19 +3216,6 @@
       "norm_label": "sex",
       "source_file": "platform/src/features/assessment/scoring.ts",
       "source_location": "L10"
-    },
-    {
-      "id": "platform_src_features_member_progressextras_metric",
-      "label": "Metric",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "metric",
-      "source_file": "platform/src/features/member/ProgressExtras.tsx",
-      "source_location": "L8"
     },
     {
       "id": "platform_src_features_access_plus_actions_passactionstate",
@@ -3361,13 +3400,26 @@
       "source_location": "L87"
     },
     {
+      "id": "platform_src_components_workout_strengthprogress_strengthprogressprops",
+      "label": "StrengthProgressProps",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "StrengthProgress.tsx",
+      "file_type": "code",
+      "norm_label": "strengthprogressprops",
+      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
+      "source_location": "L31"
+    },
+    {
       "id": "platform_src_features_member_useprogram_activeprogram",
       "label": "ActiveProgram",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "activeprogram",
       "source_file": "platform/src/features/member/useProgram.ts",
@@ -3380,7 +3432,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "programday",
       "source_file": "platform/src/features/member/useProgram.ts",
@@ -3393,7 +3445,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "prescribedexercise",
       "source_file": "platform/src/types/platform.ts",
@@ -3463,58 +3515,6 @@
       "norm_label": "admsrecord",
       "source_file": "platform/src/features/access/adms.ts",
       "source_location": "L12"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_parsedscale",
-      "label": "ParsedScale",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "parsedscale",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L19"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_scalerow",
-      "label": "ScaleRow",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "scalerow",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L8"
-    },
-    {
-      "id": "platform_src_features_member_progression_lastset",
-      "label": "LastSet",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "lastset",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L12"
-    },
-    {
-      "id": "platform_src_features_member_progression_loadsuggestion",
-      "label": "LoadSuggestion",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "loadsuggestion",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L18"
     },
     {
       "id": "platform_src_features_payments_signature_mpsignatureinput",
@@ -3653,7 +3653,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "occupancylevel",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -3666,7 +3666,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "openinghouritem",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -3679,7 +3679,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhoursprops",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -3692,7 +3692,7 @@
       "_callable_class": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhourslot",
       "source_file": "platform/src/types/platform.ts",
@@ -5472,6 +5472,18 @@
       "source_location": "L73"
     },
     {
+      "id": "platform_src_app_org_app_invitados_page_guestspage",
+      "label": "GuestsPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "MemberProvider.tsx",
+      "file_type": "code",
+      "norm_label": "guestspage()",
+      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
+      "source_location": "L7"
+    },
+    {
       "id": "platform_src_app_org_app_layout_memberapplayout",
       "label": "MemberAppLayout()",
       "_callable": true,
@@ -6791,6 +6803,54 @@
       "source_location": "L100"
     },
     {
+      "id": "platform_src_app_org_maquina_code_page_exercisecard",
+      "label": "ExerciseCard()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "exercisecard()",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L108"
+    },
+    {
+      "id": "platform_src_app_org_maquina_code_page_fmtday",
+      "label": "fmtDay()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "fmtday()",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L13"
+    },
+    {
+      "id": "platform_src_app_org_maquina_code_page_fmtsets",
+      "label": "fmtSets()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "fmtsets()",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L21"
+    },
+    {
+      "id": "platform_src_app_org_maquina_code_page_machineqrpage",
+      "label": "MachineQrPage()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "machineqrpage()",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L27"
+    },
+    {
       "id": "platform_src_app_api_access_agent_route_json",
       "label": "json()",
       "_callable": true,
@@ -7353,54 +7413,6 @@
       "source_location": "L71"
     },
     {
-      "id": "platform_src_features_floor_period_adddays",
-      "label": "addDays()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "adddays()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L22"
-    },
-    {
-      "id": "platform_src_features_floor_period_d",
-      "label": "d()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "d()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L16"
-    },
-    {
-      "id": "platform_src_features_floor_period_daysbetween",
-      "label": "daysBetween()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "daysbetween()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L35"
-    },
-    {
-      "id": "platform_src_features_floor_period_firstofmonth",
-      "label": "firstOfMonth()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "firstofmonth()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L27"
-    },
-    {
       "id": "platform_src_features_floor_period_fmtshort",
       "label": "fmtShort()",
       "_callable": true,
@@ -7411,42 +7423,6 @@
       "norm_label": "fmtshort()",
       "source_file": "platform/src/features/floor/period.ts",
       "source_location": "L70"
-    },
-    {
-      "id": "platform_src_features_floor_period_lastofmonth",
-      "label": "lastOfMonth()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "lastofmonth()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L31"
-    },
-    {
-      "id": "platform_src_features_floor_period_resolveperiod",
-      "label": "resolvePeriod()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "resolveperiod()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L39"
-    },
-    {
-      "id": "platform_src_features_floor_period_ymd",
-      "label": "ymd()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "ymd()",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L19"
     },
     {
       "id": "tools_adms_relay_worker_fetch",
@@ -9653,6 +9629,138 @@
       "source_location": "L32"
     },
     {
+      "id": "platform_src_components_assessment_assessmentview_assessmentview",
+      "label": "AssessmentView()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "assessmentview()",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "platform_src_components_assessment_assessmentview_fmtdate",
+      "label": "fmtDate()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "fmtdate()",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L17"
+    },
+    {
+      "id": "platform_src_components_assessment_assessmentview_toassessmentrow",
+      "label": "toAssessmentRow()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "toassessmentrow()",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L109"
+    },
+    {
+      "id": "platform_src_features_member_progressextras_delta",
+      "label": "Delta()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "delta()",
+      "source_file": "platform/src/features/member/ProgressExtras.tsx",
+      "source_location": "L22"
+    },
+    {
+      "id": "platform_src_features_member_progressextras_fmt",
+      "label": "fmt()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "fmt()",
+      "source_file": "platform/src/features/member/ProgressExtras.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "platform_src_features_member_progressextras_progressextras",
+      "label": "ProgressExtras()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "progressextras()",
+      "source_file": "platform/src/features/member/ProgressExtras.tsx",
+      "source_location": "L36"
+    },
+    {
+      "id": "platform_src_features_member_progression_fmt",
+      "label": "fmt()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "fmt()",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L37"
+    },
+    {
+      "id": "platform_src_features_member_progression_parsereprange",
+      "label": "parseRepRange()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "parsereprange()",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L26"
+    },
+    {
+      "id": "platform_src_features_member_progression_roundload",
+      "label": "roundLoad()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "roundload()",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L40"
+    },
+    {
+      "id": "platform_src_features_member_progression_suggestload",
+      "label": "suggestLoad()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "suggestload()",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L45"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_s",
+      "label": "s()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "s()",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L14"
+    },
+    {
       "id": "platform_src_app_org_admin_alumnos_balanza_page_scaleimportpage",
       "label": "ScaleImportPage()",
       "_callable": true,
@@ -9917,6 +10025,78 @@
       "source_location": "L9"
     },
     {
+      "id": "platform_src_features_assessment_scale_csv_norm",
+      "label": "norm()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "norm()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_parsescalecsv",
+      "label": "parseScaleCsv()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "parsescalecsv()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L111"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_parsescaledate",
+      "label": "parseScaleDate()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "parsescaledate()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L88"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_splitline",
+      "label": "splitLine()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "splitline()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L48"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_tonumber",
+      "label": "toNumber()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "tonumber()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L68"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_tzoffset",
+      "label": "tzOffset()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "tzoffset()",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L80"
+    },
+    {
       "id": "platform_src_app_layout_rootlayout",
       "label": "RootLayout()",
       "_callable": true,
@@ -10047,6 +10227,90 @@
       "norm_label": "sitemap()",
       "source_file": "platform/src/app/sitemap.ts",
       "source_location": "L5"
+    },
+    {
+      "id": "platform_src_features_floor_period_adddays",
+      "label": "addDays()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "adddays()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "platform_src_features_floor_period_d",
+      "label": "d()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "d()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L16"
+    },
+    {
+      "id": "platform_src_features_floor_period_daysbetween",
+      "label": "daysBetween()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "daysbetween()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "platform_src_features_floor_period_firstofmonth",
+      "label": "firstOfMonth()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "firstofmonth()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "platform_src_features_floor_period_lastofmonth",
+      "label": "lastOfMonth()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "lastofmonth()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "platform_src_features_floor_period_resolveperiod",
+      "label": "resolvePeriod()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "resolveperiod()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "platform_src_features_floor_period_ymd",
+      "label": "ymd()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "ymd()",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L19"
     },
     {
       "id": "platform_src_features_engagement_retention_actions_cancelchallenge",
@@ -10903,30 +11167,6 @@
       "norm_label": "platecalculator()",
       "source_file": "platform/src/components/workout/PlateCalculator.tsx",
       "source_location": "L16"
-    },
-    {
-      "id": "platform_src_components_workout_strengthprogress_localdaykey",
-      "label": "localDayKey()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 35,
-      "community_name": "ActiveWorkout.tsx",
-      "file_type": "code",
-      "norm_label": "localdaykey()",
-      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
-      "source_location": "L25"
-    },
-    {
-      "id": "platform_src_components_workout_strengthprogress_strengthprogress",
-      "label": "StrengthProgress()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 35,
-      "community_name": "ActiveWorkout.tsx",
-      "file_type": "code",
-      "norm_label": "strengthprogress()",
-      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
-      "source_location": "L37"
     },
     {
       "id": "platform_src_components_workout_videoembed_parse",
@@ -12199,18 +12439,6 @@
       "norm_label": "ymd()",
       "source_file": "platform/src/app/[org]/app/invitados/GuestsScreen.tsx",
       "source_location": "L33"
-    },
-    {
-      "id": "platform_src_app_org_app_invitados_page_guestspage",
-      "label": "GuestsPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 46,
-      "community_name": "labels.ts",
-      "file_type": "code",
-      "norm_label": "guestspage()",
-      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
-      "source_location": "L7"
     },
     {
       "id": "platform_src_app_org_pase_code_page_publicpasspage",
@@ -14031,7 +14259,7 @@
       "file_type": "code",
       "norm_label": "passscreen()",
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L21"
+      "source_location": "L22"
     },
     {
       "id": "platform_src_app_org_app_pase_passscreen_wait",
@@ -14043,7 +14271,7 @@
       "file_type": "code",
       "norm_label": "wait()",
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L15"
+      "source_location": "L16"
     },
     {
       "id": "platform_src_components_membership_membershipbanner_membershipbanner",
@@ -14103,7 +14331,7 @@
       "file_type": "code",
       "norm_label": "memberqrpass()",
       "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L30"
+      "source_location": "L32"
     },
     {
       "id": "platform_src_features_member_usemembership_usemembership",
@@ -14116,6 +14344,30 @@
       "norm_label": "usemembership()",
       "source_file": "platform/src/features/member/useMembership.ts",
       "source_location": "L15"
+    },
+    {
+      "id": "platform_src_features_payments_actions_onlinepaymentsenabled",
+      "label": "onlinePaymentsEnabled()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 64,
+      "community_name": "PassScreen.tsx",
+      "file_type": "code",
+      "norm_label": "onlinepaymentsenabled()",
+      "source_file": "platform/src/features/payments/actions.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "platform_src_features_payments_payplanbutton_payplanbutton",
+      "label": "PayPlanButton()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 64,
+      "community_name": "PassScreen.tsx",
+      "file_type": "code",
+      "norm_label": "payplanbutton()",
+      "source_file": "platform/src/features/payments/PayPlanButton.tsx",
+      "source_location": "L16"
     },
     {
       "id": "platform_src_app_api_bookings_bookingid_route_delete",
@@ -14908,54 +15160,6 @@
       "source_location": "L21"
     },
     {
-      "id": "platform_src_app_org_maquina_code_page_exercisecard",
-      "label": "ExerciseCard()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "exercisecard()",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L108"
-    },
-    {
-      "id": "platform_src_app_org_maquina_code_page_fmtday",
-      "label": "fmtDay()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "fmtday()",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L13"
-    },
-    {
-      "id": "platform_src_app_org_maquina_code_page_fmtsets",
-      "label": "fmtSets()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "fmtsets()",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L21"
-    },
-    {
-      "id": "platform_src_app_org_maquina_code_page_machineqrpage",
-      "label": "MachineQrPage()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "machineqrpage()",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L27"
-    },
-    {
       "id": "platform_src_features_assessment_scoring_assessmentprompttext",
       "label": "assessmentPromptText()",
       "_callable": true,
@@ -15495,42 +15699,6 @@
       "source_location": "L19"
     },
     {
-      "id": "platform_src_components_assessment_assessmentview_assessmentview",
-      "label": "AssessmentView()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "assessmentview()",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L27"
-    },
-    {
-      "id": "platform_src_components_assessment_assessmentview_fmtdate",
-      "label": "fmtDate()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "fmtdate()",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L17"
-    },
-    {
-      "id": "platform_src_components_assessment_assessmentview_toassessmentrow",
-      "label": "toAssessmentRow()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "toassessmentrow()",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L109"
-    },
-    {
       "id": "platform_src_features_assessment_scoring_avg",
       "label": "avg()",
       "_callable": true,
@@ -15613,42 +15781,6 @@
       "norm_label": "scoreassessment()",
       "source_file": "platform/src/features/assessment/scoring.ts",
       "source_location": "L126"
-    },
-    {
-      "id": "platform_src_features_member_progressextras_delta",
-      "label": "Delta()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "delta()",
-      "source_file": "platform/src/features/member/ProgressExtras.tsx",
-      "source_location": "L22"
-    },
-    {
-      "id": "platform_src_features_member_progressextras_fmt",
-      "label": "fmt()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "fmt()",
-      "source_file": "platform/src/features/member/ProgressExtras.tsx",
-      "source_location": "L18"
-    },
-    {
-      "id": "platform_src_features_member_progressextras_progressextras",
-      "label": "ProgressExtras()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "progressextras()",
-      "source_file": "platform/src/features/member/ProgressExtras.tsx",
-      "source_location": "L36"
     },
     {
       "id": "platform_src_features_access_plus_actions_issuedaypass",
@@ -15944,7 +16076,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "progresopage()",
       "source_file": "platform/src/app/[org]/app/progreso/page.tsx",
@@ -15956,23 +16088,35 @@
       "_callable": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "progressscreen()",
       "source_file": "platform/src/app/[org]/app/progreso/ProgressScreen.tsx",
       "source_location": "L10"
     },
     {
-      "id": "platform_src_features_member_memberprovider_usemember",
-      "label": "useMember()",
+      "id": "platform_src_components_workout_strengthprogress_localdaykey",
+      "label": "localDayKey()",
       "_callable": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
-      "norm_label": "usemember()",
-      "source_file": "platform/src/features/member/MemberProvider.tsx",
-      "source_location": "L34"
+      "norm_label": "localdaykey()",
+      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
+      "source_location": "L25"
+    },
+    {
+      "id": "platform_src_components_workout_strengthprogress_strengthprogress",
+      "label": "StrengthProgress()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "StrengthProgress.tsx",
+      "file_type": "code",
+      "norm_label": "strengthprogress()",
+      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
+      "source_location": "L37"
     },
     {
       "id": "platform_src_features_member_useprogram_useprogram",
@@ -15980,35 +16124,11 @@
       "_callable": true,
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "useprogram()",
       "source_file": "platform/src/features/member/useProgram.ts",
       "source_location": "L21"
-    },
-    {
-      "id": "platform_src_features_payments_actions_onlinepaymentsenabled",
-      "label": "onlinePaymentsEnabled()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "useMember",
-      "file_type": "code",
-      "norm_label": "onlinepaymentsenabled()",
-      "source_file": "platform/src/features/payments/actions.ts",
-      "source_location": "L32"
-    },
-    {
-      "id": "platform_src_features_payments_payplanbutton_payplanbutton",
-      "label": "PayPlanButton()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "useMember",
-      "file_type": "code",
-      "norm_label": "payplanbutton()",
-      "source_file": "platform/src/features/payments/PayPlanButton.tsx",
-      "source_location": "L16"
     },
     {
       "id": "tools_camaras_camaras_b64url",
@@ -16826,138 +16946,6 @@
       "source_location": "L90"
     },
     {
-      "id": "platform_src_features_assessment_scale_csv_norm",
-      "label": "norm()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "norm()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L27"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_parsescalecsv",
-      "label": "parseScaleCsv()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "parsescalecsv()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L111"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_parsescaledate",
-      "label": "parseScaleDate()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "parsescaledate()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L88"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_splitline",
-      "label": "splitLine()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "splitline()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L48"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_tonumber",
-      "label": "toNumber()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "tonumber()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L68"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_tzoffset",
-      "label": "tzOffset()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "tzoffset()",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L80"
-    },
-    {
-      "id": "platform_src_features_member_progression_fmt",
-      "label": "fmt()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "fmt()",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L37"
-    },
-    {
-      "id": "platform_src_features_member_progression_parsereprange",
-      "label": "parseRepRange()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "parsereprange()",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L26"
-    },
-    {
-      "id": "platform_src_features_member_progression_roundload",
-      "label": "roundLoad()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "roundload()",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L40"
-    },
-    {
-      "id": "platform_src_features_member_progression_suggestload",
-      "label": "suggestLoad()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "suggestload()",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L45"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_s",
-      "label": "s()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "s()",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L14"
-    },
-    {
       "id": "platform_src_features_payments_signature_mpmanifest",
       "label": "mpManifest()",
       "_callable": true,
@@ -17299,7 +17287,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "horariospage()",
       "source_file": "platform/src/app/[org]/app/horarios/page.tsx",
@@ -17311,7 +17299,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhoursscreen()",
       "source_file": "platform/src/app/[org]/app/horarios/PeakHoursScreen.tsx",
@@ -17323,7 +17311,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "fmtavg()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17335,7 +17323,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "hourof()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17347,7 +17335,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "hoursforday()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17359,7 +17347,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "levelof()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17371,7 +17359,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "minutesof()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17383,7 +17371,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "pad()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17395,7 +17383,7 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhours()",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -17407,11 +17395,23 @@
       "_callable": true,
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "liveoccupancy()",
       "source_file": "platform/src/features/access-plus/LiveOccupancy.tsx",
       "source_location": "L13"
+    },
+    {
+      "id": "platform_src_features_member_memberprovider_usemember",
+      "label": "useMember()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 90,
+      "community_name": "useMember",
+      "file_type": "code",
+      "norm_label": "usemember()",
+      "source_file": "platform/src/features/member/MemberProvider.tsx",
+      "source_location": "L34"
     },
     {
       "id": "app_ios_src_app_tabs_clases_clasesscreen",
@@ -19745,6 +19745,28 @@
       "norm_label": "web_media",
       "source_file": "platform/src/features/public/media.ts",
       "source_location": "L7"
+    },
+    {
+      "id": "platform_src_app_org_app_invitados_page",
+      "label": "invitados/page.tsx",
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "MemberProvider.tsx",
+      "file_type": "code",
+      "norm_label": "invitados/page.tsx",
+      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_app_org_app_invitados_page_metadata",
+      "label": "metadata",
+      "_origin": "ast",
+      "community": 112,
+      "community_name": "MemberProvider.tsx",
+      "file_type": "code",
+      "norm_label": "metadata",
+      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
+      "source_location": "L5"
     },
     {
       "id": "platform_src_app_org_app_layout",
@@ -22508,6 +22530,72 @@
       "source_location": "L32"
     },
     {
+      "id": "platform_src_app_org_maquina_code_page",
+      "label": "maquina/[code]/page.tsx",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "maquina/[code]/page.tsx",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_app_org_maquina_code_page_dynamic",
+      "label": "dynamic",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "dynamic",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "platform_src_app_org_maquina_code_page_metadata",
+      "label": "metadata",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "metadata",
+      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "platform_src_features_floor_types",
+      "label": "floor/types.ts",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "floor/types.ts",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_features_floor_types_ai_daily_limit",
+      "label": "AI_DAILY_LIMIT",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "ai_daily_limit",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L98"
+    },
+    {
+      "id": "platform_src_features_floor_types_goals",
+      "label": "GOALS",
+      "_origin": "ast",
+      "community": 146,
+      "community_name": "maquina/[code]/page.tsx",
+      "file_type": "code",
+      "norm_label": "goals",
+      "source_file": "platform/src/features/floor/types.ts",
+      "source_location": "L89"
+    },
+    {
       "id": "supabase_migrations_0026_member_files",
       "label": "0026_member_files.sql",
       "_origin": "ast",
@@ -23383,17 +23471,6 @@
       "norm_label": "short_days",
       "source_file": "platform/src/features/floor/DashboardCharts.tsx",
       "source_location": "L5"
-    },
-    {
-      "id": "platform_src_features_floor_period",
-      "label": "period.ts",
-      "_origin": "ast",
-      "community": 17,
-      "community_name": "negocio/page.tsx",
-      "file_type": "code",
-      "norm_label": "period.ts",
-      "source_file": "platform/src/features/floor/period.ts",
-      "source_location": "L1"
     },
     {
       "id": "supabase_test_scenario_product_costs",
@@ -24892,6 +24969,61 @@
       "source_location": "L1"
     },
     {
+      "id": "platform_src_components_assessment_assessmentview",
+      "label": "AssessmentView.tsx",
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "assessmentview.tsx",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_components_assessment_assessmentview_assessment_columns",
+      "label": "ASSESSMENT_COLUMNS",
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "assessment_columns",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L106"
+    },
+    {
+      "id": "platform_src_components_assessment_assessmentview_bar",
+      "label": "BAR",
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "bar",
+      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "platform_src_features_assessment_scoring_areas",
+      "label": "AREAS",
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "areas",
+      "source_file": "platform/src/features/assessment/scoring.ts",
+      "source_location": "L30"
+    },
+    {
+      "id": "platform_src_features_member_progressextras",
+      "label": "ProgressExtras.tsx",
+      "_origin": "ast",
+      "community": 221,
+      "community_name": "AssessmentView.tsx",
+      "file_type": "code",
+      "norm_label": "progressextras.tsx",
+      "source_file": "platform/src/features/member/ProgressExtras.tsx",
+      "source_location": "L1"
+    },
+    {
       "id": "supabase_migrations_0059_mp_cash_discount",
       "label": "0059_mp_cash_discount.sql",
       "_origin": "ast",
@@ -25050,6 +25182,83 @@
       "norm_label": "public.rooms",
       "source_file": "",
       "source_location": ""
+    },
+    {
+      "id": "platform_src_features_member_progression",
+      "label": "progression.ts",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "progression.ts",
+      "source_file": "platform/src/features/member/progression.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_features_member_progression_test",
+      "label": "progression.test.ts",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "progression.test.ts",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_down",
+      "label": "down",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "down",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L25"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_fit",
+      "label": "fit",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "fit",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L39"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_inbody",
+      "label": "inbody",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "inbody",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L57"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_tanita",
+      "label": "tanita",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "tanita",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L62"
+    },
+    {
+      "id": "platform_src_features_member_progression_test_weak",
+      "label": "weak",
+      "_origin": "ast",
+      "community": 225,
+      "community_name": "progression.test.ts",
+      "file_type": "code",
+      "norm_label": "weak",
+      "source_file": "platform/src/features/member/progression.test.ts",
+      "source_location": "L44"
     },
     {
       "id": "platform_src_app_org_admin_alumnos_balanza_page",
@@ -25259,6 +25468,28 @@
       "norm_label": "metadata",
       "source_file": "platform/src/app/equipo/clave/page.tsx",
       "source_location": "L7"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv",
+      "label": "scale-csv.ts",
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "scale-csv.ts",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_features_assessment_scale_csv_matchers",
+      "label": "MATCHERS",
+      "_origin": "ast",
+      "community": 229,
+      "community_name": "scale-csv.ts",
+      "file_type": "code",
+      "norm_label": "matchers",
+      "source_file": "platform/src/features/assessment/scale-csv.ts",
+      "source_location": "L36"
     },
     {
       "id": "platform_next_config",
@@ -25534,6 +25765,17 @@
       "norm_label": "next",
       "source_file": "platform/package.json",
       "source_location": "L18"
+    },
+    {
+      "id": "platform_src_features_floor_period",
+      "label": "period.ts",
+      "_origin": "ast",
+      "community": 230,
+      "community_name": "period.ts",
+      "file_type": "code",
+      "norm_label": "period.ts",
+      "source_file": "platform/src/features/floor/period.ts",
+      "source_location": "L1"
     },
     {
       "id": "claude_outputs_aplicar_0062_profes_cobran",
@@ -29628,28 +29870,6 @@
       "source_location": "L1"
     },
     {
-      "id": "platform_src_components_workout_strengthprogress",
-      "label": "StrengthProgress.tsx",
-      "_origin": "ast",
-      "community": 35,
-      "community_name": "ActiveWorkout.tsx",
-      "file_type": "code",
-      "norm_label": "strengthprogress.tsx",
-      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_components_workout_strengthprogress_daykeyformatter",
-      "label": "dayKeyFormatter",
-      "_origin": "ast",
-      "community": 35,
-      "community_name": "ActiveWorkout.tsx",
-      "file_type": "code",
-      "norm_label": "daykeyformatter",
-      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
-      "source_location": "L19"
-    },
-    {
       "id": "platform_src_components_workout_videoembed",
       "label": "VideoEmbed.tsx",
       "_origin": "ast",
@@ -31573,28 +31793,6 @@
       "norm_label": "guestsscreen.tsx",
       "source_file": "platform/src/app/[org]/app/invitados/GuestsScreen.tsx",
       "source_location": "L1"
-    },
-    {
-      "id": "platform_src_app_org_app_invitados_page",
-      "label": "invitados/page.tsx",
-      "_origin": "ast",
-      "community": 46,
-      "community_name": "labels.ts",
-      "file_type": "code",
-      "norm_label": "invitados/page.tsx",
-      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_app_org_app_invitados_page_metadata",
-      "label": "metadata",
-      "_origin": "ast",
-      "community": 46,
-      "community_name": "labels.ts",
-      "file_type": "code",
-      "norm_label": "metadata",
-      "source_file": "platform/src/app/[org]/app/invitados/page.tsx",
-      "source_location": "L5"
     },
     {
       "id": "platform_src_app_org_pase_code_page",
@@ -34974,6 +35172,17 @@
       "source_location": "L10"
     },
     {
+      "id": "platform_src_features_payments_payplanbutton",
+      "label": "PayPlanButton.tsx",
+      "_origin": "ast",
+      "community": 64,
+      "community_name": "PassScreen.tsx",
+      "file_type": "code",
+      "norm_label": "payplanbutton.tsx",
+      "source_file": "platform/src/features/payments/PayPlanButton.tsx",
+      "source_location": "L1"
+    },
+    {
       "id": "public_permissions",
       "label": "public.permissions",
       "_origin": "ast",
@@ -36646,39 +36855,6 @@
       "source_location": "L17"
     },
     {
-      "id": "platform_src_app_org_maquina_code_page",
-      "label": "maquina/[code]/page.tsx",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "maquina/[code]/page.tsx",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_app_org_maquina_code_page_dynamic",
-      "label": "dynamic",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "dynamic",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L9"
-    },
-    {
-      "id": "platform_src_app_org_maquina_code_page_metadata",
-      "label": "metadata",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "metadata",
-      "source_file": "platform/src/app/[org]/maquina/[code]/page.tsx",
-      "source_location": "L8"
-    },
-    {
       "id": "platform_src_features_floor_ai",
       "label": "ai.ts",
       "_origin": "ast",
@@ -36732,39 +36908,6 @@
       "norm_label": "routinerequestschema",
       "source_file": "platform/src/features/floor/ai.ts",
       "source_location": "L8"
-    },
-    {
-      "id": "platform_src_features_floor_types",
-      "label": "floor/types.ts",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "floor/types.ts",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_floor_types_ai_daily_limit",
-      "label": "AI_DAILY_LIMIT",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "ai_daily_limit",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L98"
-    },
-    {
-      "id": "platform_src_features_floor_types_goals",
-      "label": "GOALS",
-      "_origin": "ast",
-      "community": 71,
-      "community_name": "routine/route.ts",
-      "file_type": "code",
-      "norm_label": "goals",
-      "source_file": "platform/src/features/floor/types.ts",
-      "source_location": "L89"
     },
     {
       "id": "platform_src_features_admin_assessment_actions",
@@ -37405,39 +37548,6 @@
       "source_location": "L22"
     },
     {
-      "id": "platform_src_components_assessment_assessmentview",
-      "label": "AssessmentView.tsx",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "assessmentview.tsx",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_components_assessment_assessmentview_assessment_columns",
-      "label": "ASSESSMENT_COLUMNS",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "assessment_columns",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L106"
-    },
-    {
-      "id": "platform_src_components_assessment_assessmentview_bar",
-      "label": "BAR",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "bar",
-      "source_file": "platform/src/components/assessment/AssessmentView.tsx",
-      "source_location": "L10"
-    },
-    {
       "id": "platform_src_features_assessment_scoring",
       "label": "scoring.ts",
       "_origin": "ast",
@@ -37447,17 +37557,6 @@
       "norm_label": "scoring.ts",
       "source_file": "platform/src/features/assessment/scoring.ts",
       "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_assessment_scoring_areas",
-      "label": "AREAS",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "areas",
-      "source_file": "platform/src/features/assessment/scoring.ts",
-      "source_location": "L30"
     },
     {
       "id": "platform_src_features_assessment_scoring_balance",
@@ -37524,17 +37623,6 @@
       "norm_label": "step",
       "source_file": "platform/src/features/assessment/scoring.ts",
       "source_location": "L113"
-    },
-    {
-      "id": "platform_src_features_member_progressextras",
-      "label": "ProgressExtras.tsx",
-      "_origin": "ast",
-      "community": 78,
-      "community_name": "scoring.ts",
-      "file_type": "code",
-      "norm_label": "progressextras.tsx",
-      "source_file": "platform/src/features/member/ProgressExtras.tsx",
-      "source_location": "L1"
     },
     {
       "id": "supabase_migrations_0024_turnstile_qr",
@@ -38113,7 +38201,7 @@
       "label": "progreso/page.tsx",
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "progreso/page.tsx",
       "source_file": "platform/src/app/[org]/app/progreso/page.tsx",
@@ -38124,7 +38212,7 @@
       "label": "metadata",
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "metadata",
       "source_file": "platform/src/app/[org]/app/progreso/page.tsx",
@@ -38135,32 +38223,43 @@
       "label": "ProgressScreen.tsx",
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "progressscreen.tsx",
       "source_file": "platform/src/app/[org]/app/progreso/ProgressScreen.tsx",
       "source_location": "L1"
     },
     {
+      "id": "platform_src_components_workout_strengthprogress",
+      "label": "StrengthProgress.tsx",
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "StrengthProgress.tsx",
+      "file_type": "code",
+      "norm_label": "strengthprogress.tsx",
+      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "platform_src_components_workout_strengthprogress_daykeyformatter",
+      "label": "dayKeyFormatter",
+      "_origin": "ast",
+      "community": 82,
+      "community_name": "StrengthProgress.tsx",
+      "file_type": "code",
+      "norm_label": "daykeyformatter",
+      "source_file": "platform/src/components/workout/StrengthProgress.tsx",
+      "source_location": "L19"
+    },
+    {
       "id": "platform_src_features_member_useprogram",
       "label": "useProgram.ts",
       "_origin": "ast",
       "community": 82,
-      "community_name": "useMember",
+      "community_name": "StrengthProgress.tsx",
       "file_type": "code",
       "norm_label": "useprogram.ts",
       "source_file": "platform/src/features/member/useProgram.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_payments_payplanbutton",
-      "label": "PayPlanButton.tsx",
-      "_origin": "ast",
-      "community": 82,
-      "community_name": "useMember",
-      "file_type": "code",
-      "norm_label": "payplanbutton.tsx",
-      "source_file": "platform/src/features/payments/PayPlanButton.tsx",
       "source_location": "L1"
     },
     {
@@ -38646,105 +38745,6 @@
       "norm_label": "adms.ts",
       "source_file": "platform/src/features/access/adms.ts",
       "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv",
-      "label": "scale-csv.ts",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "scale-csv.ts",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_assessment_scale_csv_matchers",
-      "label": "MATCHERS",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "matchers",
-      "source_file": "platform/src/features/assessment/scale-csv.ts",
-      "source_location": "L36"
-    },
-    {
-      "id": "platform_src_features_member_progression",
-      "label": "progression.ts",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "progression.ts",
-      "source_file": "platform/src/features/member/progression.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_member_progression_test",
-      "label": "progression.test.ts",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "progression.test.ts",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L1"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_down",
-      "label": "down",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "down",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L25"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_fit",
-      "label": "fit",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "fit",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L39"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_inbody",
-      "label": "inbody",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "inbody",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L57"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_tanita",
-      "label": "tanita",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "tanita",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L62"
-    },
-    {
-      "id": "platform_src_features_member_progression_test_weak",
-      "label": "weak",
-      "_origin": "ast",
-      "community": 87,
-      "community_name": "[...path]/route.ts",
-      "file_type": "code",
-      "norm_label": "weak",
-      "source_file": "platform/src/features/member/progression.test.ts",
-      "source_location": "L44"
     },
     {
       "id": "platform_src_features_payments_signature",
@@ -39257,7 +39257,7 @@
       "label": "app/horarios/page.tsx",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "app/horarios/page.tsx",
       "source_file": "platform/src/app/[org]/app/horarios/page.tsx",
@@ -39268,7 +39268,7 @@
       "label": "metadata",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "metadata",
       "source_file": "platform/src/app/[org]/app/horarios/page.tsx",
@@ -39279,7 +39279,7 @@
       "label": "PeakHoursScreen.tsx",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhoursscreen.tsx",
       "source_file": "platform/src/app/[org]/app/horarios/PeakHoursScreen.tsx",
@@ -39290,7 +39290,7 @@
       "label": "PeakHours.tsx",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "peakhours.tsx",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -39301,7 +39301,7 @@
       "label": "BAR_CLASS",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "bar_class",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -39312,7 +39312,7 @@
       "label": "DAY_LABELS",
       "_origin": "ast",
       "community": 90,
-      "community_name": "PeakHours.tsx",
+      "community_name": "useMember",
       "file_type": "code",
       "norm_label": "day_labels",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
@@ -40309,18 +40309,6 @@
       "source_location": "L10"
     },
     {
-      "id": "ref_html5_qrcode",
-      "label": "ref_html5_qrcode",
-      "_origin": "semantic",
-      "community": 0,
-      "community_name": "TurnstileKiosk.tsx",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "ref_html5_qrcode",
-      "source_file": "",
-      "type": "external"
-    },
-    {
       "id": "ctypes",
       "label": "ctypes",
       "_origin": "semantic",
@@ -40581,6 +40569,18 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "src_index",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "ref_html5_qrcode",
+      "label": "ref_html5_qrcode",
+      "_origin": "semantic",
+      "community": 73,
+      "community_name": "ReceptionScreen.tsx",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "ref_html5_qrcode",
       "source_file": "",
       "type": "external"
     },
@@ -48638,43 +48638,7 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen_passscreen",
-      "target": "platform_src_components_pass_memberqrpass_memberqrpass",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L105",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_app_org_app_pase_passscreen_passscreen",
-      "target": "platform_src_components_membership_membershipbanner_membershipbanner",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L117",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_app_org_app_pase_passscreen_passscreen",
       "target": "platform_src_features_member_memberprovider_usemember",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L22",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_app_org_app_pase_passscreen_passscreen",
-      "target": "platform_src_features_member_usemembership_usemembership",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -48686,6 +48650,18 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen_passscreen",
+      "target": "platform_src_features_member_usemembership_usemembership",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "platform_src_app_org_app_pase_passscreen_passscreen",
       "target": "platform_src_app_org_app_pase_passscreen_wait",
       "relation": "calls",
       "_origin": "ast",
@@ -48693,7 +48669,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L51",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -48705,7 +48681,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L86",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -50085,7 +50061,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L46",
+      "source_location": "L49",
       "weight": 1.0
     },
     {
@@ -61701,7 +61677,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "platform/src/features/payments/PayPlanButton.tsx",
-      "source_location": "L17",
+      "source_location": "L26",
       "weight": 1.0
     },
     {
@@ -61713,7 +61689,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "platform/src/features/payments/PayPlanButton.tsx",
-      "source_location": "L21",
+      "source_location": "L30",
       "weight": 1.0
     },
     {
@@ -68062,42 +68038,6 @@
       "context": "field",
       "source_file": "platform/src/components/classes/PeakHours.tsx",
       "source_location": "L21",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_components_pass_memberqrpass_memberqrpassprops",
-      "target": "platform_src_types_platform_checkintoken",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "field",
-      "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L16",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_components_pass_memberqrpass_memberqrpassprops",
-      "target": "platform_src_types_platform_membershipsummary",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "field",
-      "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L17",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_components_pass_memberqrpass_memberqrpassprops",
-      "target": "platform_src_types_platform_familymember",
-      "relation": "references",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "field",
-      "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -80332,6 +80272,18 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen",
+      "target": "platform_src_types_platform_checkintoken",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "platform_src_app_org_app_pase_passscreen",
       "target": "platform_src_components_pass_memberqrpass_memberqrpass",
       "relation": "imports",
       "_origin": "ast",
@@ -80368,18 +80320,6 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen",
-      "target": "platform_src_components_membership_status_no_membership",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L7",
-      "weight": 1.0
-    },
-    {
-      "source": "platform_src_app_org_app_pase_passscreen",
       "target": "platform_src_features_member_usemembership_usemembership",
       "relation": "imports",
       "_origin": "ast",
@@ -80404,7 +80344,7 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen",
-      "target": "platform_src_types_platform_checkintoken",
+      "target": "platform_src_features_payments_payplanbutton_payplanbutton",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -102645,6 +102585,19 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen",
+      "target": "platform_src_types_platform",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
+      "source_location": "L10",
+      "type_only": true,
+      "weight": 1.0
+    },
+    {
+      "source": "platform_src_app_org_app_pase_passscreen",
       "target": "ref_react",
       "relation": "imports_from",
       "_origin": "ast",
@@ -102717,7 +102670,7 @@
     },
     {
       "source": "platform_src_app_org_app_pase_passscreen",
-      "target": "platform_src_types_platform",
+      "target": "platform_src_features_payments_payplanbutton",
       "relation": "imports_from",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -102725,7 +102678,6 @@
       "context": "import",
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
       "source_location": "L9",
-      "type_only": true,
       "weight": 1.0
     },
     {
@@ -119998,7 +119950,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0
     },
     {
@@ -120009,7 +119961,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "platform/src/app/[org]/app/pase/PassScreen.tsx",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -121505,7 +121457,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "platform/src/components/pass/MemberQrPass.tsx",
-      "source_location": "L30",
+      "source_location": "L32",
       "weight": 1.0
     },
     {
@@ -149702,5 +149654,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6ca276b21521db0340d0a472bdc5080c17466863"
+  "built_at_commit": "b6dbb1b58852c1f5eaeaeea0bf777e7670efb9f3"
 }
