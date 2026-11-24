@@ -6,6 +6,7 @@ import { MembershipBanner } from '@/components/membership/MembershipBanner'
 import { useMember } from '@/features/member/MemberProvider'
 import { useMembership, NO_MEMBERSHIP } from '@/features/member/useMembership'
 import { getPassStatus } from '@/components/membership/status'
+import { PayPlanButton } from '@/features/payments/PayPlanButton'
 import type { CheckinToken } from '@/types/platform'
 
 /** Reintentos silenciosos de una renovación fallida antes de mostrar el error (la tablet del molinete no debe parpadear). */
@@ -113,6 +114,15 @@ export function PassScreen() {
         orgName={org.name}
         isLoading={!membership || (canEnter && loading && !token)}
         error={shownError}
+        action={
+          membership && !canEnter ? (
+            <PayPlanButton
+              label={getPassStatus(membership).kind === 'none' ? 'Elegir mi plan' : 'Renovar mi plan'}
+              reception={false}
+              neon
+            />
+          ) : undefined
+        }
       />
       {membership && <MembershipBanner membership={membership} />}
     </div>

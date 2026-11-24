@@ -25,6 +25,8 @@ export interface MemberQrPassProps {
   orgName?: string;
   isLoading?: boolean;
   error?: string | null;
+  /** Botón que se muestra dentro del cartel cuando no puede entrar (ej. «Elegir mi plan»). */
+  action?: React.ReactNode;
 }
 
 export const MemberQrPass: React.FC<MemberQrPassProps> = ({
@@ -38,6 +40,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
   orgName,
   isLoading = false,
   error = null,
+  action,
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
@@ -237,7 +240,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
         </div>
 
         {/* Bloque central: QR o motivo por el que no se puede ingresar */}
-        <div className="relative mx-auto my-2 w-60 h-60 p-3 rounded-2xl bg-[#09090b] border-2 border-zinc-800 flex flex-col items-center justify-center overflow-hidden">
+        <div className={`relative mx-auto my-2 w-60 ${canEnter ? 'h-60' : 'min-h-60'} p-3 rounded-2xl bg-[#09090b] border-2 ${status.kind === 'none' ? 'border-[#edcc36] shadow-[0_0_10px_#edcc36,0_0_28px_rgba(237,204,54,0.45)]' : 'border-zinc-800'} flex flex-col items-center justify-center ${canEnter ? 'overflow-hidden' : ''}`}>
           {!canEnter ? (
             <div className="text-center p-3 space-y-2 z-10">
               <div
@@ -253,6 +256,7 @@ export const MemberQrPass: React.FC<MemberQrPassProps> = ({
                 {status.kind === 'none' ? 'Sin plan activo' : 'Pase inhabilitado'}
               </h5>
               <p className="text-xs text-zinc-400 leading-snug">{status.message}</p>
+              {action}
             </div>
           ) : qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
