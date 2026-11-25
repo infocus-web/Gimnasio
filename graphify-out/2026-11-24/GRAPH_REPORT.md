@@ -1,16 +1,16 @@
-# Graph Report - Gimnasio  (2026-11-19)
+# Graph Report - Gimnasio  (2026-11-24)
 
 ## Corpus Check
-- 510 files · ~5,584,790 words
+- 510 files · ~5,584,959 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3504 nodes · 9315 edges · 230 communities (148 shown, 33 thin omitted)
+- 3504 nodes · 9311 edges · 235 communities (153 shown, 33 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6ca276b2`
+- Built from commit: `b6dbb1b5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -97,7 +97,7 @@
 - public.turnstile_scan
 - compilerOptions
 - main
-- useMember
+- StrengthProgress.tsx
 - Portero
 - admin/staff-account-actions.ts
 - ref_lucide_react
@@ -105,7 +105,7 @@
 - [...path]/route.ts
 - 0050_tv_pair_and_class_boards.sql
 - dependencies
-- PeakHours.tsx
+- useMember
 - aplicar_0032_0033.sql
 - 0038_public_signup.sql
 - clases.tsx
@@ -158,6 +158,7 @@
 - platform/vercel.json
 - 0044_kiosk_pair_code.sql
 - 0048_kiosk_slides.sql
+- maquina/[code]/page.tsx
 - private.member_file_allowed
 - test.qr
 - tsconfig.json
@@ -188,12 +189,16 @@
 - formatMoney
 - Hijo
 - sys
+- AssessmentView.tsx
 - private.mp_surcharge
 - Cámaras (PC del gimnasio)
 - public.rename_room
+- progression.test.ts
 - Card
 - public.rename_room
 - equipo/clave/page.tsx
+- scale-csv.ts
+- period.ts
 - retention-actions.ts
 - login/actions.ts
 
@@ -216,19 +221,19 @@
   platform/package.json → package.json
 - `@types/react@^19.2.18` --declares--> `@types/react`  [EXTRACTED]
   platform/package.json → package.json
-- `MiniForm()` --calls--> `useActionForm()`  [EXTRACTED]
-  platform/src/features/buffet/AdminForms.tsx → platform/src/features/admin/ui.tsx
 - `confirm()` --calls--> `createClient()`  [EXTRACTED]
   platform/src/app/auth/confirm/page.tsx → platform/src/lib/supabase/server.ts
+- `PublicPassPage()` --calls--> `createClient()`  [EXTRACTED]
+  platform/src/app/[org]/pase/[code]/page.tsx → platform/src/lib/supabase/server.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (230 total, 33 thin omitted)
+## Communities (235 total, 33 thin omitted)
 
 ### Community 0 - "TurnstileKiosk.tsx"
 Cohesion: 0.05
-Nodes (66): dynamic, GET(), metadata, ScreensPage(), AD_SLIDES, call(), cookieName(), deniedText() (+58 more)
+Nodes (65): dynamic, GET(), metadata, ScreensPage(), AD_SLIDES, call(), cookieName(), deniedText() (+57 more)
 
 ### Community 1 - "createClient"
 Cohesion: 0.08
@@ -295,8 +300,8 @@ Cohesion: 0.15
 Nodes (21): ActivitiesPage(), metadata, metadata, RoomsPage(), metadata, SessionPage(), STATUS, EQUIPMENT_KINDS (+13 more)
 
 ### Community 17 - "negocio/page.tsx"
-Cohesion: 0.16
-Nodes (22): DashboardBody(), metadata, n(), TABS, Delta(), Heatmap(), Kpi(), PeakVsClasses() (+14 more)
+Cohesion: 0.22
+Nodes (13): DashboardBody(), metadata, n(), TABS, Delta(), Heatmap(), Kpi(), PeakVsClasses() (+5 more)
 
 ### Community 18 - "errorText"
 Cohesion: 0.12
@@ -367,8 +372,8 @@ Cohesion: 0.16
 Nodes (27): public.class_sessions_guard, public.member_secrets, class_sessions_guard, private.promote_waitlist(), private.resolve_membership_for_class(), public.book_class(), public.bookings, public.cancel_booking() (+19 more)
 
 ### Community 35 - "ActiveWorkout.tsx"
-Cohesion: 0.15
-Nodes (26): EntrenarPage(), metadata, WorkoutScreen(), ActiveWorkout(), ActiveWorkoutProps, fmtClock(), fmtKg(), kgFormatter (+18 more)
+Cohesion: 0.17
+Nodes (22): EntrenarPage(), metadata, WorkoutScreen(), ActiveWorkout(), ActiveWorkoutProps, fmtClock(), fmtKg(), kgFormatter (+14 more)
 
 ### Community 36 - "0014_payments_schedule_mfa.sql"
 Cohesion: 0.11
@@ -411,8 +416,8 @@ Cohesion: 0.17
 Nodes (11): payments_force_recorder, public.payment_ledger, public.void_payment(), private.payments_force_recorder, public.billing_accounts, public.invoices, public.members, public.membership_plans (+3 more)
 
 ### Community 46 - "labels.ts"
-Cohesion: 0.11
-Nodes (22): GuestPass, GuestsScreen(), Quota, ymd(), GuestsPage(), metadata, dynamic, metadata (+14 more)
+Cohesion: 0.12
+Nodes (20): GuestPass, GuestsScreen(), Quota, ymd(), dynamic, metadata, PublicPass, PublicPassPage() (+12 more)
 
 ### Community 47 - "Button"
 Cohesion: 0.17
@@ -443,8 +448,8 @@ Cohesion: 0.21
 Nodes (22): json, os, shutil, subprocess, guardar_estado(), asistente(), config_path(), configurar() (+14 more)
 
 ### Community 54 - "platform.ts"
-Cohesion: 0.16
-Nodes (19): ClassesScreen(), KNOWN_ERRORS, ClasesPage(), metadata, capitalize(), ClassSchedule(), ClassScheduleProps, equipmentNoun() (+11 more)
+Cohesion: 0.17
+Nodes (18): ClassesScreen(), KNOWN_ERRORS, ClasesPage(), metadata, capitalize(), ClassSchedule(), ClassScheduleProps, equipmentNoun() (+10 more)
 
 ### Community 55 - "payments/actions.ts"
 Cohesion: 0.12
@@ -483,8 +488,8 @@ Cohesion: 0.23
 Nodes (11): metadata, PostersPage(), approveStaffRequest(), generatePassword(), origin(), PUBLIC_ERRORS, submitStaffRequest(), PrintButton() (+3 more)
 
 ### Community 64 - "PassScreen.tsx"
-Cohesion: 0.18
-Nodes (17): metadata, PassScreen(), wait(), MembershipBanner(), MembershipBannerProps, formatPeriodEnd(), getPassStatus(), isNoMembership() (+9 more)
+Cohesion: 0.14
+Nodes (20): metadata, PassScreen(), wait(), MembershipBanner(), MembershipBannerProps, formatPeriodEnd(), getPassStatus(), isNoMembership() (+12 more)
 
 ### Community 65 - "0013_admin_panel.sql"
 Cohesion: 0.12
@@ -511,16 +516,16 @@ Cohesion: 0.10
 Nodes (19): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+11 more)
 
 ### Community 71 - "routine/route.ts"
-Cohesion: 0.09
-Nodes (31): dynamic, json(), maxDuration, POST(), dynamic, ExerciseCard(), fmtDay(), fmtSets() (+23 more)
+Cohesion: 0.18
+Nodes (16): dynamic, json(), maxDuration, POST(), assessmentPromptText(), aiExercise, aiRoutine, buildPrompt() (+8 more)
 
 ### Community 72 - "assessment-actions.ts"
 Cohesion: 0.27
 Nodes (10): addScaleReading(), assessmentSchema, coach(), deleteAssessment(), importScaleCsv(), int(), opt(), saveAssessment() (+2 more)
 
 ### Community 73 - "ReceptionScreen.tsx"
-Cohesion: 0.16
-Nodes (16): DENIED, Entry, fmtDay(), fmtTime(), GuestEntry, METHOD, Quick, RawResult (+8 more)
+Cohesion: 0.15
+Nodes (17): DENIED, Entry, fmtDay(), fmtTime(), GuestEntry, METHOD, Quick, RawResult (+9 more)
 
 ### Community 74 - "referidos/page.tsx"
 Cohesion: 0.23
@@ -539,8 +544,8 @@ Cohesion: 0.17
 Nodes (12): qrcode@^1.5.4, qrcode, dependencies, next@^16.3.6, qrcode@^1.5.4, react@^19.3.0, react-is@^19.3.0, server-only@^0.0.1 (+4 more)
 
 ### Community 78 - "scoring.ts"
-Cohesion: 0.10
-Nodes (30): ASSESSMENT_COLUMNS, AssessmentRow, AssessmentView(), BAR, fmtDate(), toAssessmentRow(), AreaKey, AREAS (+22 more)
+Cohesion: 0.16
+Nodes (17): AreaScore, AssessmentScores, avg(), BALANCE, BODY_FAT, byAge(), clamp(), Level (+9 more)
 
 ### Community 79 - "public.turnstile_scan"
 Cohesion: 0.18
@@ -554,9 +559,9 @@ Nodes (16): compilerOptions, allowImportingTsExtensions, erasableSyntaxOnly, lib
 Cohesion: 0.17
 Nodes (9): logging, Aperturas, cargar_json(), conectar(), leer_config(), main(), Plataforma, Aperturas pedidas por la tablet del molinete (QR). Se ejecutan al instante; no… (+1 more)
 
-### Community 82 - "useMember"
-Cohesion: 0.26
-Nodes (10): metadata, ProgresoPage(), ProgressScreen(), useMember(), ActiveProgram, ProgramDay, useProgram(), onlinePaymentsEnabled() (+2 more)
+### Community 82 - "StrengthProgress.tsx"
+Cohesion: 0.24
+Nodes (11): metadata, ProgresoPage(), ProgressScreen(), dayKeyFormatter, localDayKey(), StrengthProgress(), StrengthProgressProps, ActiveProgram (+3 more)
 
 ### Community 83 - "Portero"
 Cohesion: 0.24
@@ -575,8 +580,8 @@ Cohesion: 0.67
 Nodes (3): @types/react@^19.2.18, @types/react, @types/react@^19.2.18
 
 ### Community 87 - "[...path]/route.ts"
-Cohesion: 0.05
-Nodes (57): createSchema, createStaffAccount(), deleteStaff(), generatePassword(), isExclusiveStaffAccount(), isThisGymOnlyAccount(), loadTarget(), resetStaffPassword() (+49 more)
+Cohesion: 0.09
+Nodes (37): createSchema, createStaffAccount(), deleteStaff(), generatePassword(), isExclusiveStaffAccount(), isThisGymOnlyAccount(), loadTarget(), resetStaffPassword() (+29 more)
 
 ### Community 88 - "0050_tv_pair_and_class_boards.sql"
 Cohesion: 0.16
@@ -586,9 +591,9 @@ Nodes (8): public.class_boards, public.floor_tv_pair_claim(), public.tv_board_hi
 Cohesion: 0.14
 Nodes (14): dependencies, html5-qrcode@^2.3.8, lucide-react@^1.47.0, react@^19.2.8, react-dom@^19.2.8, react-router-dom@^7.18.4, @supabase/supabase-js@^2.117.1, html5-qrcode (+6 more)
 
-### Community 90 - "PeakHours.tsx"
+### Community 90 - "useMember"
 Cohesion: 0.18
-Nodes (17): HorariosPage(), metadata, PeakHoursScreen(), BAR_CLASS, DAY_LABELS, fmtAvg(), hourOf(), hoursForDay() (+9 more)
+Nodes (18): HorariosPage(), metadata, PeakHoursScreen(), BAR_CLASS, DAY_LABELS, fmtAvg(), hourOf(), hoursForDay() (+10 more)
 
 ### Community 91 - "aplicar_0032_0033.sql"
 Cohesion: 0.15
@@ -667,8 +672,8 @@ Cohesion: 0.13
 Nodes (17): generateMetadata(), GymHome(), NAV, revalidate, IosInstallButton(), Step(), REVEAL_BOOT, RevealObserver() (+9 more)
 
 ### Community 112 - "MemberProvider.tsx"
-Cohesion: 0.17
-Nodes (15): MemberAppLayout(), MemberNav(), TABS, Ctx, MemberProvider(), MemberState, SurveyPrompt(), getMemberContext (+7 more)
+Cohesion: 0.15
+Nodes (17): GuestsPage(), metadata, MemberAppLayout(), MemberNav(), TABS, Ctx, MemberProvider(), MemberState (+9 more)
 
 ### Community 113 - "_claude_tmp/LoginForm.tsx"
 Cohesion: 0.50
@@ -782,6 +787,10 @@ Nodes (11): approveDraft(), claimTvCode(), FLOOR_ERRORS, floorCtx(), linkTv(), m
 Cohesion: 0.50
 Nodes (3): crons, framework, $schema
 
+### Community 146 - "maquina/[code]/page.tsx"
+Cohesion: 0.16
+Nodes (15): dynamic, ExerciseCard(), fmtDay(), fmtSets(), MachineQrPage(), metadata, AI_DAILY_LIMIT, DashboardTotals (+7 more)
+
 ### Community 218 - "formatMoney"
 Cohesion: 0.11
 Nodes (27): addDays(), fmtDay(), GananciasPage(), metadata, asPrice(), metadata, ProductosPage(), metadata (+19 more)
@@ -790,6 +799,10 @@ Nodes (27): addDays(), fmtDay(), GananciasPage(), metadata, asPrice(), metadata,
 Cohesion: 0.40
 Nodes (4): sys, Prueba: ¿el lector abre el molinete a pedido desde la red? Le manda al lector…, Prueba de SOLO LECTURA del lector ZKTeco MB360 por la red local (puerto 4370).…, zk
 
+### Community 221 - "AssessmentView.tsx"
+Cohesion: 0.23
+Nodes (13): ASSESSMENT_COLUMNS, AssessmentRow, AssessmentView(), BAR, fmtDate(), toAssessmentRow(), AreaKey, AREAS (+5 more)
+
 ### Community 223 - "Cámaras (PC del gimnasio)"
 Cohesion: 0.33
 Nodes (5): Calidad y conexión, Cámaras (PC del gimnasio), El .exe, Instalación, Qué hace
@@ -797,6 +810,10 @@ Nodes (5): Calidad y conexión, Cámaras (PC del gimnasio), El .exe, Instalació
 ### Community 224 - "public.rename_room"
 Cohesion: 0.40
 Nodes (4): public.rename_room(), public.class_series, public.class_sessions, public.rooms
+
+### Community 225 - "progression.test.ts"
+Cohesion: 0.20
+Nodes (11): fmt(), LastSet, LoadSuggestion, parseRepRange(), roundLoad(), suggestLoad(), down, fit (+3 more)
 
 ### Community 226 - "Card"
 Cohesion: 0.11
@@ -810,6 +827,14 @@ Nodes (4): public.rename_room(), public.class_series, public.class_sessions, pub
 Cohesion: 0.53
 Nodes (4): ChangePasswordForm(), ChangePasswordPage(), metadata, safeNext()
 
+### Community 229 - "scale-csv.ts"
+Cohesion: 0.31
+Nodes (9): MATCHERS, norm(), ParsedScale, parseScaleCsv(), parseScaleDate(), ScaleRow, splitLine(), toNumber() (+1 more)
+
+### Community 230 - "period.ts"
+Cohesion: 0.47
+Nodes (9): addDays(), d(), daysBetween(), firstOfMonth(), lastOfMonth(), Period, PeriodKey, resolvePeriod() (+1 more)
+
 ### Community 234 - "retention-actions.ts"
 Cohesion: 0.38
 Nodes (9): cancelChallenge(), challengeSchema, errorText(), FORBIDDEN, manager(), saveChallenge(), setNpsEnabled(), settleChallenge() (+1 more)
@@ -819,23 +844,23 @@ Cohesion: 0.46
 Nodes (7): emailForDniLogin(), isEmail(), onlyDigits(), resetPasswordWithCode(), resolveEmail(), Result, sendPasswordResetCode()
 
 ## Knowledge Gaps
-- **625 isolated node(s):** `metadata`, `DatabaseWithoutInternals`, `DefaultSchema`, `Tables`, `TablesInsert` (+620 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1237 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **626 isolated node(s):** `MemberQrPassProps`, `Resp`, `Result`, `Unlock`, `Slide` (+621 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1238 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `react` to `TurnstileKiosk.tsx`, `encuestas/page.tsx`, `StaffLoginForm.tsx`, `buffet/actions.ts`, `board-actions.ts`, `online/page.tsx`, `Portal.tsx`, `[sessionId]/page.tsx`, `errorText`, `next`, `MemberDetail.tsx`, `pases/page.tsx`, `src/components/ui.tsx`, `ActiveWorkout.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `VideoRTC`, `app-ios/package.json`, `labels.ts`, `Button`, `index.tsx`, `retention.ts`, `engagement/actions.ts`, `platform.ts`, `App.tsx`, `app-ios/src/components/ui.tsx`, `AuthProvider.tsx`, `PassScreen.tsx`, `ReceptionScreen.tsx`, `scoring.ts`, `useMember`, `ref_lucide_react`, `PeakHours.tsx`, `formatMoney`, `clases.tsx`, `HelpVideoButton.tsx`, `createClient`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `TodayLive.tsx`, `Dashboard.tsx`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `MemberProvider.tsx`, `_claude_tmp/LoginForm.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `next` connect `next` to `TurnstileKiosk.tsx`, `createClient`, `encuestas/page.tsx`, `StaffLoginForm.tsx`, `buffet/actions.ts`, `billing-actions.ts`, `board-actions.ts`, `online/page.tsx`, `floor/actions.ts`, `dbMessage`, `createAdminClient`, `[sessionId]/page.tsx`, `negocio/page.tsx`, `admin/actions.ts`, `react`, `pases/page.tsx`, `ActiveWorkout.tsx`, `accesos/page.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `labels.ts`, `retention.ts`, `admin/layout.tsx`, `engagement/actions.ts`, `platform.ts`, `payments/actions.ts`, `platform/package.json`, `padron-actions.ts`, `PassScreen.tsx`, `zod`, `routine/route.ts`, `assessment-actions.ts`, `ReceptionScreen.tsx`, `referidos/page.tsx`, `mercadopago.ts`, `dependencies`, `useMember`, `ref_lucide_react`, `[...path]/route.ts`, `formatMoney`, `PeakHours.tsx`, `createClient`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `retention-actions.ts`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `MemberProvider.tsx`, `_claude_tmp/LoginForm.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
-- **Why does `createClient()` connect `createClient` to `TurnstileKiosk.tsx`, `encuestas/page.tsx`, `buffet/actions.ts`, `billing-actions.ts`, `board-actions.ts`, `online/page.tsx`, `floor/actions.ts`, `dbMessage`, `[sessionId]/page.tsx`, `negocio/page.tsx`, `admin/actions.ts`, `formObject`, `next`, `pases/page.tsx`, `accesos/page.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `labels.ts`, `admin/layout.tsx`, `engagement/actions.ts`, `payments/actions.ts`, `padron-actions.ts`, `zod`, `routine/route.ts`, `assessment-actions.ts`, `referidos/page.tsx`, `mercadopago.ts`, `admin/staff-account-actions.ts`, `ref_lucide_react`, `formatMoney`, `createClient`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `TodayLive.tsx`, `retention-actions.ts`, `login/actions.ts`, `MemberProvider.tsx`, `[programId]/page.tsx`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
-- **What connects `metadata`, `DatabaseWithoutInternals`, `DefaultSchema` to the rest of the system?**
-  _625 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `react` connect `react` to `TurnstileKiosk.tsx`, `encuestas/page.tsx`, `StaffLoginForm.tsx`, `buffet/actions.ts`, `board-actions.ts`, `online/page.tsx`, `Portal.tsx`, `[sessionId]/page.tsx`, `errorText`, `next`, `MemberDetail.tsx`, `pases/page.tsx`, `src/components/ui.tsx`, `ActiveWorkout.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `VideoRTC`, `app-ios/package.json`, `labels.ts`, `Button`, `index.tsx`, `retention.ts`, `engagement/actions.ts`, `platform.ts`, `App.tsx`, `app-ios/src/components/ui.tsx`, `AuthProvider.tsx`, `PassScreen.tsx`, `ReceptionScreen.tsx`, `StrengthProgress.tsx`, `ref_lucide_react`, `useMember`, `formatMoney`, `clases.tsx`, `HelpVideoButton.tsx`, `createClient`, `AssessmentView.tsx`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `TodayLive.tsx`, `Dashboard.tsx`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `MemberProvider.tsx`, `_claude_tmp/LoginForm.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
+  _High betweenness centrality (0.103) - this node is a cross-community bridge._
+- **Why does `next` connect `next` to `TurnstileKiosk.tsx`, `createClient`, `encuestas/page.tsx`, `StaffLoginForm.tsx`, `buffet/actions.ts`, `billing-actions.ts`, `board-actions.ts`, `online/page.tsx`, `floor/actions.ts`, `dbMessage`, `createAdminClient`, `[sessionId]/page.tsx`, `negocio/page.tsx`, `maquina/[code]/page.tsx`, `admin/actions.ts`, `react`, `pases/page.tsx`, `ActiveWorkout.tsx`, `accesos/page.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `labels.ts`, `retention.ts`, `admin/layout.tsx`, `engagement/actions.ts`, `platform.ts`, `payments/actions.ts`, `platform/package.json`, `padron-actions.ts`, `PassScreen.tsx`, `zod`, `routine/route.ts`, `assessment-actions.ts`, `ReceptionScreen.tsx`, `referidos/page.tsx`, `mercadopago.ts`, `dependencies`, `StrengthProgress.tsx`, `ref_lucide_react`, `[...path]/route.ts`, `formatMoney`, `useMember`, `createClient`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `retention-actions.ts`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `MemberProvider.tsx`, `_claude_tmp/LoginForm.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
+  _High betweenness centrality (0.061) - this node is a cross-community bridge._
+- **Why does `createClient()` connect `createClient` to `TurnstileKiosk.tsx`, `encuestas/page.tsx`, `buffet/actions.ts`, `billing-actions.ts`, `board-actions.ts`, `online/page.tsx`, `floor/actions.ts`, `dbMessage`, `[sessionId]/page.tsx`, `negocio/page.tsx`, `maquina/[code]/page.tsx`, `admin/actions.ts`, `formObject`, `next`, `pases/page.tsx`, `accesos/page.tsx`, `context.ts`, `server.ts`, `RatesForm.tsx`, `labels.ts`, `admin/layout.tsx`, `engagement/actions.ts`, `payments/actions.ts`, `padron-actions.ts`, `zod`, `routine/route.ts`, `assessment-actions.ts`, `referidos/page.tsx`, `mercadopago.ts`, `admin/staff-account-actions.ts`, `ref_lucide_react`, `formatMoney`, `createClient`, `Card`, `getPublicGym`, `equipo/clave/page.tsx`, `TodayLive.tsx`, `retention-actions.ts`, `login/actions.ts`, `MemberProvider.tsx`, `[programId]/page.tsx`?**
+  _High betweenness centrality (0.056) - this node is a cross-community bridge._
+- **What connects `MemberQrPassProps`, `Resp`, `Result` to the rest of the system?**
+  _626 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `TurnstileKiosk.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05198358413132695 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.052941176470588235 - nodes in this community are weakly interconnected._
 - **Should `createClient` be split into smaller, more focused modules?**
   _Cohesion score 0.08408163265306122 - nodes in this community are weakly interconnected._
 - **Should `agente.py` be split into smaller, more focused modules?**
