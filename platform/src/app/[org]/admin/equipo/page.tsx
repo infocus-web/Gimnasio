@@ -4,7 +4,7 @@ import { Clock, X, Lock, ChevronDown } from 'lucide-react'
 import { getAdminContext, ROLE_LABELS } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { cancelInvitation, inviteStaff, resendInvitation, setTrainerBillingAccess, setTrainerSalesAccess, setTrainerScheduleAccess, updateStaff } from '@/features/admin/actions'
+import { cancelInvitation, inviteStaff, resendInvitation, setTrainerBillingAccess, setTrainerReceptionAccess, setTrainerSalesAccess, setTrainerScheduleAccess, updateStaff } from '@/features/admin/actions'
 import { ActionButton } from '@/features/admin/ConfirmAction'
 import { createStaffAccount, deleteStaff, resetStaffPassword, setStaffBlocked } from '@/features/admin/staff-account-actions'
 import { fmtDate } from '@/features/admin/format'
@@ -56,7 +56,7 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
   if (!ctx.can('staff.manage')) return <p className="text-sm text-zinc-400">Solo el dueño o un administrador gestiona el equipo.</p>
 
   const supabase = await createClient()
-  const [{ data: staff }, { data: invites }, { data: requests }, { data: overrides }, { data: salesOverrides }, { data: billingOverrides }] = await Promise.all([
+  const [{ data: staff }, { data: invites }, { data: requests }, { data: overrides }, { data: salesOverrides }, { data: billingOverrides }, { data: receptionOverrides }] = await Promise.all([
     supabase
       .from('staff')
       .select('id, display_name, role, active, user_id, created_at')
@@ -81,10 +81,13 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
     supabase.from('staff_permission_overrides').select('staff_id, granted').eq('permission', 'sales.write'),
     // Profes habilitados para cobrar cuotas (0062)
     supabase.from('staff_permission_overrides').select('staff_id, granted').eq('permission', 'billing.write'),
+    // Profes que además trabajan de recepcionistas
+    supabase.from('staff_permission_overrides').select('staff_id, granted').eq('permission', 'checkins.manage'),
   ])
   const scheduleBlocked = new Set((overrides ?? []).filter((o) => !o.granted).map((o) => o.staff_id))
   const canSell = new Set((salesOverrides ?? []).filter((o) => o.granted).map((o) => o.staff_id))
   const canCharge = new Set((billingOverrides ?? []).filter((o) => o.granted).map((o) => o.staff_id))
+  const isReception = new Set((receptionOverrides ?? []).filter((o) => o.granted).map((o) => o.staff_id))
   const h = await headers()
   const padronUrl = `${h.get('x-forwarded-proto') ?? 'https'}://${h.get('x-forwarded-host') ?? h.get('host')}/${slug}/padron`
 
@@ -197,9 +200,19 @@ export default async function TeamPage({ params }: PageProps<'/[org]/admin/equip
                         >
                           Cobros <SwitchVisual on={canCharge.has(s.id)} />
                         </ActionButton>
+                        <ActionButton
+                          action={setTrainerReceptionAccess.bind(null, slug, s.id, !isReception.has(s.id))}
+                          ariaPressed={isReception.has(s.id)}
+                          ariaLabel={`${s.display_name} también es recepcionista`}
+                          title="También trabaja de recepcionista: caja, pagos, planes y membresías, socios e ingreso manual. Sigue siendo profe."
+                          className={SWITCH_BUTTON}
+                        >
+                          Recepción <SwitchVisual on={isReception.has(s.id)} />
+                        </ActionButton>
                         <InfoTip label="Permisos del profesor">
                           <p><strong>Agenda:</strong> maneja sus horarios y cupos, anota socios y cancela sus clases.</p>
                           <p><strong>Ventas:</strong> vende productos en el mostrador. No ve la caja ni los pagos.</p>
+                          <p><strong>Recepción:</strong> además de profe, trabaja de recepcionista: ve la caja y los pagos, cobra, cambia planes y membresías, edita socios y hace el ingreso manual. No necesita verificación en dos pasos.</p>
                           <p><strong>Cobros:</strong> busca cualquier socio y le registra el pago de la cuota (y le renueva o cambia el plan). No ve la caja.</p>
                           <p>Verde = activado. Tocá el interruptor para cambiarlo.</p>
                         </InfoTip>

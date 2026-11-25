@@ -502,3 +502,31 @@ export async function setTrainerBillingAccess(slug: string, staffId: string, all
   revalidatePath(`/${slug}/admin`, 'layout')
   return { ok: true, message: allow ? 'Ahora puede cobrar cuotas.' : 'Ya no puede cobrar cuotas.' }
 }
+
+/**
+ * ¿El profe también trabaja de recepcionista? Por defecto no.
+ * Sigue siendo profe (no pierde su panel ni necesita verificación en dos pasos) y suma todo lo de Recepción:
+ * ver la caja y los pagos, cobrar, cambiar planes y membresías, editar socios, ingreso manual y reservas.
+ * Al apagarlo se quita solo lo propio de recepción; Ventas y Cobros quedan como estaban en sus interruptores.
+ */
+const RECEPTION_EXTRA_PERMS = ['billing.read', 'bookings.manage', 'checkins.manage', 'members.write'] as const
+const RECEPTION_ALL_PERMS = [...RECEPTION_EXTRA_PERMS, 'billing.write', 'members.read', 'sales.write'] as const
+
+export async function setTrainerReceptionAccess(slug: string, staffId: string, allow: boolean, _prev?: ActionState): Promise<ActionState> {
+  const ctx = await getAdminContext(slug)
+  if (!ctx?.can('staff.manage')) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: target } = await supabase.from('staff').select('id, role').eq('id', staffId).eq('org_id', ctx.org.id).maybeSingle()
+  if (!target || target.role !== 'trainer') return { message: 'Esa opción es solo para profesores.' }
+  const { error } = allow
+    ? await supabase
+        .from('staff_permission_overrides')
+        .upsert(
+          RECEPTION_ALL_PERMS.map((permission) => ({ staff_id: staffId, permission, granted: true })),
+          { onConflict: 'staff_id,permission' },
+        )
+    : await supabase.from('staff_permission_overrides').delete().eq('staff_id', staffId).in('permission', [...RECEPTION_EXTRA_PERMS])
+  if (error) return { message: dbMessage(error) }
+  revalidatePath(`/${slug}/admin`, 'layout')
+  return { ok: true, message: allow ? 'Ahora también es recepcionista.' : 'Ya no tiene acceso de recepción.' }
+}
