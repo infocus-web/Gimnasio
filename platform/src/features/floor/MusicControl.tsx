@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { ListMusic, Loader2, Music, Pause, Play, Shuffle, SkipBack, SkipForward, Volume1, Volume2 } from 'lucide-react'
+import { ListMusic, Loader2, Music, Pause, Play, Shuffle, SkipBack, SkipForward, Upload, Volume1, Volume2 } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { fmtDuration, type MusicState, type MusicTrack } from '@/features/screens/music'
 
@@ -17,13 +17,17 @@ export function MusicControl({
   tracks,
   control,
   manageHint = true,
+  library,
 }: {
   state: MusicState
   tracks: MusicTrack[]
   control: (action: Action, value?: string) => Promise<ActionState & { state?: MusicState }>
-  /** mostrar "Los temas se suben en Pantallas → Música" */
+  /** mostrar cómo cargar temas cuando no hay */
   manageHint?: boolean
+  /** lista para subir/ordenar/borrar temas (se abre con "Subir y ordenar temas") */
+  library?: ReactNode
 }) {
+  const [showLibrary, setShowLibrary] = useState(false)
   const router = useRouter()
   const [state, setState] = useState(initial)
   const [pending, start] = useTransition()
@@ -61,7 +65,7 @@ export function MusicControl({
 
       {!active.length ? (
         <p className="text-sm text-zinc-400">
-          Todavía no hay música cargada.{manageHint ? ' Administración la sube en Pantallas → Música.' : ''}
+          Todavía no hay música cargada.{manageHint && library ? ' Subí tus temas acá abajo.' : ''}
         </p>
       ) : (
         <>
@@ -169,6 +173,21 @@ export function MusicControl({
             </ul>
           )}
         </>
+      )}
+      {library && (
+        <div className="space-y-3 border-t border-zinc-800 pt-3">
+          {active.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={showLibrary}
+              onClick={() => setShowLibrary((v) => !v)}
+              className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[#edcc36]"
+            >
+              <Upload className="h-4 w-4" aria-hidden="true" /> {showLibrary ? 'Ocultar temas cargados' : 'Subir y ordenar temas'}
+            </button>
+          )}
+          {(showLibrary || !active.length) && library}
+        </div>
       )}
       {state.tv_linked === false && <p className="text-xs text-amber-300">No hay una TV vinculada: vinculala en Pantallas → TV de la sala.</p>}
       {error && (

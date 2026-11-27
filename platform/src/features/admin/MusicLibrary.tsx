@@ -46,7 +46,7 @@ function durationOf(f: File): Promise<number | null> {
 
 const titleOf = (name: string) => name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'Tema'
 
-/** Administración: subir MP3/M4A para la TV, ordenarlos, pausarlos o borrarlos. */
+/** Todo el equipo: subir MP3/M4A para la TV, ordenarlos, pausarlos o borrarlos. */
 export function MusicLibrary({
   orgId,
   tracks,

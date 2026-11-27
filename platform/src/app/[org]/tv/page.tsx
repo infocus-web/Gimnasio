@@ -1,20 +1,15 @@
-import type { Metadata, Route, Viewport } from 'next'
-import { headers } from 'next/headers'
+import type { Route } from 'next'
 import { redirect } from 'next/navigation'
-import { TvScreen } from '@/features/floor/TvScreen'
 
-export const metadata: Metadata = { title: 'Pantalla de la sala', robots: { index: false, follow: false } }
-export const viewport: Viewport = { themeColor: '#000000' }
-
-/** Chrome anterior al 111 (televisores viejos) no puede mostrar esta pantalla: va a la versión compatible */
-function isOldChrome(ua: string) {
-  const m = /Chrome\/(\d+)/.exec(ua)
-  return !!m && Number(m[1]) < 111
-}
-
-/** Pantalla para el TV de la sala. Se vincula desde Panel → Pantallas. */
+/**
+ * Pantalla para el TV de la sala. Se vincula desde Panel → Pantallas.
+ *
+ * Todas las TVs usan la versión compatible (/<gym>/tv/lite): es liviana, anda en navegadores
+ * viejos (Chrome 72) y nuevos (Fully Kiosk, Chromecast) y es la que tiene todo: pizarra del profe,
+ * cronómetro con sonido, textos sobre las imágenes, publicidad con videos y música.
+ * (La versión anterior en React, features/floor/TvScreen, queda sin usar.)
+ */
 export default async function TvPage({ params }: { params: Promise<{ org: string }> }) {
   const { org: slug } = await params
-  if (isOldChrome((await headers()).get('user-agent') ?? '')) redirect(`/${slug}/tv/lite` as Route)
-  return <TvScreen slug={slug} />
+  redirect(`/${slug}/tv/lite` as Route)
 }

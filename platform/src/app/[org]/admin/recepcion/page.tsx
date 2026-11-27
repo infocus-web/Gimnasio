@@ -9,7 +9,8 @@ import { todayYMD } from '@/features/admin/format'
 import { ReceptionScreen } from './ReceptionScreen'
 import { MusicControl } from '@/features/floor/MusicControl'
 import { loadMusic } from '@/features/floor/music-data'
-import { musicControl } from '@/features/floor/music-actions'
+import { addMusicTrack, deleteMusicTrack, moveMusicTrack, musicControl, toggleMusicTrack } from '@/features/floor/music-actions'
+import { MusicLibrary } from '@/features/admin/MusicLibrary'
 
 export const metadata: Metadata = { title: 'Recepción' }
 
@@ -146,7 +147,21 @@ export default async function RecepcionPage({ params }: PageProps<'/[org]/admin/
         canBill={ctx.can('billing.write')}
         alerts={alerts}
       />
-      {music && <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} />}
+      {music && (
+        <MusicControl
+          state={music.state}
+          tracks={music.tracks}
+          control={musicControl.bind(null, slug)}
+          library={<MusicLibrary
+            orgId={ctx.org.id}
+            tracks={music.tracks}
+            add={addMusicTrack.bind(null, slug)}
+            remove={deleteMusicTrack.bind(null, slug)}
+            toggle={toggleMusicTrack.bind(null, slug)}
+            move={moveMusicTrack.bind(null, slug)}
+          />}
+        />
+      )}
     </div>
   )
 }

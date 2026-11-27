@@ -31,9 +31,9 @@ export async function musicControl(
   return { ok: true, state: cleanMusicState(data) }
 }
 
+/** Subir, ordenar y borrar temas: todo el equipo (0066) */
 async function adminCtx(slug: string) {
-  const ctx = await getAdminContext(slug)
-  return ctx?.can('org.manage') ? ctx : null
+  return getAdminContext(slug)
 }
 
 /** El archivo ya se subió al bucket desde el navegador: se registra al final de la lista. */

@@ -6,7 +6,8 @@ import { boardSound, boardTimer, deleteBoard, hideBoard, quickTimer, saveBoard, 
 import { boardMediaUrl, cleanMedia, cleanTimer } from '@/features/screens/board'
 import { MusicControl } from '@/features/floor/MusicControl'
 import { loadMusic } from '@/features/floor/music-data'
-import { musicControl } from '@/features/floor/music-actions'
+import { addMusicTrack, deleteMusicTrack, moveMusicTrack, musicControl, toggleMusicTrack } from '@/features/floor/music-actions'
+import { MusicLibrary } from '@/features/admin/MusicLibrary'
 
 export const metadata: Metadata = { title: 'Pizarra TV' }
 
@@ -42,7 +43,21 @@ export default async function BoardPage({ params }: PageProps<'/[org]/admin/mis-
 
   return (
     <div className="space-y-5">
-    {music && <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} />}
+    {music && (
+        <MusicControl
+          state={music.state}
+          tracks={music.tracks}
+          control={musicControl.bind(null, slug)}
+          library={<MusicLibrary
+            orgId={ctx.org.id}
+            tracks={music.tracks}
+            add={addMusicTrack.bind(null, slug)}
+            remove={deleteMusicTrack.bind(null, slug)}
+            toggle={toggleMusicTrack.bind(null, slug)}
+            move={moveMusicTrack.bind(null, slug)}
+          />}
+        />
+      )}
     <BoardsPanel
       orgId={ctx.org.id}
       staffId={ctx.staff.id}

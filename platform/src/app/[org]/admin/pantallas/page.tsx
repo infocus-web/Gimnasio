@@ -94,19 +94,19 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
 
       {music && (
         <Card title="Música">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} manageHint={!canAds} />
-            {canAds && (
-              <MusicLibrary
-                orgId={ctx.org.id}
-                tracks={music.tracks}
-                add={addMusicTrack.bind(null, slug)}
-                remove={deleteMusicTrack.bind(null, slug)}
-                toggle={toggleMusicTrack.bind(null, slug)}
-                move={moveMusicTrack.bind(null, slug)}
-              />
-            )}
-          </div>
+          <MusicControl
+            state={music.state}
+            tracks={music.tracks}
+            control={musicControl.bind(null, slug)}
+            library={<MusicLibrary
+            orgId={ctx.org.id}
+            tracks={music.tracks}
+            add={addMusicTrack.bind(null, slug)}
+            remove={deleteMusicTrack.bind(null, slug)}
+            toggle={toggleMusicTrack.bind(null, slug)}
+            move={moveMusicTrack.bind(null, slug)}
+          />}
+          />
         </Card>
       )}
 
