@@ -12,6 +12,11 @@ import { isPromoOrientation, isPromoPosition, isPromoStyle } from '@/features/sc
 import { TvCodeForm, TvLinkPanel, TvSettingsForm } from '@/features/floor/MachineForms'
 import { claimTvCode, linkTv, saveTvSettings, unlinkTv } from '@/features/floor/actions'
 
+import { MusicControl } from '@/features/floor/MusicControl'
+import { MusicLibrary } from '@/features/admin/MusicLibrary'
+import { loadMusic } from '@/features/floor/music-data'
+import { addMusicTrack, deleteMusicTrack, moveMusicTrack, musicControl, toggleMusicTrack } from '@/features/floor/music-actions'
+
 export const metadata: Metadata = { title: 'Pantallas' }
 
 /**
@@ -57,6 +62,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
       },
     ]
   })
+  const music = await loadMusic(supabase, ctx.org.id)
   const tvSettings = (tv.data ?? null) as { linked: boolean; seen_at: string | null; ranking_enabled: boolean; message: string | null; web_enabled?: boolean } | null
 
   return (
@@ -83,6 +89,24 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
             move={moveKioskSlide.bind(null, slug)}
             save={updateKioskSlide.bind(null, slug)}
           />
+        </Card>
+      )}
+
+      {music && (
+        <Card title="Música">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} manageHint={!canAds} />
+            {canAds && (
+              <MusicLibrary
+                orgId={ctx.org.id}
+                tracks={music.tracks}
+                add={addMusicTrack.bind(null, slug)}
+                remove={deleteMusicTrack.bind(null, slug)}
+                toggle={toggleMusicTrack.bind(null, slug)}
+                move={moveMusicTrack.bind(null, slug)}
+              />
+            )}
+          </div>
         </Card>
       )}
 

@@ -1,14 +1,21 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { timerElapsed, timerView, type BoardTimer, type TimerState } from '@/features/screens/board'
+import { captionStyle, timerElapsed, timerView, type BoardTimer, type CaptionBg, type CaptionColor, type CaptionPos, type TimerState } from '@/features/screens/board'
 
 export interface LiveBoard {
   id: string
   title: string
   body: string | null
   trainer: string | null
-  media: { type: 'image' | 'video'; url: string }[]
+  media: {
+    type: 'image' | 'video'
+    url: string
+    caption?: string | null
+    caption_color?: CaptionColor | null
+    caption_bg?: CaptionBg | null
+    caption_pos?: CaptionPos | null
+  }[]
   timer: BoardTimer | null
   timer_state: TimerState
 }
@@ -20,10 +27,13 @@ const IMAGE_MS = 10_000
  * título y profe arriba, texto de la clase, imágenes/videos que van pasando y el temporizador grande.
  */
 export function BoardScreen({ board, offsetMs }: { board: LiveBoard; offsetMs: number }) {
-  const hasText = !!board.body?.trim()
   const hasMedia = board.media.length > 0
   const [i, setI] = useState(0)
   const current = hasMedia ? board.media[i % board.media.length] : null
+  // El texto de la clase va al costado; el de cada imagen, encima de la imagen
+  const text = board.body?.trim() ?? ''
+  const hasText = !!text
+  const caption = current?.caption?.trim() || ''
 
   // Imágenes: 10 s cada una. Videos: hasta que terminan (onEnded)
   useEffect(() => {
@@ -50,8 +60,8 @@ export function BoardScreen({ board, offsetMs }: { board: LiveBoard; offsetMs: n
     view?.tone === 'rest' ? 'text-red-500' : view?.tone === 'done' ? 'text-[#edcc36]' : view?.tone === 'work' ? 'text-emerald-400' : 'text-white'
   const bar = view?.tone === 'rest' ? 'bg-red-500' : view?.tone === 'done' ? 'bg-[#edcc36]' : 'bg-emerald-400'
 
-  const lines = (board.body ?? '').split('\n')
-  const longText = lines.length > 10 || (board.body ?? '').length > 350
+  const lines = text.split('\n')
+  const longText = lines.length > 10 || text.length > 350
 
   return (
     <div className="fixed inset-0 z-20 flex cursor-none flex-col bg-black text-white select-none">
@@ -91,7 +101,7 @@ export function BoardScreen({ board, offsetMs }: { board: LiveBoard; offsetMs: n
                   hasMedia ? (longText ? 'text-[1.9vw]' : 'text-[2.6vw]') : longText ? 'text-[2.4vw]' : 'text-[3.4vw]'
                 }`}
               >
-                {board.body}
+                {text}
               </p>
             </div>
           )}
@@ -112,6 +122,23 @@ export function BoardScreen({ board, offsetMs }: { board: LiveBoard; offsetMs: n
                   onError={() => setI((n) => (n + 1) % board.media.length)}
                   className="h-full w-full object-contain"
                 />
+              )}
+              {caption && current && (
+                <div
+                  className={`pointer-events-none absolute inset-x-0 flex px-[2vw] ${
+                    current.caption_pos === 'top' ? 'top-[2vh]' : current.caption_pos === 'center' ? 'top-1/2 -translate-y-1/2 justify-center text-center' : 'bottom-[4vh]'
+                  }`}
+                >
+                  <p
+                    key={`${i}-cap`}
+                    className={`max-w-full animate-[boardfade_0.8s_ease-out] whitespace-pre-line rounded-[0.8vw] px-[1.5vw] py-[1vh] font-black leading-tight ${
+                      caption.length > 80 ? 'text-[2.4vw]' : 'text-[3.6vw]'
+                    }`}
+                    style={captionStyle({ caption_color: current.caption_color ?? undefined, caption_bg: current.caption_bg ?? undefined })}
+                  >
+                    {caption}
+                  </p>
+                </div>
               )}
               {board.media.length > 1 && (
                 <div className="absolute bottom-[1.5vh] left-1/2 flex -translate-x-1/2 gap-[0.6vw]" aria-hidden="true">

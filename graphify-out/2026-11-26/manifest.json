@@ -2148,10 +2148,10 @@
     "semantic_hash": "4ce0a559bbdfdbb8cef3660d79969461"
   },
   "platform/src/app/[org]/admin/mis-clases/pizarra/page.tsx": {
-    "mtime": 1794610949.4508517,
-    "seen": 1794664507.497581,
-    "ast_hash": "5c6be4fc4f0d4d4c6186940dadd0fab4",
-    "semantic_hash": "5c6be4fc4f0d4d4c6186940dadd0fab4"
+    "mtime": 1795744335.858332,
+    "seen": 1795744394.3106184,
+    "ast_hash": "c3a8a5a63e5eb0f73b0193c9f45b51d4",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/pagos/reglas/page.tsx": {
     "mtime": 1794614774.9944663,
@@ -2352,10 +2352,10 @@
     "semantic_hash": "78d86687d9914b0ae9ff93876484891f"
   },
   "platform/src/features/floor/BoardEditor.tsx": {
-    "mtime": 1794610317.357088,
-    "seen": 1794664507.513186,
-    "ast_hash": "d313f9fc741a98d22178c2f47f815f61",
-    "semantic_hash": "d313f9fc741a98d22178c2f47f815f61"
+    "mtime": 1795744335.8394196,
+    "seen": 1795744394.3106184,
+    "ast_hash": "e333483caf3eb9d5ffd4d21d2fc903c8",
+    "semantic_hash": ""
   },
   "platform/src/features/floor/BoardScreen.tsx": {
     "mtime": 1794610356.9677217,
@@ -2364,16 +2364,16 @@
     "semantic_hash": "c17087935fa1e30fc28c82c827afc0fd"
   },
   "platform/src/features/floor/BoardsPanel.tsx": {
-    "mtime": 1794610949.4288456,
-    "seen": 1794664507.513186,
-    "ast_hash": "820895692e2b483e4c3f50979a15cd59",
-    "semantic_hash": "820895692e2b483e4c3f50979a15cd59"
+    "mtime": 1795744335.8443289,
+    "seen": 1795744394.3106184,
+    "ast_hash": "20417e457b372f16a29f4cff5001b507",
+    "semantic_hash": ""
   },
   "platform/src/features/floor/board-actions.ts": {
-    "mtime": 1794610949.4003317,
-    "seen": 1794664507.5141811,
-    "ast_hash": "5fd5e1f948c88f364c4891ca85c6f224",
-    "semantic_hash": "5fd5e1f948c88f364c4891ca85c6f224"
+    "mtime": 1795744335.8483298,
+    "seen": 1795744394.3106184,
+    "ast_hash": "6952fb9af6126b319e12cd19aed9712a",
+    "semantic_hash": ""
   },
   "platform/src/features/legal/LegalPage.tsx": {
     "mtime": 1793847890.8086581,
@@ -2400,10 +2400,10 @@
     "semantic_hash": ""
   },
   "platform/src/features/screens/board.ts": {
-    "mtime": 1794610172.3821652,
-    "seen": 1794664507.5181854,
-    "ast_hash": "0e87b8894371c7cfe4753d774f174931",
-    "semantic_hash": "0e87b8894371c7cfe4753d774f174931"
+    "mtime": 1795744335.818401,
+    "seen": 1795744394.3106184,
+    "ast_hash": "e29972f31316fb775cae9b0402ae6e55",
+    "semantic_hash": ""
   },
   "platform/src/features/screens/promo.ts": {
     "mtime": 1795743842.4727452,
@@ -3744,15 +3744,21 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/lite/route.ts": {
-    "mtime": 1795743879.5395203,
-    "seen": 1795744148.8139572,
-    "ast_hash": "f580c227f79354658431ca1dd8f90653",
+    "mtime": 1795745110.943486,
+    "seen": 1795745220.5352995,
+    "ast_hash": "8aaae69862ea9d88dd86a9e339e120a7",
     "semantic_hash": ""
   },
   "supabase/migrations/0064_kiosk_slide_videos.sql": {
     "mtime": 1795743842.4558887,
     "seen": 1795744148.8139572,
     "ast_hash": "9a9e77a8e67967a6284e36346b6aa286",
+    "semantic_hash": ""
+  },
+  "platform/src/features/floor/TimerSoundFields.tsx": {
+    "mtime": 1795744335.821401,
+    "seen": 1795744394.3106184,
+    "ast_hash": "9240662e39d05aa9a49ca1fe605fcdf6",
     "semantic_hash": ""
   }
 }

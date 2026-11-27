@@ -7,6 +7,9 @@ import { OpenTurnstileButton } from '@/features/admin/AccessForms'
 import { openTurnstile } from '@/features/admin/access-actions'
 import { todayYMD } from '@/features/admin/format'
 import { ReceptionScreen } from './ReceptionScreen'
+import { MusicControl } from '@/features/floor/MusicControl'
+import { loadMusic } from '@/features/floor/music-data'
+import { musicControl } from '@/features/floor/music-actions'
 
 export const metadata: Metadata = { title: 'Recepción' }
 
@@ -115,6 +118,7 @@ export default async function RecepcionPage({ params }: PageProps<'/[org]/admin/
     </div>
   )
 
+  const music = await loadMusic(supabase, ctx.org.id)
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -142,6 +146,7 @@ export default async function RecepcionPage({ params }: PageProps<'/[org]/admin/
         canBill={ctx.can('billing.write')}
         alerts={alerts}
       />
+      {music && <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} />}
     </div>
   )
 }

@@ -5,7 +5,20 @@ import { ArrowLeft, ArrowRight, ImagePlus, Loader2, Trash2, X } from 'lucide-rea
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from '@/features/admin/errors'
 import { TimerSoundFields } from './TimerSoundFields'
-import { BOARD_BUCKET, boardMediaUrl, type BoardMedia, type BoardTimer } from '@/features/screens/board'
+import {
+  BOARD_BUCKET,
+  boardMediaUrl,
+  CAPTION_BGS,
+  CAPTION_COLORS,
+  CAPTION_MAX,
+  CAPTION_POSITIONS,
+  captionStyle,
+  type BoardMedia,
+  type BoardTimer,
+  type CaptionBg,
+  type CaptionColor,
+  type CaptionPos,
+} from '@/features/screens/board'
 import type { BoardInput } from './board-actions'
 
 const MAX_MEDIA = 12
@@ -47,7 +60,17 @@ export function BoardEditor({
 }) {
   const [title, setTitle] = useState(board?.title ?? '')
   const [body, setBody] = useState(board?.body ?? '')
-  const [media, setMedia] = useState<BoardMedia[]>(board?.media.map((m) => ({ type: m.type, path: m.path })) ?? [])
+  const [media, setMedia] = useState<BoardMedia[]>(
+    board?.media.map((m) => ({
+      type: m.type,
+      path: m.path,
+      caption: m.caption ?? '',
+      caption_color: m.caption_color ?? 'white',
+      caption_bg: m.caption_bg ?? 'dark',
+      caption_pos: m.caption_pos ?? 'bottom',
+    })) ?? [],
+  )
+  const setItem = (i: number, patch: Partial<BoardMedia>) => setMedia((all) => all.map((x, n) => (n === i ? { ...x, ...patch } : x)))
   const t = board?.timer ?? null
   const [mode, setMode] = useState<TimerMode>(t?.mode ?? 'none')
   const [cdMin, setCdMin] = useState(t?.mode === 'countdown' ? Math.floor(t.total_s / 60) : 10)
@@ -232,7 +255,7 @@ export function BoardEditor({
             </label>
           </div>
           {media.length > 0 && (
-            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {media.map((m, i) => {
                 const url = boardMediaUrl(m.path) ?? ''
                 return (
@@ -244,8 +267,79 @@ export function BoardEditor({
                       ) : (
                         <video src={url} muted playsInline preload="metadata" className="h-full w-full object-cover" aria-label={`Video ${i + 1}`} />
                       )}
-                      <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 text-[11px] text-white">{m.type === 'video' ? 'Video' : i + 1}</span>
+                      <span className="absolute left-1 top-1 z-10 rounded bg-black/70 px-1.5 text-[11px] text-white">{m.type === 'video' ? 'Video' : i + 1}</span>
+                      {/* Vista previa del texto sobre la imagen, como en la TV */}
+                      {m.caption?.trim() && (
+                        <div
+                          className={`absolute inset-x-0 flex px-1.5 ${
+                            m.caption_pos === 'top' ? 'top-1' : m.caption_pos === 'center' ? 'top-1/2 -translate-y-1/2 justify-center' : 'bottom-1'
+                          }`}
+                        >
+                          <span
+                            className="line-clamp-2 whitespace-pre-line rounded px-1.5 py-0.5 text-[11px] font-black leading-tight"
+                            style={captionStyle(m)}
+                          >
+                            {m.caption}
+                          </span>
+                        </div>
+                      )}
                     </div>
+                    <label className="block border-t border-zinc-800">
+                      <span className="sr-only">Texto sobre la {m.type === 'video' ? 'video' : 'imagen'} {i + 1}</span>
+                      <textarea
+                        rows={2}
+                        maxLength={CAPTION_MAX}
+                        value={m.caption ?? ''}
+                        onChange={(e) => setItem(i, { caption: e.target.value })}
+                        placeholder="Texto sobre la imagen (ej. Sentadillas · 15)"
+                        className="block w-full resize-none bg-zinc-950 px-2 py-1.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#edcc36]"
+                      />
+                    </label>
+                    {m.caption?.trim() && (
+                      <div className="space-y-1.5 border-t border-zinc-800 p-1.5">
+                        <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={`Color del texto ${i + 1}`}>
+                          {(Object.keys(CAPTION_COLORS) as CaptionColor[]).map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              role="radio"
+                              aria-checked={m.caption_color === c}
+                              aria-label={CAPTION_COLORS[c].label}
+                              title={CAPTION_COLORS[c].label}
+                              onClick={() => setItem(i, { caption_color: c })}
+                              className={`h-7 w-7 rounded-full border-2 ${m.caption_color === c ? 'border-[#edcc36] ring-2 ring-[#edcc36]/40' : 'border-zinc-600'}`}
+                              style={{ backgroundColor: CAPTION_COLORS[c].hex }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex gap-1">
+                          <select
+                            aria-label={`Fondo del texto ${i + 1}`}
+                            value={m.caption_bg ?? 'dark'}
+                            onChange={(e) => setItem(i, { caption_bg: e.target.value as CaptionBg })}
+                            className="min-h-[36px] min-w-0 flex-1 rounded-lg border border-zinc-700 bg-black px-1 text-xs text-white"
+                          >
+                            {(Object.keys(CAPTION_BGS) as CaptionBg[]).map((b) => (
+                              <option key={b} value={b}>
+                                {CAPTION_BGS[b].label}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label={`Posición del texto ${i + 1}`}
+                            value={m.caption_pos ?? 'bottom'}
+                            onChange={(e) => setItem(i, { caption_pos: e.target.value as CaptionPos })}
+                            className="min-h-[36px] min-w-0 flex-1 rounded-lg border border-zinc-700 bg-black px-1 text-xs text-white"
+                          >
+                            {(Object.keys(CAPTION_POSITIONS) as CaptionPos[]).map((p) => (
+                              <option key={p} value={p}>
+                                {CAPTION_POSITIONS[p]}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Mover antes" className="grid h-10 w-10 place-items-center text-zinc-300 disabled:opacity-30">
                         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -268,7 +362,22 @@ export function BoardEditor({
               })}
             </ul>
           )}
-          <p className="text-xs text-zinc-500">En la TV las imágenes van pasando solas; los videos se reproducen sin sonido. Videos de hasta {MAX_VIDEO_MB} MB.</p>
+          {media.length > 0 && body.trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                const lines = body.split('\n').map((l) => l.trim()).filter(Boolean)
+                setMedia((all) => all.map((x, n) => ({ ...x, caption: (lines[n] ?? x.caption ?? '').slice(0, CAPTION_MAX) })))
+              }}
+              className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-[#edcc36]"
+            >
+              Repartir el texto de la clase: una línea para cada imagen
+            </button>
+          )}
+          <p className="text-xs text-zinc-500">
+            En la TV las imágenes van pasando solas (10 s cada una) con su texto encima; el texto de la clase queda al costado.
+            Los videos se reproducen sin sonido. Videos de hasta {MAX_VIDEO_MB} MB.
+          </p>
         </div>
 
         {/* Temporizador */}

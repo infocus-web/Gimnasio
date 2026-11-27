@@ -1698,6 +1698,39 @@ export type Database = {
           },
         ]
       }
+      music_tracks: {
+        Row: {
+          active: boolean
+          created_at: string
+          duration_s: number | null
+          id: string
+          org_id: string
+          path: string
+          sort: number
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          duration_s?: number | null
+          id?: string
+          org_id: string
+          path: string
+          sort?: number
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          duration_s?: number | null
+          id?: string
+          org_id?: string
+          path?: string
+          sort?: number
+          title?: string
+        }
+        Relationships: []
+      }
       kiosk_slides: {
         Row: {
           active: boolean
@@ -3684,6 +3717,9 @@ export type Database = {
       tv_board_timer: { Args: { p_org: string; p_action: string }; Returns: Json }
       tv_live: { Args: { p_token: string }; Returns: Json }
       tv_board_live: { Args: { p_org: string }; Returns: Json }
+      music_status: { Args: { p_org: string }; Returns: Json }
+      music_control: { Args: { p_org: string; p_action: string; p_value?: string | null }; Returns: Json }
+      tv_music: { Args: { p_token: string; p_list_v: string | null; p_now: string | null }; Returns: Json }
       ai_routine_reserve: { Args: { p_org: string }; Returns: Json }
       ai_routine_release: { Args: { p_org: string; p_ticket: number }; Returns: undefined }
       ai_routine_usage: { Args: { p_org: string }; Returns: Json }

@@ -6,6 +6,50 @@ export interface BoardMedia {
   type: 'image' | 'video'
   /** ruta dentro del bucket: <org>/<staff>/<uuid>.<ext> */
   path: string
+  /** texto propio de esta imagen/video (ej. el ejercicio): en la TV va encima de la imagen */
+  caption?: string
+  caption_color?: CaptionColor
+  caption_bg?: CaptionBg
+  caption_pos?: CaptionPos
+}
+
+export const CAPTION_MAX = 200
+
+/** Colores del texto sobre la imagen (el primero es el de siempre) */
+export const CAPTION_COLORS = {
+  white: { label: 'Blanco', hex: '#ffffff' },
+  yellow: { label: 'Amarillo', hex: '#edcc36' },
+  black: { label: 'Negro', hex: '#000000' },
+  red: { label: 'Rojo', hex: '#ef4444' },
+  green: { label: 'Verde', hex: '#34d399' },
+  blue: { label: 'Celeste', hex: '#38bdf8' },
+} as const
+export type CaptionColor = keyof typeof CAPTION_COLORS
+
+/** Fondo detrás del texto, para separarlo de la imagen */
+export const CAPTION_BGS = {
+  dark: { label: 'Fondo oscuro', css: 'rgba(0,0,0,0.7)' },
+  none: { label: 'Sin fondo', css: 'transparent' },
+  light: { label: 'Fondo claro', css: 'rgba(255,255,255,0.88)' },
+  yellow: { label: 'Fondo amarillo', css: '#edcc36' },
+} as const
+export type CaptionBg = keyof typeof CAPTION_BGS
+
+export const CAPTION_POSITIONS = { bottom: 'Abajo', center: 'Centro', top: 'Arriba' } as const
+export type CaptionPos = keyof typeof CAPTION_POSITIONS
+
+const isKey = <T extends object>(o: T, k: unknown): k is keyof T => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k)
+
+/** Estilo del texto sobre la imagen (TV y vista previa del editor) */
+export function captionStyle(m: Pick<BoardMedia, 'caption_color' | 'caption_bg'>) {
+  const color = CAPTION_COLORS[m.caption_color ?? 'white']?.hex ?? '#ffffff'
+  const bg = m.caption_bg ?? 'dark'
+  return {
+    color,
+    background: CAPTION_BGS[bg]?.css ?? CAPTION_BGS.dark.css,
+    // Sin fondo: sombra para que se lea sobre cualquier foto
+    textShadow: bg === 'none' ? (color === '#000000' ? '0 0 6px rgba(255,255,255,0.9)' : '0 2px 8px rgba(0,0,0,0.95)') : undefined,
+  }
 }
 
 /** Sonido en la TV: pitidos al cambiar de fase y en los últimos `beep_s` segundos (0 = sin cuenta). */
@@ -69,7 +113,18 @@ export function cleanMedia(raw: unknown, prefix: string): BoardMedia[] {
         /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|mp4|webm|mov)$/.test((m as BoardMedia).path),
     )
     .slice(0, 12)
-    .map((m) => ({ type: m.type, path: m.path }))
+    .map((m) => {
+      const caption = typeof m.caption === 'string' ? m.caption.replace(/[ \t]+/g, ' ').trim().slice(0, CAPTION_MAX) : ''
+      if (!caption) return { type: m.type, path: m.path }
+      return {
+        type: m.type,
+        path: m.path,
+        caption,
+        caption_color: isKey(CAPTION_COLORS, m.caption_color) ? m.caption_color : 'white',
+        caption_bg: isKey(CAPTION_BGS, m.caption_bg) ? m.caption_bg : 'dark',
+        caption_pos: isKey(CAPTION_POSITIONS, m.caption_pos) ? m.caption_pos : 'bottom',
+      }
+    })
 }
 
 /** Milisegundos que lleva el temporizador (offset = reloj del servidor − reloj local) */

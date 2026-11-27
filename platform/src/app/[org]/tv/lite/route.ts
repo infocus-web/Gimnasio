@@ -8,6 +8,8 @@
  *   POST /<gym>/tv/feed   datos (gente, clases, ranking, cumpleaños, mensaje)
  *   GET  /api/access/turnstile/slides?org=<gym>   publicidad (imágenes y videos; el video pasa entero, sin sonido)
  * La clave queda guardada igual que en la pantalla normal (localStorage "tv:<gym>").
+ *   POST /<gym>/tv/music  música cargada en Pantallas → Música (cada 3 s; la maneja todo el equipo).
+ *   Mientras suenan los pitidos del temporizador, la música baja sola.
  * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
  * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
  *   POST /<gym>/tv/live   pizarra en vivo del profe (cada 3 s; el profe la maneja desde Mis clases → Pizarra)
@@ -106,6 +108,9 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 #btext{-webkit-box-flex:1;flex:1;min-width:0;overflow:hidden;white-space:pre-line;font-weight:700;line-height:1.3}
 #bmedia{flex:1.15;min-width:0;position:relative;background:#09090b;border-radius:1vw;overflow:hidden;margin-left:2vw}
 #bmedia img,#bmedia video{width:100%;height:100%;object-fit:contain;display:block}
+#bcap{position:absolute;left:0;right:0;padding:0 2vw;display:flex}
+#bcap.bottom{bottom:4vh}#bcap.top{top:2vh}#bcap.center{top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);justify-content:center;text-align:center}
+#bcap p{max-width:100%;white-space:pre-line;border-radius:.8vw;padding:1vh 1.5vw;font-weight:900;line-height:1.15}
 #bonly{-webkit-box-flex:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 #bonly .lb{font-size:6vw;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
 #bonly .ck{font-family:monospace;font-size:24vw;font-weight:900;line-height:1}
@@ -199,6 +204,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     loadAds(); setInterval(loadAds, 5 * 60000);
     fullscreenSetup();
     pollLive();
+    musicPoll();
   }
   function nowD() { return new Date(Date.now() + offset); }
   function clock() {
@@ -381,9 +387,12 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       if (!actx) actx = new AC();
       if (actx.state === 'suspended' && actx.resume) actx.resume();
     } catch (e) {}
+    // La música no pudo arrancar sola: con este toque ya puede
+    if (mBlocked) { mBlocked = false; if (mPlaying && mAudio && mAudio.paused) mPlay(); fsUpd(); }
   }
   function beep(freq, ms, times) {
     if (!actx || actx.state !== 'running') return;
+    duck((times || 1) * (ms + 120) + 500);
     for (var n = 0; n < (times || 1); n++) {
       try {
         var t0 = actx.currentTime + n * (ms / 1000 + 0.12);
@@ -447,6 +456,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     clearTimeout(mediaTimer); mediaI = 0;
     var body = (b.body || '').replace(/^\\s+|\\s+$/g, ''), media = b.media || [];
     var timerOnly = !!b.timer && !body && !media.length;
+    var hasText = !!body;
     var h = '<div id="bhead"><div style="min-width:0"><p id="btitle">' + esc(b.title) + '</p>' +
       (b.trainer ? '<p id="btrainer">Profesor: ' + esc(b.trainer) + '</p>' : '') + '</div>' +
       (b.timer && !timerOnly ? '<div id="btime"><p class="ck" id="bck"></p><p class="lb" id="blb"></p></div>' : '') + '</div>';
@@ -455,8 +465,8 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     else {
       var lines = body.split('\\n').length, longT = lines > 10 || body.length > 350;
       var fs = media.length ? (longT ? '1.9vw' : '2.6vw') : (longT ? '2.4vw' : '3.4vw');
-      h += '<div id="bbody">' + (body ? '<div id="btext" style="font-size:' + fs + '">' + esc(body) + '</div>' : '') +
-        (media.length ? '<div id="bmedia"' + (body ? '' : ' style="margin-left:0"') + '></div>' : '') + '</div>';
+      h += '<div id="bbody">' + (hasText ? '<div id="btext" data-fs="' + fs + '" style="font-size:' + fs + '">' + esc(body) + '</div>' : '') +
+        (media.length ? '<div id="bmedia"' + (hasText ? '' : ' style="margin-left:0"') + '></div>' : '') + '</div>';
     }
     $('board').innerHTML = h;
     last = {};
@@ -464,11 +474,19 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     show($('screen'), false); // la pantalla de abajo no se dibuja mientras está la pizarra
     if (media.length) showMedia();
   }
+  var CAP_COLORS = { white: '#ffffff', yellow: '#edcc36', black: '#000000', red: '#ef4444', green: '#34d399', blue: '#38bdf8' };
+  var CAP_BGS = { dark: 'rgba(0,0,0,0.7)', none: 'transparent', light: 'rgba(255,255,255,0.88)', yellow: '#edcc36' };
+  function capStyle(m) {
+    var c = CAP_COLORS[m.caption_color] || '#ffffff', bgKey = CAP_BGS[m.caption_bg] ? m.caption_bg : 'dark';
+    var shadow = bgKey === 'none' ? (c === '#000000' ? '0 0 6px rgba(255,255,255,0.9)' : '0 2px 8px rgba(0,0,0,0.95)') : '';
+    return { color: c, bg: CAP_BGS[bgKey], shadow: shadow };
+  }
   function showMedia() {
     var b = live, box = $('bmedia');
     if (!b || !box || !b.media || !b.media.length) return;
     var m = b.media[mediaI % b.media.length], many = b.media.length > 1;
     clearTimeout(mediaTimer);
+
     function nextM() { mediaI++; showMedia(); }
     if (m.type === 'video') {
       box.innerHTML = '<video autoplay muted playsinline' + (many ? '' : ' loop') + '></video>';
@@ -480,6 +498,20 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       box.innerHTML = '<img class="fade" alt="">';
       box.firstChild.src = m.url;
       if (many) mediaTimer = setTimeout(nextM, 10000);
+    }
+    // Texto de esta imagen, encima (color, fondo y posición que eligió el profe)
+    if (m.caption) {
+      var cap = document.createElement('div');
+      cap.id = 'bcap';
+      cap.className = m.caption_pos === 'top' || m.caption_pos === 'center' ? m.caption_pos : 'bottom';
+      var cp = document.createElement('p');
+      cp.textContent = m.caption;
+      var st = capStyle(m);
+      cp.style.color = st.color; cp.style.background = st.bg;
+      if (st.shadow) cp.style.textShadow = st.shadow;
+      cp.style.fontSize = m.caption.length > 80 ? '2.4vw' : '3.6vw';
+      cap.appendChild(cp);
+      box.appendChild(cap);
     }
   }
   function tickBoard() {
@@ -504,6 +536,83 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   }
   var last = {};
 
+  /* ---------- Música (Pantallas → Música; la maneja todo el equipo desde el panel) ---------- */
+  var mAudio = null, mTracks = [], mListV = null, mSeq = null, mCur = -1, mVol = 0.7, mDuck = 1, duckTimer = null;
+  var mPlaying = false, mShuffle = false, mBlocked = false;
+  function mIndexOf(id) { for (var i = 0; i < mTracks.length; i++) if (mTracks[i].id === id) return i; return -1; }
+  function mCurId() { return mCur >= 0 && mTracks[mCur] ? mTracks[mCur].id : null; }
+  function mSetVol() { if (mAudio) { try { mAudio.volume = Math.max(0, Math.min(1, mVol * mDuck)); } catch (e) {} } }
+  function duck(ms) {
+    mDuck = 0.25; mSetVol();
+    clearTimeout(duckTimer);
+    duckTimer = setTimeout(function () { mDuck = 1; mSetVol(); }, ms);
+  }
+  function mEnsure() {
+    if (!mAudio) {
+      mAudio = new Audio();
+      mAudio.preload = 'auto';
+      mAudio.onended = function () { mStep(1); };
+      mAudio.onerror = function () { if (mTracks.length > 1) setTimeout(function () { mStep(1); }, 1500); };
+    }
+    return mAudio;
+  }
+  function mPlay() {
+    var a = mEnsure();
+    try {
+      var pr = a.play();
+      if (pr && pr.catch) pr.catch(function () { mBlocked = true; fsUpd(); });
+    } catch (e) { mBlocked = true; fsUpd(); }
+  }
+  function mLoad(i) {
+    if (i < 0 || !mTracks.length) return;
+    mCur = i;
+    var a = mEnsure();
+    a.src = mTracks[i].url;
+    mSetVol();
+    if (mPlaying) mPlay();
+  }
+  function mStep(d) {
+    var n = mTracks.length;
+    if (!n) return;
+    var i;
+    if (mShuffle && n > 1) { do { i = Math.floor(Math.random() * n); } while (i === mCur); }
+    else i = ((mCur < 0 ? (d > 0 ? -1 : 0) : mCur) + d + n) % n;
+    mLoad(i);
+  }
+  function mApply(m) {
+    mVol = (typeof m.volume === 'number' ? m.volume : 70) / 100;
+    mShuffle = !!m.shuffle;
+    mSetVol();
+    var seq = Number(m.seq) || 0;
+    mPlaying = !!m.playing;
+    if (mSeq === null) mSeq = seq; // al abrir la página no se repite la última orden
+    else if (seq !== mSeq) {
+      mSeq = seq;
+      if (m.cmd === 'next') mStep(1);
+      else if (m.cmd === 'prev') mStep(-1);
+      else if (m.cmd === 'track') { var t = mIndexOf(m.track_id); if (t >= 0) mLoad(t); }
+    }
+    if (!mTracks.length) { if (mAudio) mAudio.pause(); return; }
+    if (mPlaying) {
+      if (mCur < 0) mStep(1);
+      else if (mAudio && mAudio.paused && !mBlocked) mPlay();
+    } else if (mAudio && !mAudio.paused) mAudio.pause();
+  }
+  function musicPoll() {
+    req('POST', '/' + SLUG + '/tv/music', { k: token, v: mListV, now: mPlaying ? mCurId() : null }, function (st, j) {
+      if (st === 200 && j && j.status === 'ok') {
+        if (j.tracks) {
+          var keep = mCurId();
+          mTracks = j.tracks; mListV = j.list_v;
+          mCur = mIndexOf(keep);
+          if (keep && mCur < 0 && mAudio) { mAudio.pause(); mAudio.removeAttribute('src'); } // borraron el tema que sonaba
+        }
+        mApply(j.music || {});
+      }
+      setTimeout(musicPoll, 3000);
+    });
+  }
+
   /* ---------- Pantalla completa (necesita que alguien apriete OK o toque la pantalla) ---------- */
   function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
   function goFull() {
@@ -514,8 +623,12 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       if (r && r.catch) r.catch(function () {});
     } catch (e) {}
   }
+  function fsUpd() {
+    $('fs').textContent = mBlocked ? 'Apretá OK en el control para habilitar el sonido' : 'Apretá OK en el control para pantalla completa y sonido';
+    show($('fs'), !isFull() || mBlocked);
+  }
   function fullscreenSetup() {
-    function upd() { show($('fs'), !isFull()); }
+    var upd = fsUpd;
     var evs = ['keydown', 'click', 'touchend', 'mousedown'];
     for (var i = 0; i < evs.length; i++) {
       document.addEventListener(evs[i], goFull, true);

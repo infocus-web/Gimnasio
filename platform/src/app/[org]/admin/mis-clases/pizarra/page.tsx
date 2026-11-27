@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { BoardsPanel, type BoardItem, type LiveInfo } from '@/features/floor/BoardsPanel'
 import { boardSound, boardTimer, deleteBoard, hideBoard, quickTimer, saveBoard, showBoard } from '@/features/floor/board-actions'
 import { boardMediaUrl, cleanMedia, cleanTimer } from '@/features/screens/board'
+import { MusicControl } from '@/features/floor/MusicControl'
+import { loadMusic } from '@/features/floor/music-data'
+import { musicControl } from '@/features/floor/music-actions'
 
 export const metadata: Metadata = { title: 'Pizarra TV' }
 
@@ -24,7 +27,7 @@ export default async function BoardPage({ params }: PageProps<'/[org]/admin/mis-
     .eq('org_id', ctx.org.id)
     .order('updated_at', { ascending: false })
   if (!isAdmin) q = q.eq('staff_id', ctx.staff.id)
-  const [{ data }, live] = await Promise.all([q, supabase.rpc('tv_board_live', { p_org: ctx.org.id })])
+  const [{ data }, live, music] = await Promise.all([q, supabase.rpc('tv_board_live', { p_org: ctx.org.id }), loadMusic(supabase, ctx.org.id)])
 
   const boards: BoardItem[] = (data ?? []).map((b) => ({
     id: b.id,
@@ -38,6 +41,8 @@ export default async function BoardPage({ params }: PageProps<'/[org]/admin/mis-
   const liveInfo = (live.data ?? null) as LiveInfo | null
 
   return (
+    <div className="space-y-5">
+    {music && <MusicControl state={music.state} tracks={music.tracks} control={musicControl.bind(null, slug)} />}
     <BoardsPanel
       orgId={ctx.org.id}
       staffId={ctx.staff.id}
@@ -52,5 +57,6 @@ export default async function BoardPage({ params }: PageProps<'/[org]/admin/mis-
       quick={quickTimer.bind(null, slug)}
       sound={boardSound.bind(null, slug)}
     />
+    </div>
   )
 }

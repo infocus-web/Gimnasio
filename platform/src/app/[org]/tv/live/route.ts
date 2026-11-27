@@ -30,7 +30,16 @@ export async function POST(req: NextRequest) {
   const live = r.live
     ? {
         ...r.live,
-        media: cleanMedia(r.live.media, '').map((m) => ({ type: m.type, url: boardMediaUrl(m.path) })).filter((m) => m.url),
+        media: cleanMedia(r.live.media, '')
+          .map((m) => ({
+            type: m.type,
+            url: boardMediaUrl(m.path),
+            caption: m.caption ?? null,
+            caption_color: m.caption_color ?? null,
+            caption_bg: m.caption_bg ?? null,
+            caption_pos: m.caption_pos ?? null,
+          }))
+          .filter((m) => m.url),
         timer: cleanTimer(r.live.timer),
       }
     : null
