@@ -10,7 +10,7 @@
  * La clave queda guardada igual que en la pantalla normal (localStorage "tv:<gym>").
  * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
  * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
- * No incluye la pizarra en vivo del profe.
+ *   POST /<gym>/tv/live   pizarra en vivo del profe (cada 3 s; el profe la maneja desde Mis clases → Pizarra)
  *
  * /<gym>/tv redirige acá sola cuando detecta un Chrome anterior al 111.
  */
@@ -92,6 +92,24 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 #adtx .bd{display:inline-block;background:#edcc36;color:#000;font-weight:900;font-size:1.8vw;padding:.6vh 1.2vw;border-radius:99px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2vh}
 #adtx .tt{font-size:5.5vw;font-weight:900;line-height:1.05}
 #fs{position:fixed;left:50%;bottom:2vh;-webkit-transform:translateX(-50%);transform:translateX(-50%);z-index:20;background:#edcc36;color:#000;font-weight:900;font-size:1.6vw;padding:1vh 2vw;border-radius:99px}
+#board{position:fixed;top:0;left:0;right:0;bottom:0;z-index:15;background:#000;display:flex;flex-direction:column}
+#bhead{display:flex;align-items:center;justify-content:space-between;border-bottom:.5vh solid #edcc36;padding:2vh 3vw}
+#btitle{font-size:3.6vw;font-weight:900;text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#btrainer{font-size:1.6vw;color:#a1a1aa;margin-top:.8vh}
+#btime{text-align:right;flex-shrink:0;padding-left:3vw}
+#btime .ck{font-family:monospace;font-size:6vw;font-weight:900;line-height:1}
+#btime .lb{font-size:1.5vw;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#d4d4d8}
+#bprog{height:.8vh;background:#18181b}
+#bbar{height:100%;width:0;background:#34d399}
+#bbody{-webkit-box-flex:1;flex:1;display:flex;padding:3vw;min-height:0}
+#btext{-webkit-box-flex:1;flex:1;min-width:0;overflow:hidden;white-space:pre-line;font-weight:700;line-height:1.3}
+#bmedia{flex:1.15;min-width:0;position:relative;background:#09090b;border-radius:1vw;overflow:hidden;margin-left:2vw}
+#bmedia img,#bmedia video{width:100%;height:100%;object-fit:contain;display:block}
+#bonly{-webkit-box-flex:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#bonly .lb{font-size:6vw;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
+#bonly .ck{font-family:monospace;font-size:24vw;font-weight:900;line-height:1}
+#bonly .rd{font-size:3.5vw;font-weight:700;color:#d4d4d8;margin-top:2vh}
+.t-work{color:#34d399}.t-rest{color:#ef4444}.t-done{color:#edcc36}.t-idle{color:#fff}
 #adtx .st{font-size:2.4vw;color:#e4e4e7;margin-top:1.5vh}
 </style>
 </head>
@@ -107,6 +125,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   <div id="content"><div class="center wait">Cargando…</div></div>
   <div id="foot"><div id="dots"></div><p id="off" class="hide"></p></div>
 </div>
+<div id="board" class="hide"></div>
 <p id="fs" class="hide">Apretá OK en el control para ver en pantalla completa</p>
 <div id="ad" class="hide"><img id="adimg" alt=""><div id="adtx" class="hide"></div></div>
 <script>
@@ -178,6 +197,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     fetchFeed();
     loadAds(); setInterval(loadAds, 5 * 60000);
     fullscreenSetup();
+    pollLive();
   }
   function nowD() { return new Date(Date.now() + offset); }
   function clock() {
@@ -242,7 +262,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var i = index % list.length, s = list[i];
     index = i + 1;
     var ad = s.indexOf('ad:') === 0 ? ads[Number(s.slice(3))] : null;
-    if (ad) renderAd(ad); else { show($('ad'), false); renderSlide(s); }
+    if (ad && !live) renderAd(ad); else { show($('ad'), false); renderSlide(ad ? 'now' : s); }
     var dots = '';
     if (list.length > 1) for (var k = 0; k < list.length; k++) dots += '<span' + (k === i ? ' class="on"' : '') + '></span>';
     $('dots').innerHTML = dots;
@@ -297,6 +317,116 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
         (t.length > 120 ? '3.4vw' : '4.6vw') + '">' + esc(t) + '</p></div></div>';
     }
     $('content').innerHTML = '<div class="fade">' + h + '</div>';
+  }
+
+  /* ---------- Pizarra del profe en vivo (cronómetro / temporizador) ---------- */
+  var live = null, liveContent = '', liveState = '', mediaI = 0, mediaTimer = null, tickTimer = null;
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function hms(t) { var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), x = t % 60; return h ? h + ':' + pad(m) + ':' + pad(x) : pad(m) + ':' + pad(x); }
+  function mmss(ms) { return hms(Math.max(0, Math.ceil(ms / 1000))); }
+  function elapsed(st) {
+    if (!st) return 0;
+    var base = Number(st.elapsed_ms) || 0;
+    if (!st.running || !st.started_at) return base;
+    return base + Math.max(0, Date.now() + offset - new Date(st.started_at).getTime());
+  }
+  function tview(t, e, run) {
+    if (t.mode === 'stopwatch') {
+      return { clock: hms(Math.max(0, Math.floor(e / 1000))), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: 0 };
+    }
+    if (t.mode === 'countdown') {
+      var left = t.total_s * 1000 - e;
+      if (left <= 0) return { clock: '00:00', label: '¡TIEMPO!', tone: 'done', round: null, progress: 1 };
+      return { clock: mmss(left), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: e / (t.total_s * 1000) };
+    }
+    var cycle = (t.work_s + t.rest_s) * 1000, idx = Math.floor(e / cycle);
+    var done = { clock: '00:00', label: '¡TERMINADO!', tone: 'done', round: t.rounds + ' de ' + t.rounds + ' rondas', progress: 1 };
+    if (idx >= t.rounds) return done;
+    var within = e - idx * cycle, working = within < t.work_s * 1000;
+    if (!working && idx === t.rounds - 1) return done;
+    var phase = working ? t.work_s * 1000 : t.rest_s * 1000, inP = working ? within : within - t.work_s * 1000;
+    var idle = !run && e === 0;
+    return { clock: mmss(phase - inP), label: idle ? 'LISTOS' : working ? 'TRABAJO' : 'DESCANSO', tone: idle ? 'idle' : working ? 'work' : 'rest',
+      round: 'Ronda ' + (idx + 1) + ' de ' + t.rounds, progress: inP / phase };
+  }
+  function pollLive() {
+    var sent = Date.now();
+    req('POST', '/' + SLUG + '/tv/live', { k: token }, function (st, j) {
+      if (st === 200 && j && j.status === 'ok') {
+        if (j.server_now) { var srv = new Date(j.server_now).getTime(); if (!isNaN(srv)) offset = srv - (sent + Date.now()) / 2; }
+        setLive(j.live || null);
+      }
+      setTimeout(pollLive, 3000);
+    });
+  }
+  function setLive(b) {
+    var content = b ? JSON.stringify([b.id, b.title, b.body, b.trainer, b.media, b.timer]) : '';
+    var state = b ? JSON.stringify(b.timer_state || null) : '';
+    live = b;
+    if (content === liveContent && state === liveState) return;
+    var rebuild = content !== liveContent;
+    liveContent = content; liveState = state;
+    if (!b) {
+      clearTimeout(mediaTimer); clearInterval(tickTimer); tickTimer = null;
+      $('board').innerHTML = ''; show($('board'), false); show($('ad'), false);
+      return;
+    }
+    show($('ad'), false);
+    if (rebuild) buildBoard(b);
+    tickBoard();
+    if (b.timer && !tickTimer) tickTimer = setInterval(tickBoard, 250);
+    if (!b.timer && tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  }
+  function buildBoard(b) {
+    clearTimeout(mediaTimer); mediaI = 0;
+    var body = (b.body || '').replace(/^\\s+|\\s+$/g, ''), media = b.media || [];
+    var timerOnly = !!b.timer && !body && !media.length;
+    var h = '<div id="bhead"><div style="min-width:0"><p id="btitle">' + esc(b.title) + '</p>' +
+      (b.trainer ? '<p id="btrainer">con ' + esc(b.trainer) + '</p>' : '') + '</div>' +
+      (b.timer && !timerOnly ? '<div id="btime"><p class="ck" id="bck"></p><p class="lb" id="blb"></p></div>' : '') + '</div>';
+    if (b.timer) h += '<div id="bprog"><div id="bbar"></div></div>';
+    if (timerOnly) h += '<div id="bonly"><p class="lb" id="blb"></p><p class="ck" id="bck"></p><p class="rd" id="brd"></p></div>';
+    else {
+      var lines = body.split('\\n').length, longT = lines > 10 || body.length > 350;
+      var fs = media.length ? (longT ? '1.9vw' : '2.6vw') : (longT ? '2.4vw' : '3.4vw');
+      h += '<div id="bbody">' + (body ? '<div id="btext" style="font-size:' + fs + '">' + esc(body) + '</div>' : '') +
+        (media.length ? '<div id="bmedia"' + (body ? '' : ' style="margin-left:0"') + '></div>' : '') + '</div>';
+    }
+    $('board').innerHTML = h;
+    show($('board'), true);
+    if (media.length) showMedia();
+  }
+  function showMedia() {
+    var b = live, box = $('bmedia');
+    if (!b || !box || !b.media || !b.media.length) return;
+    var m = b.media[mediaI % b.media.length], many = b.media.length > 1;
+    clearTimeout(mediaTimer);
+    function nextM() { mediaI++; showMedia(); }
+    if (m.type === 'video') {
+      box.innerHTML = '<video autoplay muted playsinline' + (many ? '' : ' loop') + '></video>';
+      var v = box.firstChild;
+      v.src = m.url;
+      if (many) { v.onended = nextM; v.onerror = nextM; }
+      try { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+    } else {
+      box.innerHTML = '<img class="fade" alt="">';
+      box.firstChild.src = m.url;
+      if (many) mediaTimer = setTimeout(nextM, 10000);
+    }
+  }
+  function tickBoard() {
+    var b = live;
+    if (!b || !b.timer) return;
+    var st = b.timer_state || { running: false, elapsed_ms: 0 };
+    var v = tview(b.timer, elapsed(st), !!st.running), tone = 't-' + v.tone;
+    var ck = $('bck'), lb = $('blb'), rd = $('brd'), bar = $('bbar');
+    if (ck) { ck.textContent = v.clock; ck.className = 'ck ' + tone; }
+    if (rd) { lb.textContent = v.label || ''; lb.className = 'lb ' + tone; rd.textContent = v.round || ''; }
+    else if (lb) lb.textContent = v.label && v.round ? v.label + ' · ' + v.round : (v.label || v.round || '');
+    if (bar) {
+      bar.style.width = Math.round(v.progress * 100) + '%';
+      bar.style.background = v.tone === 'rest' ? '#ef4444' : v.tone === 'done' ? '#edcc36' : '#34d399';
+    }
   }
 
   /* ---------- Pantalla completa (necesita que alguien apriete OK o toque la pantalla) ---------- */
