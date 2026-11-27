@@ -21,7 +21,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ org: st
   const { org: slug } = await params
   if (!/^[a-z0-9-]{1,60}$/.test(slug)) return new Response('Not found', { status: 404 })
   return new Response(PAGE.split('__SLUG__').join(slug), {
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   })
 }
 
@@ -56,9 +56,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 #dots span{display:inline-block;height:.8vh;width:3vw;border-radius:99px;background:#27272a;margin-right:.8vw}
 #dots span.on{background:#edcc36}
 #off{font-size:1.2vw;color:#fcd34d}
-.fade{-webkit-animation:tvfade .8s ease-out;animation:tvfade .8s ease-out;height:100%}
-@-webkit-keyframes tvfade{from{opacity:0;-webkit-transform:translateY(1.5vh)}to{opacity:1;-webkit-transform:none}}
-@keyframes tvfade{from{opacity:0;transform:translateY(1.5vh)}to{opacity:1;transform:none}}
+.fade{height:100%}
 .center{display:flex;height:100%;align-items:center;justify-content:center;text-align:center}
 .wait{font-size:2.5vw;color:#71717a}
 .title{font-size:3.2vw;font-weight:900;margin-bottom:4vh}
@@ -265,7 +263,8 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var i = index % list.length, s = list[i];
     index = i + 1;
     var ad = s.indexOf('ad:') === 0 ? ads[Number(s.slice(3))] : null;
-    if (ad && !live) renderAd(ad); else { stopAdVideo(); show($('ad'), false); renderSlide(ad ? 'now' : s); }
+    if (live) { nextTimer = setTimeout(next, 5000); return; } // pizarra en la TV: nada abajo
+    if (ad) renderAd(ad); else { stopAdVideo(); show($('ad'), false); renderSlide(s); }
     var dots = '';
     if (list.length > 1) for (var k = 0; k < list.length; k++) dots += '<span' + (k === i ? ' class="on"' : '') + '></span>';
     $('dots').innerHTML = dots;
@@ -435,13 +434,13 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     if (!b) {
       lastBoardId = null; lastPhase = null;
       clearTimeout(mediaTimer); clearInterval(tickTimer); tickTimer = null;
-      $('board').innerHTML = ''; show($('board'), false);
+      $('board').innerHTML = ''; show($('board'), false); show($('screen'), true);
       return;
     }
     stopAdVideo(); show($('ad'), false);
     if (rebuild) buildBoard(b);
     tickBoard();
-    if (b.timer && !tickTimer) tickTimer = setInterval(tickBoard, 250);
+    if (b.timer && !tickTimer) tickTimer = setInterval(tickBoard, 500);
     if (!b.timer && tickTimer) { clearInterval(tickTimer); tickTimer = null; }
   }
   function buildBoard(b) {
@@ -460,7 +459,9 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
         (media.length ? '<div id="bmedia"' + (body ? '' : ' style="margin-left:0"') + '></div>' : '') + '</div>';
     }
     $('board').innerHTML = h;
+    last = {};
     show($('board'), true);
+    show($('screen'), false); // la pantalla de abajo no se dibuja mientras está la pizarra
     if (media.length) showMedia();
   }
   function showMedia() {
@@ -488,14 +489,20 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var v = tview(b.timer, elapsed(st), !!st.running), tone = 't-' + v.tone;
     sound(b, v, !!st.running);
     var ck = $('bck'), lb = $('blb'), rd = $('brd'), bar = $('bbar');
-    if (ck) { ck.textContent = v.clock; ck.className = 'ck ' + tone; }
-    if (rd) { lb.textContent = v.label || ''; lb.className = 'lb ' + tone; rd.textContent = v.round || ''; }
-    else if (lb) lb.textContent = v.label && v.round ? v.label + ' · ' + v.round : (v.label || v.round || '');
-    if (bar) {
-      bar.style.width = Math.round(v.progress * 100) + '%';
-      bar.style.background = v.tone === 'rest' ? '#ef4444' : v.tone === 'done' ? '#edcc36' : '#34d399';
-    }
+    var lbText = rd ? (v.label || '') : (v.label && v.round ? v.label + ' · ' + v.round : (v.label || v.round || ''));
+    var w = Math.round(v.progress * 100) + '%';
+    var color = v.tone === 'rest' ? '#ef4444' : v.tone === 'done' ? '#edcc36' : '#34d399';
+    // Solo se toca la pantalla cuando algo cambió (la caja de la TV es lenta)
+    if (ck && last.clock !== v.clock) ck.textContent = v.clock;
+    if (ck && last.tone !== tone) ck.className = 'ck ' + tone;
+    if (lb && last.lb !== lbText) lb.textContent = lbText;
+    if (rd && last.tone !== tone) lb.className = 'lb ' + tone;
+    if (rd && last.round !== v.round) rd.textContent = v.round || '';
+    if (bar && last.w !== w) bar.style.width = w;
+    if (bar && last.color !== color) bar.style.background = color;
+    last = { clock: v.clock, tone: tone, lb: lbText, round: v.round, w: w, color: color };
   }
+  var last = {};
 
   /* ---------- Pantalla completa (necesita que alguien apriete OK o toque la pantalla) ---------- */
   function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
