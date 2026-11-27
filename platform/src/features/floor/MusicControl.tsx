@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { ListMusic, Loader2, Music, Pause, Play, Shuffle, SkipBack, SkipForward, Upload, Volume1, Volume2 } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
@@ -28,6 +28,9 @@ export function MusicControl({
   library?: ReactNode
 }) {
   const [showLibrary, setShowLibrary] = useState(false)
+  // Volumen: se mueve al instante en pantalla y se manda cuando se suelta la barra (o 400 ms después del último cambio)
+  const volTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragging = useRef(false)
   const router = useRouter()
   const [state, setState] = useState(initial)
   const [pending, start] = useTransition()
@@ -35,7 +38,11 @@ export function MusicControl({
   const [showList, setShowList] = useState(false)
   const active = tracks.filter((t) => t.active)
 
-  useEffect(() => setState(initial), [initial])
+  // Mientras se arrastra el volumen no se pisa con lo que llega del servidor
+  useEffect(() => setState((s) => (dragging.current ? { ...initial, volume: s.volume } : initial)), [initial])
+  useEffect(() => () => {
+    if (volTimer.current) clearTimeout(volTimer.current)
+  }, [])
   useEffect(() => {
     const t = setInterval(() => router.refresh(), 10_000)
     return () => clearInterval(t)
@@ -47,9 +54,23 @@ export function MusicControl({
     start(async () => {
       const r = await control(action, value)
       if (!r.ok) setError(r.message ?? 'No se pudo.')
-      else if (r.state) setState((s) => ({ ...s, ...r.state, now_id: s.now_id, now_title: s.now_title }))
+      else if (r.state) setState((s) => ({ ...s, ...r.state, volume: dragging.current ? s.volume : r.state!.volume, now_id: s.now_id, now_title: s.now_title }))
       router.refresh()
+      // La TV toma la orden en ~1,5 s: se vuelve a mirar enseguida para mostrar qué tema suena
+      if (action !== 'volume') setTimeout(() => router.refresh(), 2500)
     })
+  }
+
+  const setVolume = (v: number, now = false) => {
+    const vol = Math.max(0, Math.min(100, Math.round(v)))
+    setState((s) => ({ ...s, volume: vol }))
+    if (volTimer.current) clearTimeout(volTimer.current)
+    const go = () => {
+      dragging.current = false
+      send('volume', String(vol))
+    }
+    if (now) go()
+    else volTimer.current = setTimeout(go, 400)
   }
 
   const btn = 'grid h-14 w-14 place-items-center rounded-xl border border-zinc-700 text-white hover:border-[#edcc36] disabled:opacity-40'
@@ -70,7 +91,7 @@ export function MusicControl({
       ) : (
         <>
           <p className="min-h-[1.5rem] truncate text-sm text-zinc-300" aria-live="polite">
-            {state.playing ? (state.now_title ? <>Sonando: <strong className="text-white">{state.now_title}</strong></> : 'Arrancando…') : 'En pausa'}
+            {state.playing ? (state.now_title ? <>Sonando: <strong className="text-white">{state.now_title}</strong></> : 'Arrancando en la TV…') : 'En pausa'}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className={btn} disabled={pending} onClick={() => send('prev')} aria-label="Tema anterior">
@@ -113,34 +134,34 @@ export function MusicControl({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={btn}
-              disabled={pending || state.volume <= 0}
-              onClick={() => {
-                const v = Math.max(0, state.volume - 10)
-                send('volume', String(v), { volume: v })
-              }}
-              aria-label="Bajar volumen"
-            >
+            <button type="button" className={btn} disabled={state.volume <= 0} onClick={() => setVolume(state.volume - 10, true)} aria-label="Bajar volumen">
               <Volume1 className="h-5 w-5" aria-hidden="true" />
             </button>
-            <div className="min-w-0 flex-1">
-              <div className="h-2 overflow-hidden rounded-full bg-zinc-800" aria-hidden="true">
-                <div className="h-full bg-[#edcc36]" style={{ width: `${state.volume}%` }} />
-              </div>
-              <p className="mt-1 text-center text-xs text-zinc-400">Volumen {state.volume}%</p>
-            </div>
-            <button
-              type="button"
-              className={btn}
-              disabled={pending || state.volume >= 100}
-              onClick={() => {
-                const v = Math.min(100, state.volume + 10)
-                send('volume', String(v), { volume: v })
-              }}
-              aria-label="Subir volumen"
-            >
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Volumen de la música</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={state.volume}
+                onPointerDown={() => (dragging.current = true)}
+                onChange={(e) => {
+                  dragging.current = true
+                  setVolume(Number(e.target.value))
+                }}
+                onPointerUp={(e) => setVolume(Number((e.target as HTMLInputElement).value), true)}
+                onKeyUp={(e) => setVolume(Number((e.target as HTMLInputElement).value), true)}
+                className="h-11 w-full cursor-pointer accent-[#edcc36]"
+                style={{
+                  background: `linear-gradient(to right, #edcc36 ${state.volume}%, #27272a ${state.volume}%) center / 100% 8px no-repeat`,
+                }}
+              />
+              <span className="block text-center text-xs text-zinc-400" aria-hidden="true">
+                Volumen {state.volume}%
+              </span>
+            </label>
+            <button type="button" className={btn} disabled={state.volume >= 100} onClick={() => setVolume(state.volume + 10, true)} aria-label="Subir volumen">
               <Volume2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>

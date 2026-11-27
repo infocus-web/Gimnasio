@@ -8,11 +8,11 @@
  *   POST /<gym>/tv/feed   datos (gente, clases, ranking, cumpleaños, mensaje)
  *   GET  /api/access/turnstile/slides?org=<gym>   publicidad (imágenes y videos; el video pasa entero, sin sonido)
  * La clave queda guardada igual que en la pantalla normal (localStorage "tv:<gym>").
- *   POST /<gym>/tv/music  música cargada en Pantallas → Música (cada 3 s; la maneja todo el equipo).
+ *   (la música viene en el mismo pedido de /tv/live, cada 1,5 s; la maneja todo el equipo).
  *   Mientras suenan los pitidos del temporizador, la música baja sola.
  * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
  * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
- *   POST /<gym>/tv/live   pizarra en vivo del profe (cada 3 s; el profe la maneja desde Mis clases → Pizarra)
+ *   POST /<gym>/tv/live   pizarra en vivo del profe y música (cada 1,5 s en clase o con algo en uso; abierto 6 s; cerrado 60 s; el profe la maneja desde Mis clases → Pizarra)
  *   Con sonido (se apaga desde la pizarra): pitidos al empezar trabajo/descanso, al terminar y en los
  *   últimos N segundos de cada fase (timer.beep_s, 0 = no; por defecto 3).
  *   El navegador recién deja sonar después de que alguien apriete OK (el mismo OK de pantalla completa).
@@ -204,7 +204,6 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     loadAds(); setInterval(loadAds, 5 * 60000);
     fullscreenSetup();
     pollLive();
-    musicPoll();
   }
   function nowD() { return new Date(Date.now() + offset); }
   function clock() {
@@ -225,7 +224,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
         if (j.timezone) TZ = j.timezone;
         if (j.gym) $('gym').textContent = j.gym;
         show($('off'), false);
-        setTimeout(fetchFeed, 60000);
+        setTimeout(fetchFeed, isOpen() ? 60000 : 5 * 60000); // cerrado: los datos generales cada 5 min
       } else {
         if (feed) { $('off').textContent = 'Sin conexión · datos de las ' + (updatedAt ? hm(updatedAt) : '--:--'); show($('off'), true); }
         else $('content').innerHTML = '<div class="center wait">Sin conexión. Reintentando…</div>';
@@ -392,7 +391,8 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   }
   function beep(freq, ms, times) {
     if (!actx || actx.state !== 'running') return;
-    duck((times || 1) * (ms + 120) + 500);
+    // La música queda baja el doble de lo que dura el pitido (así no sube y baja entre el 3, 2, 1)
+    duck(((times || 1) * (ms + 120) + 500) * 2);
     for (var n = 0; n < (times || 1); n++) {
       try {
         var t0 = actx.currentTime + n * (ms / 1000 + 0.12);
@@ -423,14 +423,62 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     lastPhase = phase; lastLeft = v.left;
   }
 
+  /*
+   * Cada cuánto pregunta la TV, según el horario del gimnasio (Configuración → Web) y las clases
+   * de hoy que cargaron los profes (para no gastar consultas al servidor sin necesidad):
+   *   durante una clase (10 min antes a 10 min después), pizarra en la TV, música sonando
+   *   o un cambio hace menos de 2 min → 1,5 s
+   *   gimnasio abierto sin clase → 6 s (el primer "Reproducir" puede tardar hasta 6 s)
+   *   gimnasio cerrado → 60 s
+   */
+  var lastSig = null, fastUntil = 0;
+  var WD = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
+  function localNow() {
+    // Día de la semana (1 = lunes) y hora "HH:MM" en el horario del gimnasio
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(nowD());
+      var o = {};
+      for (var i = 0; i < parts.length; i++) o[parts[i].type] = parts[i].value;
+      var h = Number(o.hour) % 24;
+      return { wd: WD[o.weekday] || 0, hm: (h < 10 ? '0' : '') + h + ':' + o.minute };
+    } catch (e) { return null; }
+  }
+  function isOpen() {
+    var hours = feed && feed.opening_hours;
+    if (!hours || !hours.length) return !(feed && feed.occupancy_level === 'closed');
+    var n = localNow();
+    if (!n) return true;
+    for (var i = 0; i < hours.length; i++) {
+      var d = hours[i];
+      if (Number(d.weekday) === n.wd && n.hm >= String(d.open).slice(0, 5) && n.hm < String(d.close).slice(0, 5)) return true;
+    }
+    return false;
+  }
+  function inClass() {
+    var c = (feed && feed.classes) || [], t = nowD().getTime(), M10 = 10 * 60000;
+    for (var i = 0; i < c.length; i++) {
+      var a = new Date(c[i].starts_at).getTime(), b = new Date(c[i].ends_at).getTime();
+      if (t >= a - M10 && t <= b + M10) return true;
+    }
+    return false;
+  }
+  function pollDelay() {
+    if (live || mPlaying || Date.now() < fastUntil || inClass()) return 1500;
+    return isOpen() ? 6000 : 60000;
+  }
   function pollLive() {
     var sent = Date.now();
-    req('POST', '/' + SLUG + '/tv/live', { k: token }, function (st, j) {
+    // Un solo pedido cada 1,5 s: pizarra del profe + música
+    req('POST', '/' + SLUG + '/tv/live', { k: token, v: mListV, now: mPlaying ? mCurId() : null }, function (st, j) {
       if (st === 200 && j && j.status === 'ok') {
         if (j.server_now) { var srv = new Date(j.server_now).getTime(); if (!isNaN(srv)) offset = srv - (sent + Date.now()) / 2; }
+        var sig = JSON.stringify([j.live || null, j.music ? j.music.music : null]);
+        if (lastSig !== null && sig !== lastSig) fastUntil = Date.now() + 120000; // algo cambió: 2 minutos rápido
+        lastSig = sig;
         setLive(j.live || null);
+        if (j.music && j.music.status === 'ok') musicData(j.music);
       }
-      setTimeout(pollLive, 3000);
+      setTimeout(pollLive, pollDelay());
     });
   }
   function setLive(b) {
@@ -537,7 +585,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   var last = {};
 
   /* ---------- Música (Pantallas → Música; la maneja todo el equipo desde el panel) ---------- */
-  var mAudio = null, mTracks = [], mListV = null, mSeq = null, mCur = -1, mVol = 0.7, mDuck = 1, duckTimer = null;
+  var mAudio = null, mPre = null, mPreIdx = -1, mTracks = [], mListV = null, mSeq = null, mCur = -1, mVol = 0.7, mDuck = 1, duckTimer = null;
   var mPlaying = false, mShuffle = false, mBlocked = false;
   function mIndexOf(id) { for (var i = 0; i < mTracks.length; i++) if (mTracks[i].id === id) return i; return -1; }
   function mCurId() { return mCur >= 0 && mTracks[mCur] ? mTracks[mCur].id : null; }
@@ -547,14 +595,26 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     clearTimeout(duckTimer);
     duckTimer = setTimeout(function () { mDuck = 1; mSetVol(); }, ms);
   }
-  function mEnsure() {
-    if (!mAudio) {
-      mAudio = new Audio();
-      mAudio.preload = 'auto';
-      mAudio.onended = function () { mStep(1); };
-      mAudio.onerror = function () { if (mTracks.length > 1) setTimeout(function () { mStep(1); }, 1500); };
-    }
-    return mAudio;
+  // Dos reproductores: el que suena y el que ya va cargando el tema siguiente (así arranca al instante)
+  function mNewAudio() {
+    var a = new Audio();
+    a.preload = 'auto';
+    a.onended = function () { if (a === mAudio) mStep(1); };
+    a.onerror = function () { if (a === mAudio && mTracks.length > 1) setTimeout(function () { if (a === mAudio) mStep(1); }, 1500); };
+    return a;
+  }
+  function mEnsure() { if (!mAudio) mAudio = mNewAudio(); return mAudio; }
+  function mNextIndex(d) {
+    var n = mTracks.length, i;
+    if (mShuffle && n > 1) { do { i = Math.floor(Math.random() * n); } while (i === mCur); return i; }
+    return ((mCur < 0 ? (d > 0 ? -1 : 0) : mCur) + d + n) % n;
+  }
+  function mPreload(i) {
+    if (i < 0 || i >= mTracks.length || (mPre && mPreIdx === i)) return;
+    if (!mPre) mPre = mNewAudio();
+    mPre.src = mTracks[i].url;
+    mPreIdx = i;
+    try { mPre.load(); } catch (e) {}
   }
   function mPlay() {
     var a = mEnsure();
@@ -565,19 +625,17 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   }
   function mLoad(i) {
     if (i < 0 || !mTracks.length) return;
+    if (mAudio && !mAudio.paused) mAudio.pause();
+    if (mPre && mPreIdx === i) { var old = mAudio; mAudio = mPre; mPre = old; mPreIdx = -1; } // ya estaba cargado
+    else { mEnsure(); mAudio.src = mTracks[i].url; }
     mCur = i;
-    var a = mEnsure();
-    a.src = mTracks[i].url;
     mSetVol();
     if (mPlaying) mPlay();
+    if (mTracks.length > 1) mPreload(mNextIndex(1)); // el siguiente se va cargando
   }
   function mStep(d) {
-    var n = mTracks.length;
-    if (!n) return;
-    var i;
-    if (mShuffle && n > 1) { do { i = Math.floor(Math.random() * n); } while (i === mCur); }
-    else i = ((mCur < 0 ? (d > 0 ? -1 : 0) : mCur) + d + n) % n;
-    mLoad(i);
+    if (!mTracks.length) return;
+    mLoad(d > 0 && mPreIdx >= 0 ? mPreIdx : mNextIndex(d));
   }
   function mApply(m) {
     mVol = (typeof m.volume === 'number' ? m.volume : 70) / 100;
@@ -593,24 +651,23 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       else if (m.cmd === 'track') { var t = mIndexOf(m.track_id); if (t >= 0) mLoad(t); }
     }
     if (!mTracks.length) { if (mAudio) mAudio.pause(); return; }
+    // En pausa sin tema elegido: se deja cargado el primero, así "Reproducir" arranca al instante
+    if (!mPlaying && mCur < 0) mLoad(mShuffle ? Math.floor(Math.random() * mTracks.length) : 0);
     if (mPlaying) {
       if (mCur < 0) mStep(1);
       else if (mAudio && mAudio.paused && !mBlocked) mPlay();
     } else if (mAudio && !mAudio.paused) mAudio.pause();
   }
-  function musicPoll() {
-    req('POST', '/' + SLUG + '/tv/music', { k: token, v: mListV, now: mPlaying ? mCurId() : null }, function (st, j) {
-      if (st === 200 && j && j.status === 'ok') {
-        if (j.tracks) {
-          var keep = mCurId();
-          mTracks = j.tracks; mListV = j.list_v;
-          mCur = mIndexOf(keep);
-          if (keep && mCur < 0 && mAudio) { mAudio.pause(); mAudio.removeAttribute('src'); } // borraron el tema que sonaba
-        }
-        mApply(j.music || {});
-      }
-      setTimeout(musicPoll, 3000);
-    });
+  function musicData(j) {
+    if (j.tracks) {
+      var keep = mCurId();
+      mTracks = j.tracks; mListV = j.list_v;
+      mCur = mIndexOf(keep);
+      mPreIdx = -1; // la lista cambió: la precarga se rehace
+      if (keep && mCur < 0 && mAudio) { mAudio.pause(); mAudio.removeAttribute('src'); } // borraron el tema que sonaba
+      else if (mCur >= 0 && mTracks.length > 1) mPreload(mNextIndex(1));
+    }
+    mApply(j.music || {});
   }
 
   /* ---------- Pantalla completa (necesita que alguien apriete OK o toque la pantalla) ---------- */
