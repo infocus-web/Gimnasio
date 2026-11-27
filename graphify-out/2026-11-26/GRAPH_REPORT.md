@@ -1,7 +1,7 @@
 # Graph Report - Gimnasio  (2026-11-26)
 
 ## Corpus Check
-- 511 files · ~5,587,011 words
+- 511 files · ~5,587,177 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `739f1f64`
+- Built from commit: `8ec0a76a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -230,8 +230,8 @@
   platform/package.json → package.json
 - `SignupInfo` --calls--> `createAdminClient()`  [EXTRACTED]
   platform/src/features/payments/signup.ts → platform/src/lib/supabase/admin.ts
-- `assignRoutine()` --calls--> `errorText()`  [EXTRACTED]
-  src/pages/admin/MemberDetail.tsx → src/components/ui.tsx
+- `confirm()` --calls--> `createClient()`  [EXTRACTED]
+  platform/src/app/auth/confirm/page.tsx → platform/src/lib/supabase/server.ts
 
 ## Import Cycles
 - None detected.
@@ -883,7 +883,7 @@ Cohesion: 0.67
 Nodes (3): tailwindcss@^4.3.3, tailwindcss, tailwindcss@^4.3.3
 
 ## Knowledge Gaps
-- **628 isolated node(s):** `metadata`, `viewport`, `Slide`, `Mode`, `SocialResult` (+623 more)
+- **628 isolated node(s):** `Slide`, `Mode`, `SocialResult`, `Totals`, `RefundInfo` (+623 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1241 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -891,12 +891,12 @@ Nodes (3): tailwindcss@^4.3.3, tailwindcss, tailwindcss@^4.3.3
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `react` connect `ref_lucide_react` to `TvScreen.tsx`, `[sessionId]/page.tsx`, `createClient`, `buffet/actions.ts`, `server.ts`, `board-actions.ts`, `socios/[memberId]/page.tsx`, `Portal.tsx`, `camaras/page.tsx`, `useActionForm`, `errorText`, `admin/ui.tsx`, `next`, `MemberDetail.tsx`, `src/components/ui.tsx`, `ActiveWorkout.tsx`, `admin/equipo/page.tsx`, `inscripcion/page.tsx`, `RatesForm.tsx`, `VideoRTC`, `app-ios/package.json`, `labels.ts`, `Button`, `index.tsx`, `retention.ts`, `yo/YoScreen.tsx`, `platform.ts`, `App.tsx`, `app-ios/src/components/ui.tsx`, `AuthProvider.tsx`, `TurnstileKiosk.tsx`, `PassScreen.tsx`, `PadronForm.tsx`, `ReceptionScreen.tsx`, `StrengthProgress.tsx`, `promo.ts`, `useMember`, `ProductForm.tsx`, `clases.tsx`, `HelpVideoButton.tsx`, `login/LoginForm.tsx`, `AssessmentView.tsx`, `Card`, `TodayLive.tsx`, `_claude_tmp/LoginForm.tsx`, `ReceptionScanner.tsx`, `Dashboard.tsx`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `MemberProvider.tsx`, `RiskList.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
-  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+  _High betweenness centrality (0.091) - this node is a cross-community bridge._
 - **Why does `next` connect `next` to `TvScreen.tsx`, `billing-actions.ts`, `[sessionId]/page.tsx`, `createClient`, `buffet/actions.ts`, `server.ts`, `board-actions.ts`, `socios/[memberId]/page.tsx`, `floor/actions.ts`, `createClient`, `camaras/page.tsx`, `negocio/page.tsx`, `maquina/[code]/page.tsx`, `getAdminContext`, `admin/ui.tsx`, `dbMessage`, `encuestas/page.tsx`, `ActiveWorkout.tsx`, `accesos/page.tsx`, `admin/equipo/page.tsx`, `inscripcion/page.tsx`, `labels.ts`, `retention.ts`, `admin/layout.tsx`, `yo/YoScreen.tsx`, `platform.ts`, `payments/actions.ts`, `platform/package.json`, `TurnstileKiosk.tsx`, `PassScreen.tsx`, `bookings/route.ts`, `routine/route.ts`, `PadronForm.tsx`, `ReceptionScreen.tsx`, `referidos/page.tsx`, `dependencies`, `StrengthProgress.tsx`, `agenda/page.tsx`, `engagement/actions.ts`, `[...path]/route.ts`, `ProductForm.tsx`, `useMember`, `login/LoginForm.tsx`, `Card`, `privacidad/page.tsx`, `messages/route.ts`, `_claude_tmp/LoginForm.tsx`, `padron-actions.ts`, `retention-actions.ts`, `pantallas/page.tsx`, `_claude_tmp/YoScreen.tsx`, `[org]/page.tsx`, `createAdminClient`, `ref_lucide_react`, `MemberProvider.tsx`, `access-plus/actions.ts`, `RiskList.tsx`, `[programId]/page.tsx`, `pantalla-tv-descartada/page.tsx`?**
-  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
 - **Why does `createClient()` connect `createClient` to `billing-actions.ts`, `[sessionId]/page.tsx`, `createClient`, `buffet/actions.ts`, `server.ts`, `board-actions.ts`, `socios/[memberId]/page.tsx`, `floor/actions.ts`, `camaras/page.tsx`, `negocio/page.tsx`, `maquina/[code]/page.tsx`, `getAdminContext`, `dbMessage`, `next`, `encuestas/page.tsx`, `accesos/page.tsx`, `admin/equipo/page.tsx`, `inscripcion/page.tsx`, `RatesForm.tsx`, `labels.ts`, `admin/layout.tsx`, `payments/actions.ts`, `bookings/route.ts`, `routine/route.ts`, `referidos/page.tsx`, `agenda/page.tsx`, `engagement/actions.ts`, `ProductForm.tsx`, `login/LoginForm.tsx`, `Card`, `TodayLive.tsx`, `padron-actions.ts`, `retention-actions.ts`, `login/actions.ts`, `pantallas/page.tsx`, `access-plus/actions.ts`, `[org]/page.tsx`, `createAdminClient`, `ref_lucide_react`, `MemberProvider.tsx`, `[programId]/page.tsx`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **What connects `metadata`, `viewport`, `Slide` to the rest of the system?**
+  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+- **What connects `Slide`, `Mode`, `SocialResult` to the rest of the system?**
   _628 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `TvScreen.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12987012987012986 - nodes in this community are weakly interconnected._
