@@ -8,6 +8,8 @@
  *   POST /<gym>/tv/feed   datos (gente, clases, ranking, cumpleaños, mensaje)
  *   GET  /api/access/turnstile/slides?org=<gym>   publicidad
  * La clave queda guardada igual que en la pantalla normal (localStorage "tv:<gym>").
+ * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
+ * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
  * No incluye la pizarra en vivo del profe.
  *
  * /<gym>/tv redirige acá sola cuando detecta un Chrome anterior al 111.
@@ -89,6 +91,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 #adtx.center{top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);background:rgba(0,0,0,.45);text-align:center}
 #adtx .bd{display:inline-block;background:#edcc36;color:#000;font-weight:900;font-size:1.8vw;padding:.6vh 1.2vw;border-radius:99px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2vh}
 #adtx .tt{font-size:5.5vw;font-weight:900;line-height:1.05}
+#fs{position:fixed;left:50%;bottom:2vh;-webkit-transform:translateX(-50%);transform:translateX(-50%);z-index:20;background:#edcc36;color:#000;font-weight:900;font-size:1.6vw;padding:1vh 2vw;border-radius:99px}
 #adtx .st{font-size:2.4vw;color:#e4e4e7;margin-top:1.5vh}
 </style>
 </head>
@@ -104,12 +107,14 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   <div id="content"><div class="center wait">Cargando…</div></div>
   <div id="foot"><div id="dots"></div><p id="off" class="hide"></p></div>
 </div>
+<p id="fs" class="hide">Apretá OK en el control para ver en pantalla completa</p>
 <div id="ad" class="hide"><img id="adimg" alt=""><div id="adtx" class="hide"></div></div>
 <script>
 (function () {
   var SLUG = '__SLUG__';
   var KEY = 'tv:' + SLUG;
   var TZ = 'America/Argentina/Buenos_Aires';
+  var offset = 0; // diferencia entre la hora del servidor y la de la tele
   var token = null, feed = null, ads = [], index = 0, updatedAt = null, rotating = false;
   var LEVEL = { quiet: 'Tranquilo', normal: 'Movimiento normal', full: 'Muy lleno', closed: 'Cerrado' };
 
@@ -172,19 +177,24 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     clock(); setInterval(clock, 5000);
     fetchFeed();
     loadAds(); setInterval(loadAds, 5 * 60000);
-    // Recarga preventiva cada 6 h (solo con internet)
-    setInterval(function () { if (navigator.onLine !== false) window.location.reload(); }, 6 * 3600000);
+    fullscreenSetup();
   }
+  function nowD() { return new Date(Date.now() + offset); }
   function clock() {
-    var n = new Date();
+    var n = nowD();
     $('clock').textContent = hm(n);
     $('date').textContent = fmt(n, { weekday: 'long', day: 'numeric', month: 'long' });
   }
   function fetchFeed() {
+    var sent = Date.now();
     req('POST', '/' + SLUG + '/tv/feed', { k: token }, function (st, j) {
+      if (j && j.server_time) {
+        var srv = new Date(j.server_time).getTime();
+        if (!isNaN(srv)) { offset = srv - (sent + Date.now()) / 2; clock(); }
+      }
       if (st === 401) { save(null); token = null; feed = null; window.location.reload(); return; }
       if (st === 200 && j && j.status === 'ok') {
-        feed = j; updatedAt = new Date();
+        feed = j; updatedAt = nowD();
         if (j.timezone) TZ = j.timezone;
         if (j.gym) $('gym').textContent = j.gym;
         show($('off'), false);
@@ -209,7 +219,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     });
   }
   function upcoming() {
-    var now = new Date(), out = [], c = (feed && feed.classes) || [];
+    var now = nowD(), out = [], c = (feed && feed.classes) || [];
     for (var i = 0; i < c.length; i++) if (new Date(c[i].ends_at) > now) out.push(c[i]);
     return out;
   }
@@ -272,7 +282,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       h += '</ul>';
     } else if (s === 'ranking') {
       var r = feed.ranking.slice(0, 10);
-      h = '<p class="title"><span class="ic">🏆</span>Los más constantes de ' + esc(fmt(new Date(), { month: 'long' })) + '</p><ol class="rk">';
+      h = '<p class="title"><span class="ic">🏆</span>Los más constantes de ' + esc(fmt(nowD(), { month: 'long' })) + '</p><ol class="rk">';
       for (var j = 0; j < r.length; j++) {
         h += '<li><span class="p' + (j === 0 ? ' p1' : j < 3 ? ' p2' : '') + '">' + (j + 1) + '</span><span class="nm">' + esc(r[j].name) +
           '</span><span class="d">' + r[j].days + (r[j].days === 1 ? ' día' : ' días') + '</span></li>';
@@ -287,6 +297,25 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
         (t.length > 120 ? '3.4vw' : '4.6vw') + '">' + esc(t) + '</p></div></div>';
     }
     $('content').innerHTML = '<div class="fade">' + h + '</div>';
+  }
+
+  /* ---------- Pantalla completa (necesita que alguien apriete OK o toque la pantalla) ---------- */
+  function isFull() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+  function goFull() {
+    if (isFull()) return;
+    var el = document.documentElement;
+    try {
+      var r = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null;
+      if (r && r.catch) r.catch(function () {});
+    } catch (e) {}
+  }
+  function fullscreenSetup() {
+    function upd() { show($('fs'), !isFull()); }
+    var evs = ['keydown', 'click', 'touchend', 'mousedown'];
+    for (var i = 0; i < evs.length; i++) document.addEventListener(evs[i], goFull, true);
+    document.addEventListener('fullscreenchange', upd);
+    document.addEventListener('webkitfullscreenchange', upd);
+    upd();
   }
 
   /* ---------- Arranque ---------- */
