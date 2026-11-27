@@ -3744,9 +3744,9 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/lite/route.ts": {
-    "mtime": 1795744343.2434034,
-    "seen": 1795744394.3106184,
-    "ast_hash": "0fcb7bbaa79c00823d3cafa9fceaeb74",
+    "mtime": 1795745110.943486,
+    "seen": 1795745220.5352995,
+    "ast_hash": "8aaae69862ea9d88dd86a9e339e120a7",
     "semantic_hash": ""
   },
   "supabase/migrations/0064_kiosk_slide_videos.sql": {
