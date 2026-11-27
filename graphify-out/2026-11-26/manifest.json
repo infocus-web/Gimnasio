@@ -516,10 +516,10 @@
     "semantic_hash": "1a83fa33318fe1e20781564f969c45a9"
   },
   "platform/src/app/[org]/molinete/TurnstileKiosk.tsx": {
-    "mtime": 1794609832.013616,
-    "seen": 1794664507.5021036,
-    "ast_hash": "6940c0691ea3203b8ef5c0d482d233d5",
-    "semantic_hash": "6940c0691ea3203b8ef5c0d482d233d5"
+    "mtime": 1795743879.4702382,
+    "seen": 1795744148.8139572,
+    "ast_hash": "1e11af096cdad5a535e263f219043eb5",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/molinete/page.tsx": {
     "mtime": 1794606059.8375533,
@@ -1278,10 +1278,10 @@
     "semantic_hash": "1b749a05c4155ca713acc9535801a05d"
   },
   "platform/src/features/floor/TvScreen.tsx": {
-    "mtime": 1794610356.993741,
-    "seen": 1794664507.5141811,
-    "ast_hash": "54bca08fafc855f17be3e619da69293c",
-    "semantic_hash": "54bca08fafc855f17be3e619da69293c"
+    "mtime": 1795743879.4510539,
+    "seen": 1795744148.8139572,
+    "ast_hash": "5d3bb4564a3f08924349189f198175e2",
+    "semantic_hash": ""
   },
   "platform/src/features/floor/actions.ts": {
     "mtime": 1794610121.5752454,
@@ -1602,9 +1602,9 @@
     "semantic_hash": "d064dab0d36b0579f54ef255dc464909"
   },
   "platform/src/types/database.types.ts": {
-    "mtime": 1795118286.7806082,
-    "seen": 1795118521.759823,
-    "ast_hash": "bec46370e24ca48f5dae362b6aec6f27",
+    "mtime": 1795743968.5178602,
+    "seen": 1795744148.8139572,
+    "ast_hash": "d5038711cd7f04dc371a637fe227771c",
     "semantic_hash": ""
   },
   "platform/src/types/platform.ts": {
@@ -2160,10 +2160,10 @@
     "semantic_hash": "c56be7a463e7ec1d54a53ee75bb5f45e"
   },
   "platform/src/app/[org]/admin/pantallas/page.tsx": {
-    "mtime": 1794619312.4490545,
-    "seen": 1794664507.4985723,
-    "ast_hash": "377985b7efd292f0368e436bdae88ebe",
-    "semantic_hash": "377985b7efd292f0368e436bdae88ebe"
+    "mtime": 1795743842.4922507,
+    "seen": 1795744148.8139572,
+    "ast_hash": "8d0af46b97258436076d2c69e5baf565",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/socios/riesgo/page.tsx": {
     "mtime": 1794614774.8849397,
@@ -2214,10 +2214,10 @@
     "semantic_hash": "0364ade20ab355914c44a4121a0347fb"
   },
   "platform/src/app/api/access/turnstile/slides/route.ts": {
-    "mtime": 1794609760.0653832,
-    "seen": 1794664507.503115,
-    "ast_hash": "42d50e18c94b78111d03079a03b9cd5d",
-    "semantic_hash": "42d50e18c94b78111d03079a03b9cd5d"
+    "mtime": 1795743842.4852505,
+    "seen": 1795744148.8139572,
+    "ast_hash": "53edf6358fdf6bbdbbddb5a4903b866a",
+    "semantic_hash": ""
   },
   "platform/src/app/api/cuenta/borrar/route.ts": {
     "mtime": 1794365092.2229676,
@@ -2274,10 +2274,10 @@
     "semantic_hash": "e118865f07e4980208a33e6db39093d6"
   },
   "platform/src/features/admin/KioskSlidesManager.tsx": {
-    "mtime": 1794609802.0155668,
-    "seen": 1794664507.5086498,
-    "ast_hash": "0e35a49d2b3797d526614e80af5de076",
-    "semantic_hash": "0e35a49d2b3797d526614e80af5de076"
+    "mtime": 1795743863.762202,
+    "seen": 1795744148.8139572,
+    "ast_hash": "e8b3792bc7d93ca3f3edba834161e96d",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/help-videos.ts": {
     "mtime": 1794614776.0063593,
@@ -2286,10 +2286,10 @@
     "semantic_hash": "428b7973c9029ade00880969d7121d7a"
   },
   "platform/src/features/admin/kiosk-slide-actions.ts": {
-    "mtime": 1794609760.0473833,
-    "seen": 1794664507.5106487,
-    "ast_hash": "2bca388b0b75e8f26279107109367ac7",
-    "semantic_hash": "2bca388b0b75e8f26279107109367ac7"
+    "mtime": 1795743842.4972503,
+    "seen": 1795744148.8139572,
+    "ast_hash": "b69d900afc749504706a60af8c860bc5",
+    "semantic_hash": ""
   },
   "platform/src/features/admin/kiosk-slides.ts": {
     "mtime": 1794606007.3765082,
@@ -2394,10 +2394,10 @@
     "semantic_hash": "79bf947ec6731e29102219498795e24e"
   },
   "platform/src/features/screens/PromoSlide.tsx": {
-    "mtime": 1794609743.9643764,
-    "seen": 1794664507.5181854,
-    "ast_hash": "83d0d116e8c3e92bf9286bb8dd087a82",
-    "semantic_hash": "83d0d116e8c3e92bf9286bb8dd087a82"
+    "mtime": 1795743842.4767451,
+    "seen": 1795744148.8139572,
+    "ast_hash": "906972c76bd635486b602868688b31e7",
+    "semantic_hash": ""
   },
   "platform/src/features/screens/board.ts": {
     "mtime": 1794610172.3821652,
@@ -2406,10 +2406,10 @@
     "semantic_hash": "0e87b8894371c7cfe4753d774f174931"
   },
   "platform/src/features/screens/promo.ts": {
-    "mtime": 1794609743.9563766,
-    "seen": 1794664507.5181854,
-    "ast_hash": "fd3e6ebfd62a8d506fc556f1ee0d3c2a",
-    "semantic_hash": "fd3e6ebfd62a8d506fc556f1ee0d3c2a"
+    "mtime": 1795743842.4727452,
+    "seen": 1795744148.8139572,
+    "ast_hash": "da867fbfe2c5ebbd4172cc7c4b2ab3d6",
+    "semantic_hash": ""
   },
   "supabase/migrations/0001_init.sql": {
     "mtime": 1790203094.5942104,
@@ -3744,9 +3744,15 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/lite/route.ts": {
-    "mtime": 1795743706.5811,
-    "seen": 1795743782.4818332,
-    "ast_hash": "e6c5dfb08ebdebbb0d51646ff3682c7f",
+    "mtime": 1795743879.5395203,
+    "seen": 1795744148.8139572,
+    "ast_hash": "f580c227f79354658431ca1dd8f90653",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0064_kiosk_slide_videos.sql": {
+    "mtime": 1795743842.4558887,
+    "seen": 1795744148.8139572,
+    "ast_hash": "9a9e77a8e67967a6284e36346b6aa286",
     "semantic_hash": ""
   }
 }
