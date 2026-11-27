@@ -4,8 +4,9 @@ import type { PromoSlideData } from './promo'
  * Publicidad estilo redes: la imagen con zoom lento y los textos animados encima.
  * El tamaño de los textos se adapta a la caja (sirve igual para la tablet, la TV y la vista previa del panel).
  * Para repetir la animación, cambiar la "key" del componente.
+ * Videos: se reproducen sin sonido; si hay `onDone`, avisa cuando termina (si no, se repite).
  */
-export function PromoSlide({ slide, className = '' }: { slide: PromoSlideData; className?: string }) {
+export function PromoSlide({ slide, className = '', onDone }: { slide: PromoSlideData; className?: string; onDone?: () => void }) {
   const style = slide.style ?? 'impacto'
   const position = slide.position ?? 'bottom'
   const hasText = !!(slide.badge || slide.title || slide.subtitle)
@@ -16,13 +17,26 @@ export function PromoSlide({ slide, className = '' }: { slide: PromoSlideData; c
   return (
     <div className={`absolute inset-0 overflow-hidden bg-black [container-type:size] ${className}`}>
       <style>{KEYFRAMES}</style>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={slide.url}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{ animation: `${style === 'deslizar' ? 'ps-pan' : 'ps-zoom'} 9s ease-out both` }}
-      />
+      {slide.type === 'video' ? (
+        <video
+          src={slide.url}
+          autoPlay
+          muted
+          playsInline
+          loop={!onDone}
+          onEnded={onDone}
+          onError={onDone}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={slide.url}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ animation: `${style === 'deslizar' ? 'ps-pan' : 'ps-zoom'} 9s ease-out both` }}
+        />
+      )}
       {hasText && (
         <>
           <div

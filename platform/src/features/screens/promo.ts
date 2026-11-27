@@ -1,6 +1,8 @@
 /** Una pantalla de publicidad (Panel → Pantallas): imagen + textos animados opcionales. */
 export interface PromoSlideData {
   url: string
+  /** imagen (por defecto) o video */
+  type?: 'image' | 'video'
   badge?: string | null
   title?: string | null
   subtitle?: string | null
@@ -41,4 +43,7 @@ export function fitsScreen(s: PromoSlideData, screen: 'vertical' | 'horizontal')
 }
 
 /** Cuánto dura en pantalla: con textos un poco más, para que se lean */
-export const promoDurationMs = (s: PromoSlideData) => (s.title || s.subtitle ? 8000 : 6000)
+export const promoDurationMs = (s: PromoSlideData) => (s.type === 'video' ? VIDEO_MAX_MS : s.title || s.subtitle ? 8000 : 6000)
+
+/** Un video pasa entero (onDone de PromoSlide); esto es solo un tope por si nunca avisa que terminó */
+export const VIDEO_MAX_MS = 2 * 60_000

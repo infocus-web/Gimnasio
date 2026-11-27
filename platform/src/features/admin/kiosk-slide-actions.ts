@@ -19,11 +19,13 @@ function done(slug: string, message: string): ActionState {
   return { ok: true, message }
 }
 
-/** La imagen ya se subió al bucket desde el navegador: se registra al final de la lista. */
+/** La imagen o el video ya se subió al bucket desde el navegador: se registra al final de la lista. */
 export async function addKioskSlide(slug: string, path: string): Promise<ActionState> {
   const ctx = await guard(slug)
   if (!ctx) return { message: ERRORS.FORBIDDEN }
-  if (!new RegExp(`^${ctx.org.id}/[0-9a-f-]{36}\\.jpg$`).test(path)) return { message: 'La imagen no es válida.' }
+  const m = new RegExp(`^${ctx.org.id}/[0-9a-f-]{36}\\.(jpg|mp4|webm)$`).exec(path)
+  if (!m) return { message: 'El archivo no es válido.' }
+  const mediaType = m[1] === 'jpg' ? 'image' : 'video'
   const supabase = await createClient()
   const { data: last, count } = await supabase
     .from('kiosk_slides')
@@ -33,16 +35,16 @@ export async function addKioskSlide(slug: string, path: string): Promise<ActionS
     .limit(1)
   if ((count ?? 0) >= MAX_SLIDES) {
     await supabase.storage.from(KIOSK_BUCKET).remove([path])
-    return { message: `Máximo ${MAX_SLIDES} imágenes. Borrá alguna para agregar otra.` }
+    return { message: `Máximo ${MAX_SLIDES} publicidades. Borrá alguna para agregar otra.` }
   }
   const { error } = await supabase
     .from('kiosk_slides')
-    .insert({ org_id: ctx.org.id, image_path: path, sort: (last?.[0]?.sort ?? 0) + 1 })
+    .insert({ org_id: ctx.org.id, image_path: path, media_type: mediaType, sort: (last?.[0]?.sort ?? 0) + 1 })
   if (error) {
     await supabase.storage.from(KIOSK_BUCKET).remove([path])
     return { message: dbMessage(error) }
   }
-  return done(slug, 'Imagen agregada.')
+  return done(slug, mediaType === 'video' ? 'Video agregado.' : 'Imagen agregada.')
 }
 
 export async function deleteKioskSlide(slug: string, id: string): Promise<ActionState> {
@@ -58,7 +60,7 @@ export async function deleteKioskSlide(slug: string, id: string): Promise<Action
     .maybeSingle()
   if (error) return { message: dbMessage(error) }
   if (row?.image_path) await supabase.storage.from(KIOSK_BUCKET).remove([row.image_path])
-  return done(slug, 'Imagen borrada.')
+  return done(slug, 'Publicidad borrada.')
 }
 
 export async function toggleKioskSlide(slug: string, id: string, active: boolean): Promise<ActionState> {

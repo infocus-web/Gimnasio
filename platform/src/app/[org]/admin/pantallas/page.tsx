@@ -32,7 +32,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
     canAds
       ? supabase
           .from('kiosk_slides')
-          .select('id, image_path, active, badge, title, subtitle, style, text_position, orientation')
+          .select('id, image_path, media_type, active, badge, title, subtitle, style, text_position, orientation')
           .eq('org_id', ctx.org.id)
           .order('sort')
           .order('created_at')
@@ -46,6 +46,7 @@ export default async function ScreensPage({ params }: PageProps<'/[org]/admin/pa
       {
         id: s.id,
         url,
+        type: s.media_type === 'video' ? ('video' as const) : ('image' as const),
         active: s.active,
         badge: s.badge,
         title: s.title,

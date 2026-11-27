@@ -6,7 +6,7 @@
  * React) que usa las mismas direcciones que la pantalla normal:
  *   POST /<gym>/tv/pair   vincular con el código de 6 números
  *   POST /<gym>/tv/feed   datos (gente, clases, ranking, cumpleaños, mensaje)
- *   GET  /api/access/turnstile/slides?org=<gym>   publicidad
+ *   GET  /api/access/turnstile/slides?org=<gym>   publicidad (imágenes y videos; el video pasa entero, sin sonido)
  * La clave queda guardada igual que en la pantalla normal (localStorage "tv:<gym>").
  * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
  * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
@@ -84,7 +84,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 .rk .d{color:#a1a1aa;padding-left:1vw}
 .emoji{font-size:7vw;line-height:1}
 #ad{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10;background:#000}
-#ad img{width:100%;height:100%;object-fit:cover;display:block}
+#ad img,#ad video{width:100%;height:100%;object-fit:cover;display:block}
 #adtx{position:absolute;left:0;right:0;padding:6vh 5vw;text-align:left}
 #adtx.bottom{bottom:0;background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,0))}
 #adtx.top{top:0;background:linear-gradient(to bottom,rgba(0,0,0,.85),rgba(0,0,0,0))}
@@ -127,7 +127,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
 </div>
 <div id="board" class="hide"></div>
 <p id="fs" class="hide">Apretá OK en el control para ver en pantalla completa</p>
-<div id="ad" class="hide"><img id="adimg" alt=""><div id="adtx" class="hide"></div></div>
+<div id="ad" class="hide"><div id="admedia" style="width:100%;height:100%"></div><div id="adtx" class="hide"></div></div>
 <script>
 (function () {
   var SLUG = '__SLUG__';
@@ -233,7 +233,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
       var mine = [];
       for (var i = 0; i < j.slides.length; i++) {
         var s = j.slides[i];
-        if (s && typeof s.url === 'string' && (s.orientation || 'both') !== 'vertical') { mine.push(s); new Image().src = s.url; }
+        if (s && typeof s.url === 'string' && (s.orientation || 'both') !== 'vertical') { mine.push(s); if (s.type !== 'video') new Image().src = s.url; }
       }
       ads = mine;
     });
@@ -262,14 +262,33 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var i = index % list.length, s = list[i];
     index = i + 1;
     var ad = s.indexOf('ad:') === 0 ? ads[Number(s.slice(3))] : null;
-    if (ad && !live) renderAd(ad); else { show($('ad'), false); renderSlide(ad ? 'now' : s); }
+    if (ad && !live) renderAd(ad); else { stopAdVideo(); show($('ad'), false); renderSlide(ad ? 'now' : s); }
     var dots = '';
     if (list.length > 1) for (var k = 0; k < list.length; k++) dots += '<span' + (k === i ? ' class="on"' : '') + '></span>';
     $('dots').innerHTML = dots;
-    setTimeout(next, ad ? (ad.title || ad.subtitle ? 8000 : 6000) : 15000);
+    var wait = ad ? (ad.type === 'video' ? 120000 : ad.title || ad.subtitle ? 8000 : 6000) : 15000;
+    nextTimer = setTimeout(next, wait);
+  }
+  var nextTimer = null;
+  function skip() { clearTimeout(nextTimer); next(); }
+  function stopAdVideo() {
+    var v = $('admedia').firstChild;
+    if (v && v.tagName === 'VIDEO') { v.onended = null; v.onerror = null; try { v.pause(); } catch (e) {} v.removeAttribute('src'); try { v.load(); } catch (e) {} }
+    $('admedia').innerHTML = '';
   }
   function renderAd(ad) {
-    $('adimg').src = ad.url;
+    stopAdVideo();
+    var box = $('admedia');
+    if (ad.type === 'video') {
+      box.innerHTML = '<video autoplay muted playsinline></video>';
+      var v = box.firstChild;
+      v.onended = skip; v.onerror = skip;
+      v.src = ad.url;
+      try { var pr = v.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+    } else {
+      box.innerHTML = '<img alt="">';
+      box.firstChild.src = ad.url;
+    }
     var tx = $('adtx'), h = '';
     if (ad.badge) h += '<span class="bd">' + esc(ad.badge) + '</span>';
     if (ad.title) h += '<p class="tt">' + esc(ad.title) + '</p>';
@@ -368,10 +387,10 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     liveContent = content; liveState = state;
     if (!b) {
       clearTimeout(mediaTimer); clearInterval(tickTimer); tickTimer = null;
-      $('board').innerHTML = ''; show($('board'), false); show($('ad'), false);
+      $('board').innerHTML = ''; show($('board'), false);
       return;
     }
-    show($('ad'), false);
+    stopAdVideo(); show($('ad'), false);
     if (rebuild) buildBoard(b);
     tickBoard();
     if (b.timer && !tickTimer) tickTimer = setInterval(tickBoard, 250);

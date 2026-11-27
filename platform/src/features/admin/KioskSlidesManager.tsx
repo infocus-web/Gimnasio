@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Eye, EyeOff, ImagePlus, Loader2, Trash2, Type } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Eye, EyeOff, ImagePlus, Loader2, Trash2, Type, Video } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from './errors'
 import { KIOSK_BUCKET } from './kiosk-slides'
@@ -16,6 +16,12 @@ export interface KioskSlide extends PromoSlideData {
 }
 
 const MAX_SIDE = 1920 // nítida en la tablet y liviana (≈300 KB)
+const MAX_VIDEO_MB = 50 // tope del bucket (0064)
+const VIDEO_TYPES: Record<string, { ext: 'mp4' | 'webm'; type: string }> = {
+  'video/mp4': { ext: 'mp4', type: 'video/mp4' },
+  'video/quicktime': { ext: 'mp4', type: 'video/mp4' }, // .mov del celular: casi siempre es H.264 y se reproduce como MP4
+  'video/webm': { ext: 'webm', type: 'video/webm' },
+}
 
 /** Achica la imagen (lado mayor 1920 px) y la pasa a JPEG. */
 async function toJpeg(file: File): Promise<Blob> {
@@ -35,8 +41,9 @@ async function toJpeg(file: File): Promise<Blob> {
 }
 
 /**
- * Publicidad de la tablet del molinete: subir varias imágenes, ordenarlas, pausarlas o borrarlas.
- * Las imágenes se suben directo al almacenamiento desde el navegador (no pasan por el servidor de la web).
+ * Publicidad de la tablet del molinete y los TVs: subir imágenes y videos, ordenarlos, pausarlos o borrarlos.
+ * Se suben directo al almacenamiento desde el navegador (no pasan por el servidor de la web).
+ * Las imágenes se achican a JPEG; los videos se suben tal cual (MP4/MOV/WebM, hasta 50 MB).
  */
 export function KioskSlidesManager({
   orgId,
@@ -74,21 +81,29 @@ export function KioskSlidesManager({
     if (!files?.length) return
     setMsg(null)
     const supabase = createClient()
-    const list = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    const list = Array.from(files).filter((f) => f.type.startsWith('image/') || VIDEO_TYPES[f.type])
     let added = 0
-    let lastError = ''
+    let lastError = Array.from(files).length > list.length ? 'Algún archivo no es imagen ni video MP4/MOV/WebM y no se subió.' : ''
     for (let i = 0; i < list.length; i++) {
-      setUploading(`Subiendo ${i + 1} de ${list.length}…`)
+      const file = list[i]!
+      const video = VIDEO_TYPES[file.type]
+      if (video && file.size > MAX_VIDEO_MB * 1024 * 1024) {
+        lastError = `El video "${file.name}" pesa más de ${MAX_VIDEO_MB} MB. Acortalo o exportalo en menor calidad (1080p alcanza).`
+        continue
+      }
+      setUploading(video ? `Subiendo video ${i + 1} de ${list.length}…` : `Subiendo ${i + 1} de ${list.length}…`)
       try {
-        const blob = await toJpeg(list[i]!)
-        const path = `${orgId}/${crypto.randomUUID()}.jpg`
-        const up = await supabase.storage.from(KIOSK_BUCKET).upload(path, blob, { contentType: 'image/jpeg', cacheControl: '31536000' })
+        const path = `${orgId}/${crypto.randomUUID()}.${video ? video.ext : 'jpg'}`
+        const body = video ? file : await toJpeg(file)
+        const up = await supabase.storage
+          .from(KIOSK_BUCKET)
+          .upload(path, body, { contentType: video ? video.type : 'image/jpeg', cacheControl: '31536000' })
         if (up.error) throw new Error(up.error.message)
         const r = await add(path)
         if (r.ok) added++
         else lastError = r.message ?? 'No se pudo agregar.'
       } catch {
-        lastError = 'No se pudo subir una de las imágenes. Probá de nuevo.'
+        lastError = video ? 'No se pudo subir un video. Probá de nuevo.' : 'No se pudo subir una de las imágenes. Probá de nuevo.'
       }
     }
     setUploading(null)
@@ -96,7 +111,7 @@ export function KioskSlidesManager({
     setMsg(
       lastError
         ? { ok: false, text: added ? `Se agregaron ${added}. ${lastError}` : lastError }
-        : { ok: true, text: added === 1 ? 'Imagen agregada.' : `Se agregaron ${added} imágenes.` },
+        : { ok: true, text: added === 1 ? 'Agregada.' : `Se agregaron ${added}.` },
     )
     router.refresh()
   }
@@ -109,7 +124,7 @@ export function KioskSlidesManager({
         <input
           ref={input}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
           multiple
           className="sr-only"
           id="kiosk-upload"
@@ -121,9 +136,11 @@ export function KioskSlidesManager({
           className={`inline-flex min-h-[48px] cursor-pointer items-center gap-2 rounded-xl bg-[#edcc36] px-5 text-sm font-bold text-black ${busy ? 'pointer-events-none opacity-60' : ''}`}
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <ImagePlus className="h-4 w-4" aria-hidden="true" />}
-          {uploading ?? 'Agregar imágenes'}
+          {uploading ?? 'Agregar imágenes o videos'}
         </label>
-        <p className="text-xs text-zinc-400">Podés elegir varias juntas. Mejor si son verticales, como la pantalla de la tablet.</p>
+        <p className="text-xs text-zinc-400">
+          Podés elegir varias juntas. Videos MP4 o MOV de hasta {MAX_VIDEO_MB} MB, sin sonido. Verticales para la tablet, horizontales para las TVs.
+        </p>
       </div>
 
       <p aria-live="polite" className={`text-sm ${msg ? (msg.ok ? 'text-emerald-300' : 'text-amber-300') : 'sr-only'}`}>
@@ -136,7 +153,10 @@ export function KioskSlidesManager({
             <li key={s.id} className={`overflow-hidden rounded-xl border border-zinc-700 bg-black ${s.active ? '' : 'opacity-50'}`}>
               <div className={`relative ${s.orientation === 'horizontal' ? 'aspect-video' : 'aspect-[9/16]'}`}>
                 <PromoSlide slide={s} />
-                <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">{i + 1}</span>
+                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-bold text-white">
+                  {s.type === 'video' && <Video className="h-3 w-3" aria-label="Video" />}
+                  {i + 1}
+                </span>
                 <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-xs text-zinc-200">
                   {!s.active ? 'Pausada' : s.orientation === 'horizontal' ? 'TVs' : s.orientation === 'vertical' ? 'Tablet' : 'Tablet y TVs'}
                 </span>

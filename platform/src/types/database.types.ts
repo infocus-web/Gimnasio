@@ -1705,6 +1705,7 @@ export type Database = {
           created_at: string
           id: string
           image_path: string
+          media_type: string
           org_id: string
           orientation: string
           sort: number
@@ -1719,6 +1720,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_path: string
+          media_type?: string
           org_id: string
           orientation?: string
           sort?: number
@@ -1733,6 +1735,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_path?: string
+          media_type?: string
           org_id?: string
           orientation?: string
           sort?: number

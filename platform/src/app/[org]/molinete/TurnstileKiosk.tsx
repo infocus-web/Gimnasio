@@ -441,7 +441,7 @@ export function TurnstileKiosk({ gymName, storageKey, slug }: { gymName: string;
         // La tablet pasa las verticales (y las que son para las dos pantallas)
         const mine = j.slides.filter((x) => x && typeof x.url === 'string' && fitsScreen(x, 'vertical'))
         // Se precargan para que el cambio de imagen no muestre un hueco negro
-        for (const x of mine) new window.Image().src = x.url
+        for (const x of mine) if (x.type !== 'video') new window.Image().src = x.url
         setSlides((prev) => (JSON.stringify(prev) === JSON.stringify(mine) ? prev : mine))
       } catch {
         /* sin conexión: sigue con las que tenía */
@@ -609,7 +609,14 @@ function IdleScreen({ gymName, slides }: { gymName: string; slides: readonly Pro
   return (
     <div className="absolute inset-0 z-10 flex flex-col overflow-hidden bg-black">
       <div className="relative flex-1">
-        {current && <PromoSlide key={`${i}-${current.url}`} slide={current} className="animate-[idlefade_1s_ease-out]" />}
+        {current && (
+          <PromoSlide
+            key={`${i}-${current.url}`}
+            slide={current}
+            className="animate-[idlefade_1s_ease-out]"
+            onDone={slides.length > 1 ? () => setI((n) => (n + 1) % slides.length) : undefined}
+          />
+        )}
         {/* Fotos sin textos: logo del gimnasio arriba */}
         {plain && (
           <div className="absolute inset-x-0 top-0 flex justify-center bg-gradient-to-b from-black/80 to-transparent p-10">

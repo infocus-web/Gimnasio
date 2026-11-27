@@ -135,7 +135,7 @@ export function TvScreen({ slug }: { slug: string }) {
         if (stop || !Array.isArray(j.slides)) return
         // Los televisores pasan las horizontales (y las que son para las dos pantallas)
         const mine = j.slides.filter((x) => x && typeof x.url === 'string' && fitsScreen(x, 'horizontal'))
-        for (const x of mine) new window.Image().src = x.url // precarga
+        for (const x of mine) if (x.type !== 'video') new window.Image().src = x.url // precarga
         setAds((prev) => (JSON.stringify(prev) === JSON.stringify(mine) ? prev : mine))
       } catch {
         /* sin conexión: sigue con las que tenía */
@@ -270,7 +270,7 @@ export function TvScreen({ slug }: { slug: string }) {
       {ad && !live && (
         // Publicidad a pantalla completa (tapa el encabezado y el pie)
         <div key={`${index}-${slide}`} className="fixed inset-0 z-10 bg-black">
-          <PromoSlide slide={ad} />
+          <PromoSlide slide={ad} onDone={() => setIndex((i) => (i + 1) % Math.max(slides.length, 1))} />
         </div>
       )}
 

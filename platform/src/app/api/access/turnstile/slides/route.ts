@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   if (!org) return Response.json({ slides: [] }, { headers })
   const { data } = await admin
     .from('kiosk_slides')
-    .select('image_path, badge, title, subtitle, style, text_position, orientation')
+    .select('image_path, media_type, badge, title, subtitle, style, text_position, orientation')
     .eq('org_id', org.id)
     .eq('active', true)
     .order('sort')
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     return [
       {
         url,
+        type: s.media_type === 'video' ? ('video' as const) : ('image' as const),
         badge: s.badge,
         title: s.title,
         subtitle: s.subtitle,
