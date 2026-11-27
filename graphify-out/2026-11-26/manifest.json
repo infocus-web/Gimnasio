@@ -2358,10 +2358,10 @@
     "semantic_hash": ""
   },
   "platform/src/features/floor/BoardScreen.tsx": {
-    "mtime": 1794610356.9677217,
-    "seen": 1794664507.513186,
-    "ast_hash": "c17087935fa1e30fc28c82c827afc0fd",
-    "semantic_hash": "c17087935fa1e30fc28c82c827afc0fd"
+    "mtime": 1795746493.8584728,
+    "seen": 1795746509.6154587,
+    "ast_hash": "415465ebff10320b82d9bf1c592f9513",
+    "semantic_hash": ""
   },
   "platform/src/features/floor/BoardsPanel.tsx": {
     "mtime": 1795744335.8443289,
@@ -3744,9 +3744,9 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/lite/route.ts": {
-    "mtime": 1795745110.943486,
-    "seen": 1795745220.5352995,
-    "ast_hash": "8aaae69862ea9d88dd86a9e339e120a7",
+    "mtime": 1795746493.8324645,
+    "seen": 1795746509.6154587,
+    "ast_hash": "52540e756da6ad8862ae5760f560cacf",
     "semantic_hash": ""
   },
   "supabase/migrations/0064_kiosk_slide_videos.sql": {
