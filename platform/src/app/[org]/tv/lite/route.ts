@@ -448,7 +448,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var body = (b.body || '').replace(/^\\s+|\\s+$/g, ''), media = b.media || [];
     var timerOnly = !!b.timer && !body && !media.length;
     var h = '<div id="bhead"><div style="min-width:0"><p id="btitle">' + esc(b.title) + '</p>' +
-      (b.trainer ? '<p id="btrainer">con ' + esc(b.trainer) + '</p>' : '') + '</div>' +
+      (b.trainer ? '<p id="btrainer">Profesor: ' + esc(b.trainer) + '</p>' : '') + '</div>' +
       (b.timer && !timerOnly ? '<div id="btime"><p class="ck" id="bck"></p><p class="lb" id="blb"></p></div>' : '') + '</div>';
     if (b.timer) h += '<div id="bprog"><div id="bbar"></div></div>';
     if (timerOnly) h += '<div id="bonly"><p class="lb" id="blb"></p><p class="ck" id="bck"></p><p class="rd" id="brd"></p></div>';

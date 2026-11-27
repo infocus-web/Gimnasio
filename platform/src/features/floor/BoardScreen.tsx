@@ -59,7 +59,7 @@ export function BoardScreen({ board, offsetMs }: { board: LiveBoard; offsetMs: n
       <header className="flex items-center justify-between gap-[3vw] border-b-[0.5vh] border-[#edcc36] px-[3vw] py-[2vh]">
         <div className="min-w-0">
           <p className="truncate text-[3.6vw] font-black uppercase leading-none tracking-tight">{board.title}</p>
-          {board.trainer && <p className="mt-[0.8vh] text-[1.6vw] text-zinc-400">con {board.trainer}</p>}
+          {board.trainer && <p className="mt-[0.8vh] text-[1.6vw] text-zinc-400">Profesor: {board.trainer}</p>}
         </div>
         {view && !timerOnly && (
           <div className="shrink-0 text-right">
