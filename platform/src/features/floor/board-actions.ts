@@ -107,6 +107,24 @@ export async function boardTimer(slug: string, action: 'start' | 'pause' | 'rese
   return { ok: true, state: data }
 }
 
+/** Prender o apagar el sonido del temporizador de una pizarra (también mientras está en la TV). */
+export async function boardSound(slug: string, boardId: string, on: boolean): Promise<ActionState> {
+  const ctx = await boardCtx(slug)
+  if (!ctx) return { message: ERRORS.FORBIDDEN }
+  const supabase = await createClient()
+  const { data: row, error: readError } = await supabase.from('class_boards').select('timer').eq('id', boardId).eq('org_id', ctx.org.id).maybeSingle()
+  if (readError) return { message: msg(readError) }
+  const t = cleanTimer(row?.timer)
+  if (!t) return { message: 'Esa pizarra no tiene temporizador.' }
+  const { error } = await supabase
+    .from('class_boards')
+    .update({ timer: { ...t, sound: !!on } as unknown as Json })
+    .eq('id', boardId)
+    .eq('org_id', ctx.org.id)
+  if (error) return { message: msg(error) }
+  return done(slug, on ? 'Sonido prendido en la TV.' : 'Sonido apagado en la TV.')
+}
+
 const QUICK_TITLE = 'Temporizador'
 
 /**

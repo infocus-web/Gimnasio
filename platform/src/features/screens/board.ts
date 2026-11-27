@@ -8,10 +8,25 @@ export interface BoardMedia {
   path: string
 }
 
-export type BoardTimer =
+/** Sonido en la TV: pitidos al cambiar de fase y en los últimos `beep_s` segundos (0 = sin cuenta). */
+export interface TimerSound {
+  /** por defecto: sí */
+  sound?: boolean
+  /** por defecto: 3 */
+  beep_s?: number
+}
+
+export type BoardTimer = (
   | { mode: 'stopwatch' }
   | { mode: 'countdown'; total_s: number }
   | { mode: 'interval'; work_s: number; rest_s: number; rounds: number }
+) &
+  TimerSound
+
+/** Desde cuántos segundos antes del final suena la cuenta (0 = no suena) */
+export const BEEP_OPTIONS = [0, 3, 5, 10] as const
+export const timerSoundOn = (t: BoardTimer | null | undefined) => !!t && t.sound !== false
+export const timerBeepSeconds = (t: BoardTimer | null | undefined) => (t?.beep_s ?? 3)
 
 export interface TimerState {
   running: boolean
@@ -33,9 +48,11 @@ export function cleanTimer(raw: unknown): BoardTimer | null {
     const n = Math.round(Number(v))
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min
   }
-  if (t.mode === 'stopwatch') return { mode: 'stopwatch' }
-  if (t.mode === 'countdown') return { mode: 'countdown', total_s: int(t.total_s, 10, 3 * 3600) }
-  if (t.mode === 'interval') return { mode: 'interval', work_s: int(t.work_s, 5, 3600), rest_s: int(t.rest_s, 0, 3600), rounds: int(t.rounds, 1, 99) }
+  const sound: TimerSound = { sound: t.sound !== false, beep_s: t.beep_s === undefined || t.beep_s === null ? 3 : int(t.beep_s, 0, 10) }
+  if (t.mode === 'stopwatch') return { mode: 'stopwatch', ...sound }
+  if (t.mode === 'countdown') return { mode: 'countdown', total_s: int(t.total_s, 10, 3 * 3600), ...sound }
+  if (t.mode === 'interval')
+    return { mode: 'interval', work_s: int(t.work_s, 5, 3600), rest_s: int(t.rest_s, 0, 3600), rounds: int(t.rounds, 1, 99), ...sound }
   return null
 }
 
@@ -122,7 +139,8 @@ export function timerView(t: BoardTimer, elapsedMs: number, running: boolean): T
 
 export function timerSummary(t: BoardTimer | null): string {
   if (!t) return 'Sin temporizador'
-  if (t.mode === 'stopwatch') return 'Cronómetro'
-  if (t.mode === 'countdown') return `Cuenta regresiva de ${mmss(t.total_s * 1000)}`
-  return `${t.rounds} rondas · ${t.work_s} s trabajo / ${t.rest_s} s descanso`
+  const mute = t.sound === false ? ' · sin sonido' : ''
+  if (t.mode === 'stopwatch') return `Cronómetro${mute}`
+  if (t.mode === 'countdown') return `Cuenta regresiva de ${mmss(t.total_s * 1000)}${mute}`
+  return `${t.rounds} rondas · ${t.work_s} s trabajo / ${t.rest_s} s descanso${mute}`
 }

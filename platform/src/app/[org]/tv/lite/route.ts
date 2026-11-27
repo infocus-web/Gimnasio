@@ -11,6 +11,9 @@
  * La hora sale del servidor (server_time de tv_feed), por si el reloj de la TV está mal.
  * Apretando OK (o tocando la pantalla) pasa a pantalla completa.
  *   POST /<gym>/tv/live   pizarra en vivo del profe (cada 3 s; el profe la maneja desde Mis clases → Pizarra)
+ *   Con sonido (se apaga desde la pizarra): pitidos al empezar trabajo/descanso, al terminar y en los
+ *   últimos N segundos de cada fase (timer.beep_s, 0 = no; por defecto 3).
+ *   El navegador recién deja sonar después de que alguien apriete OK (el mismo OK de pantalla completa).
  *
  * /<gym>/tv redirige acá sola cuando detecta un Chrome anterior al 111.
  */
@@ -126,7 +129,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   <div id="foot"><div id="dots"></div><p id="off" class="hide"></p></div>
 </div>
 <div id="board" class="hide"></div>
-<p id="fs" class="hide">Apretá OK en el control para ver en pantalla completa</p>
+<p id="fs" class="hide">Apretá OK en el control para pantalla completa y sonido</p>
 <div id="ad" class="hide"><div id="admedia" style="width:100%;height:100%"></div><div id="adtx" class="hide"></div></div>
 <script>
 (function () {
@@ -351,23 +354,67 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   }
   function tview(t, e, run) {
     if (t.mode === 'stopwatch') {
-      return { clock: hms(Math.max(0, Math.floor(e / 1000))), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: 0 };
+      return { clock: hms(Math.max(0, Math.floor(e / 1000))), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: 0, left: -1, phase: 'sw' };
     }
     if (t.mode === 'countdown') {
       var left = t.total_s * 1000 - e;
-      if (left <= 0) return { clock: '00:00', label: '¡TIEMPO!', tone: 'done', round: null, progress: 1 };
-      return { clock: mmss(left), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: e / (t.total_s * 1000) };
+      if (left <= 0) return { clock: '00:00', label: '¡TIEMPO!', tone: 'done', round: null, progress: 1, left: 0, phase: 'done' };
+      return { clock: mmss(left), label: run ? null : e ? 'PAUSA' : null, tone: run ? 'work' : 'idle', round: null, progress: e / (t.total_s * 1000),
+        left: Math.ceil(left / 1000), phase: 'cd' };
     }
     var cycle = (t.work_s + t.rest_s) * 1000, idx = Math.floor(e / cycle);
-    var done = { clock: '00:00', label: '¡TERMINADO!', tone: 'done', round: t.rounds + ' de ' + t.rounds + ' rondas', progress: 1 };
+    var done = { clock: '00:00', label: '¡TERMINADO!', tone: 'done', round: t.rounds + ' de ' + t.rounds + ' rondas', progress: 1, left: 0, phase: 'done' };
     if (idx >= t.rounds) return done;
     var within = e - idx * cycle, working = within < t.work_s * 1000;
     if (!working && idx === t.rounds - 1) return done;
     var phase = working ? t.work_s * 1000 : t.rest_s * 1000, inP = working ? within : within - t.work_s * 1000;
     var idle = !run && e === 0;
     return { clock: mmss(phase - inP), label: idle ? 'LISTOS' : working ? 'TRABAJO' : 'DESCANSO', tone: idle ? 'idle' : working ? 'work' : 'rest',
-      round: 'Ronda ' + (idx + 1) + ' de ' + t.rounds, progress: inP / phase };
+      round: 'Ronda ' + (idx + 1) + ' de ' + t.rounds, progress: inP / phase,
+      left: Math.ceil((phase - inP) / 1000), phase: (working ? 'work' : 'rest') + idx };
   }
+  /* Sonido (Web Audio: no hace falta ningún archivo) */
+  var actx = null, lastPhase = null, lastLeft = null, lastBoardId = null;
+  function audioUnlock() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended' && actx.resume) actx.resume();
+    } catch (e) {}
+  }
+  function beep(freq, ms, times) {
+    if (!actx || actx.state !== 'running') return;
+    for (var n = 0; n < (times || 1); n++) {
+      try {
+        var t0 = actx.currentTime + n * (ms / 1000 + 0.12);
+        var o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'square'; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.01);
+        g.gain.setValueAtTime(0.5, t0 + ms / 1000 - 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + ms / 1000);
+        o.connect(g); g.connect(actx.destination);
+        o.start(t0); o.stop(t0 + ms / 1000 + 0.02);
+      } catch (e) {}
+    }
+  }
+  function sound(b, v, running) {
+    if (b.timer.sound === false) { lastBoardId = b.id; lastPhase = running || v.phase === 'done' ? v.phase : 'paused'; lastLeft = v.left; return; }
+    var beepS = typeof b.timer.beep_s === 'number' ? b.timer.beep_s : 3;
+    var first = lastBoardId !== b.id;
+    lastBoardId = b.id;
+    var phase = running || v.phase === 'done' ? v.phase : 'paused';
+    if (!first && phase !== lastPhase) {
+      if (phase === 'done') beep(1320, 450, 3);
+      else if (phase.indexOf('work') === 0 || phase === 'cd' || phase === 'sw') beep(1320, 500, 1);
+      else if (phase.indexOf('rest') === 0) beep(660, 600, 1);
+    } else if (!first && running && v.left > 0 && v.left <= beepS && v.left !== lastLeft) {
+      beep(880, 150, 1);
+    }
+    lastPhase = phase; lastLeft = v.left;
+  }
+
   function pollLive() {
     var sent = Date.now();
     req('POST', '/' + SLUG + '/tv/live', { k: token }, function (st, j) {
@@ -386,6 +433,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     var rebuild = content !== liveContent;
     liveContent = content; liveState = state;
     if (!b) {
+      lastBoardId = null; lastPhase = null;
       clearTimeout(mediaTimer); clearInterval(tickTimer); tickTimer = null;
       $('board').innerHTML = ''; show($('board'), false);
       return;
@@ -438,6 +486,7 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
     if (!b || !b.timer) return;
     var st = b.timer_state || { running: false, elapsed_ms: 0 };
     var v = tview(b.timer, elapsed(st), !!st.running), tone = 't-' + v.tone;
+    sound(b, v, !!st.running);
     var ck = $('bck'), lb = $('blb'), rd = $('brd'), bar = $('bbar');
     if (ck) { ck.textContent = v.clock; ck.className = 'ck ' + tone; }
     if (rd) { lb.textContent = v.label || ''; lb.className = 'lb ' + tone; rd.textContent = v.round || ''; }
@@ -461,7 +510,10 @@ html,body{height:100%;background:#000;color:#fff;overflow:hidden;cursor:none;fon
   function fullscreenSetup() {
     function upd() { show($('fs'), !isFull()); }
     var evs = ['keydown', 'click', 'touchend', 'mousedown'];
-    for (var i = 0; i < evs.length; i++) document.addEventListener(evs[i], goFull, true);
+    for (var i = 0; i < evs.length; i++) {
+      document.addEventListener(evs[i], goFull, true);
+      document.addEventListener(evs[i], audioUnlock, true);
+    }
     document.addEventListener('fullscreenchange', upd);
     document.addEventListener('webkitfullscreenchange', upd);
     upd();

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { getAdminContext } from '@/features/admin/context'
 import { createClient } from '@/lib/supabase/server'
 import { BoardsPanel, type BoardItem, type LiveInfo } from '@/features/floor/BoardsPanel'
-import { boardTimer, deleteBoard, hideBoard, quickTimer, saveBoard, showBoard } from '@/features/floor/board-actions'
+import { boardSound, boardTimer, deleteBoard, hideBoard, quickTimer, saveBoard, showBoard } from '@/features/floor/board-actions'
 import { boardMediaUrl, cleanMedia, cleanTimer } from '@/features/screens/board'
 
 export const metadata: Metadata = { title: 'Pizarra TV' }
@@ -50,6 +50,7 @@ export default async function BoardPage({ params }: PageProps<'/[org]/admin/mis-
       hide={hideBoard.bind(null, slug)}
       timer={boardTimer.bind(null, slug)}
       quick={quickTimer.bind(null, slug)}
+      sound={boardSound.bind(null, slug)}
     />
   )
 }

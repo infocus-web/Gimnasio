@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, ImagePlus, Loader2, Trash2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { ActionState } from '@/features/admin/errors'
+import { TimerSoundFields } from './TimerSoundFields'
 import { BOARD_BUCKET, boardMediaUrl, type BoardMedia, type BoardTimer } from '@/features/screens/board'
 import type { BoardInput } from './board-actions'
 
@@ -54,6 +55,8 @@ export function BoardEditor({
   const [work, setWork] = useState(t?.mode === 'interval' ? t.work_s : 40)
   const [rest, setRest] = useState(t?.mode === 'interval' ? t.rest_s : 20)
   const [rounds, setRounds] = useState(t?.mode === 'interval' ? t.rounds : 8)
+  const [sound, setSound] = useState(t?.sound !== false)
+  const [beepS, setBeepS] = useState(t?.beep_s ?? 3)
   const [uploading, setUploading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [titleError, setTitleError] = useState<string | null>(null)
@@ -112,11 +115,11 @@ export function BoardEditor({
 
   const timer = (): BoardTimer | null =>
     mode === 'stopwatch'
-      ? { mode }
+      ? { mode, sound, beep_s: beepS }
       : mode === 'countdown'
-        ? { mode, total_s: Math.max(10, cdMin * 60 + cdSec) }
+        ? { mode, total_s: Math.max(10, cdMin * 60 + cdSec), sound, beep_s: beepS }
         : mode === 'interval'
-          ? { mode, work_s: work, rest_s: rest, rounds }
+          ? { mode, work_s: work, rest_s: rest, rounds, sound, beep_s: beepS }
           : null
 
   const submit = async () => {
@@ -302,6 +305,7 @@ export function BoardEditor({
               {num(cdSec, setCdSec, 0, 59, 'Segundos', 'tm-sec')}
             </div>
           )}
+          {mode !== 'none' && <TimerSoundFields sound={sound} beepS={beepS} onSound={setSound} onBeepS={setBeepS} idPrefix="tm" />}
           {mode !== 'none' && <p className="text-xs text-zinc-500">Lo arrancás y pausás desde tu celular cuando la pizarra está en la TV.</p>}
         </fieldset>
 

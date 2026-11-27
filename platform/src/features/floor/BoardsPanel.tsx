@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Clock, Image as ImageIcon, Loader2, Pause, Pencil, Play, Plus, RotateCcw, Trash2, Tv, TvMinimal, Video } from 'lucide-react'
+import { Clock, Image as ImageIcon, Loader2, Pause, Pencil, Play, Plus, RotateCcw, Trash2, Tv, TvMinimal, Video, Volume2, VolumeX } from 'lucide-react'
 import type { ActionState } from '@/features/admin/errors'
 import { timerElapsed, timerSummary, timerView, type BoardMedia, type BoardTimer, type TimerState } from '@/features/screens/board'
 import { BoardEditor } from './BoardEditor'
+import { TimerSoundFields } from './TimerSoundFields'
 import type { BoardInput } from './board-actions'
 
 export interface BoardItem {
@@ -44,6 +45,7 @@ export function BoardsPanel({
   hide,
   timer,
   quick,
+  sound,
 }: {
   orgId: string
   staffId: string
@@ -56,6 +58,7 @@ export function BoardsPanel({
   hide: () => Promise<ActionState>
   timer: (action: 'start' | 'pause' | 'reset') => Promise<ActionState & { state?: unknown }>
   quick: (timer: BoardTimer, minutes: number) => Promise<ActionState>
+  sound: (boardId: string, on: boolean) => Promise<ActionState>
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
@@ -126,6 +129,7 @@ export function BoardsPanel({
               state={live.live.timer_state}
               serverNow={live.server_now}
               busy={pending}
+              onSound={(on) => run(() => sound(liveBoard.id, on))}
               onAction={(a) =>
                 start(async () => {
                   const r = await timer(a)
@@ -276,13 +280,16 @@ function LiveTimer({
   serverNow,
   busy,
   onAction,
+  onSound,
 }: {
   config: BoardTimer
   state: TimerState
   serverNow: string
   busy: boolean
   onAction: (a: 'start' | 'pause' | 'reset') => void
+  onSound: (on: boolean) => void
 }) {
+  const soundOn = config.sound !== false
   const offset = useMemo(() => new Date(serverNow).getTime() - Date.now(), [serverNow])
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -316,6 +323,18 @@ function LiveTimer({
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" />
         </button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={soundOn}
+          disabled={busy}
+          onClick={() => onSound(!soundOn)}
+          aria-label={soundOn ? 'Apagar el sonido de la TV' : 'Prender el sonido de la TV'}
+          title={soundOn ? 'Sonido prendido' : 'Sonido apagado'}
+          className={`grid h-14 w-14 place-items-center rounded-xl border ${soundOn ? 'border-[#edcc36] text-[#edcc36]' : 'border-zinc-600 text-zinc-500'}`}
+        >
+          {soundOn ? <Volume2 className="h-5 w-5" aria-hidden="true" /> : <VolumeX className="h-5 w-5" aria-hidden="true" />}
+        </button>
       </div>
     </div>
   )
@@ -328,6 +347,8 @@ function QuickTimer({ busy, onShow }: { busy: boolean; onShow: (t: BoardTimer) =
   const [rest, setRest] = useState(20)
   const [rounds, setRounds] = useState(8)
   const [min, setMin] = useState(10)
+  const [sound, setSound] = useState(true)
+  const [beepS, setBeepS] = useState(3)
   const field = (label: string, v: number, set: (n: number) => void, lo: number, hi: number, id: string) => (
     <label htmlFor={id} className="space-y-1">
       <span className="block text-xs text-zinc-400">{label}</span>
@@ -343,8 +364,13 @@ function QuickTimer({ busy, onShow }: { busy: boolean; onShow: (t: BoardTimer) =
       />
     </label>
   )
+  const extra = { sound, beep_s: beepS }
   const timer: BoardTimer =
-    mode === 'interval' ? { mode, work_s: work, rest_s: rest, rounds } : mode === 'countdown' ? { mode, total_s: min * 60 } : { mode }
+    mode === 'interval'
+      ? { mode, work_s: work, rest_s: rest, rounds, ...extra }
+      : mode === 'countdown'
+        ? { mode, total_s: min * 60, ...extra }
+        : { mode, ...extra }
   return (
     <section aria-labelledby="quick-timer-title" className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
       <h2 id="quick-timer-title" className="flex items-center gap-2 font-bold text-white">
@@ -388,7 +414,8 @@ function QuickTimer({ busy, onShow }: { busy: boolean; onShow: (t: BoardTimer) =
           <Tv className="h-4 w-4" aria-hidden="true" /> Poner en la TV
         </button>
       </div>
-      <p className="text-xs text-zinc-500">Aparece arriba como «En la TV ahora»: ahí lo iniciás, pausás o reiniciás.</p>
+      <TimerSoundFields sound={sound} beepS={beepS} onSound={setSound} onBeepS={setBeepS} idPrefix="qt" />
+      <p className="text-xs text-zinc-500">Aparece arriba como «En la TV ahora»: ahí lo iniciás, pausás o reiniciás, y prendés o apagás el sonido.</p>
     </section>
   )
 }
