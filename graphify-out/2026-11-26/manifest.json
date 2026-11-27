@@ -564,10 +564,10 @@
     "semantic_hash": "c61a87bc80ad83c81393bd9a1f24f607"
   },
   "platform/src/app/[org]/tv/page.tsx": {
-    "mtime": 1794609384.674952,
-    "seen": 1794664507.5021036,
-    "ast_hash": "39bf68d066d5de90e20834d74b5b637e",
-    "semantic_hash": "39bf68d066d5de90e20834d74b5b637e"
+    "mtime": 1795742493.8197353,
+    "seen": 1795742885.4202013,
+    "ast_hash": "7fb8228d9a64af990432117e591c3808",
+    "semantic_hash": ""
   },
   "platform/src/app/api/access/agent/route.ts": {
     "mtime": 1792594930.6149282,
@@ -3741,6 +3741,12 @@
     "mtime": 1795118275.6740487,
     "seen": 1795118521.759823,
     "ast_hash": "00a23491d470b4087f5920971da29925",
+    "semantic_hash": ""
+  },
+  "platform/src/app/[org]/tv/lite/route.ts": {
+    "mtime": 1795742572.805418,
+    "seen": 1795742885.4202013,
+    "ast_hash": "d456363338992eed3089382a2c2a192d",
     "semantic_hash": ""
   }
 }
