@@ -558,10 +558,10 @@
     "semantic_hash": "3b3497d15260c60723bfa5b3c3a8fddf"
   },
   "platform/src/app/[org]/tv/feed/route.ts": {
-    "mtime": 1792608774.700916,
-    "seen": 1793838985.7316823,
-    "ast_hash": "c61a87bc80ad83c81393bd9a1f24f607",
-    "semantic_hash": "c61a87bc80ad83c81393bd9a1f24f607"
+    "mtime": 1795783028.5531218,
+    "seen": 1795784962.0339227,
+    "ast_hash": "0749d0975c40eff4f0089cb35ceb5051",
+    "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/page.tsx": {
     "mtime": 1795748582.1402316,
@@ -2196,9 +2196,9 @@
     "semantic_hash": "d37c6a91ab91f3bb23bfa0816db00553"
   },
   "platform/src/app/[org]/tv/live/route.ts": {
-    "mtime": 1795747804.5513196,
-    "seen": 1795747992.6225572,
-    "ast_hash": "564de57e7bc4b6d0f07e61ed6863ea45",
+    "mtime": 1795782356.500512,
+    "seen": 1795784962.0339227,
+    "ast_hash": "76ae855c8534a0ed66926bcf61923a04",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/pair/route.ts": {
@@ -3744,9 +3744,9 @@
     "semantic_hash": ""
   },
   "platform/src/app/[org]/tv/lite/route.ts": {
-    "mtime": 1795747849.517231,
-    "seen": 1795747992.6225572,
-    "ast_hash": "4e9625f3f908b0d63bbf10b2b6ae0630",
+    "mtime": 1795783028.5691216,
+    "seen": 1795784962.0339227,
+    "ast_hash": "5253192d94ec6f36b039dba1d3d00853",
     "semantic_hash": ""
   },
   "supabase/migrations/0064_kiosk_slide_videos.sql": {
@@ -3774,9 +3774,9 @@
     "semantic_hash": ""
   },
   "platform/src/features/floor/MusicControl.tsx": {
-    "mtime": 1795748493.1551065,
-    "seen": 1795748640.5584402,
-    "ast_hash": "d6324a437a62a170537533d23ee13683",
+    "mtime": 1795782404.3787687,
+    "seen": 1795784962.0339227,
+    "ast_hash": "7f34a97326d82bc37a34ba06da496e1b",
     "semantic_hash": ""
   },
   "platform/src/features/floor/music-actions.ts": {

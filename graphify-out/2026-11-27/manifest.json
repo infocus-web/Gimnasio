@@ -330,9 +330,9 @@
     "semantic_hash": "c2357f0c6e08d3a15a14ee712f97573a"
   },
   "platform/src/app/[org]/admin/recepcion/page.tsx": {
-    "mtime": 1795747464.791224,
-    "seen": 1795747992.6225572,
-    "ast_hash": "580dc1acc1c604ca8a60e24ec6b1b766",
+    "mtime": 1795748493.1788242,
+    "seen": 1795748640.5574317,
+    "ast_hash": "571a89e45571f75f721281212c4945aa",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/reportes/page.tsx": {
@@ -564,9 +564,9 @@
     "semantic_hash": "c61a87bc80ad83c81393bd9a1f24f607"
   },
   "platform/src/app/[org]/tv/page.tsx": {
-    "mtime": 1795742493.8197353,
-    "seen": 1795742885.4202013,
-    "ast_hash": "7fb8228d9a64af990432117e591c3808",
+    "mtime": 1795748582.1402316,
+    "seen": 1795748640.5574317,
+    "ast_hash": "86400846d932b47fe4bdcdae67a01904",
     "semantic_hash": ""
   },
   "platform/src/app/api/access/agent/route.ts": {
@@ -2148,9 +2148,9 @@
     "semantic_hash": "4ce0a559bbdfdbb8cef3660d79969461"
   },
   "platform/src/app/[org]/admin/mis-clases/pizarra/page.tsx": {
-    "mtime": 1795747460.039205,
-    "seen": 1795747992.6225572,
-    "ast_hash": "bd0da669246bf45e4eedd7ae462243b3",
+    "mtime": 1795748493.1718237,
+    "seen": 1795748640.5574317,
+    "ast_hash": "42cebe2f8c94b1e2e3d8181afb1833b7",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/pagos/reglas/page.tsx": {
@@ -2160,9 +2160,9 @@
     "semantic_hash": "c56be7a463e7ec1d54a53ee75bb5f45e"
   },
   "platform/src/app/[org]/admin/pantallas/page.tsx": {
-    "mtime": 1795747460.0136962,
-    "seen": 1795747992.6225572,
-    "ast_hash": "993702a96e356e032d7f484380022ad6",
+    "mtime": 1795748493.163825,
+    "seen": 1795748640.5574317,
+    "ast_hash": "b99c30d053438de49a55465a6ca4a896",
     "semantic_hash": ""
   },
   "platform/src/app/[org]/admin/socios/riesgo/page.tsx": {
@@ -3768,21 +3768,21 @@
     "semantic_hash": ""
   },
   "platform/src/features/admin/MusicLibrary.tsx": {
-    "mtime": 1795747444.031297,
-    "seen": 1795747992.6225572,
-    "ast_hash": "09b1f1dddbe2734570f5dc765b5d1c1f",
+    "mtime": 1795748476.5642288,
+    "seen": 1795748640.5574317,
+    "ast_hash": "02b3075a894890506e4278d78f34d0f9",
     "semantic_hash": ""
   },
   "platform/src/features/floor/MusicControl.tsx": {
-    "mtime": 1795747444.0242994,
-    "seen": 1795747992.6235447,
-    "ast_hash": "c9bcc60c690519a34993b5a37bae881e",
+    "mtime": 1795748493.1551065,
+    "seen": 1795748640.5584402,
+    "ast_hash": "d6324a437a62a170537533d23ee13683",
     "semantic_hash": ""
   },
   "platform/src/features/floor/music-actions.ts": {
-    "mtime": 1795747394.6450157,
-    "seen": 1795747992.6235447,
-    "ast_hash": "f24e77fbfd59bf0c9806d00044d636a7",
+    "mtime": 1795748476.5386984,
+    "seen": 1795748640.5584402,
+    "ast_hash": "78b6f2a0f09cf88ba1cf29c499cb1aa5",
     "semantic_hash": ""
   },
   "platform/src/features/floor/music-data.ts": {
@@ -3801,6 +3801,12 @@
     "mtime": 1795747337.5963414,
     "seen": 1795747992.6235447,
     "ast_hash": "08c501baedc8fa67b7b676da959a9e73",
+    "semantic_hash": ""
+  },
+  "supabase/migrations/0066_music_staff_upload.sql": {
+    "mtime": 1795748476.5084107,
+    "seen": 1795748640.5584402,
+    "ast_hash": "befe25b84f111b7c83441114af1e3322",
     "semantic_hash": ""
   }
 }
